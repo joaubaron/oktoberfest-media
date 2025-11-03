@@ -12,7 +12,7 @@ let isDrawing = false;
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
-const currentYear = new Date().getFullYear();
+const currentYear = new Date().getFullYear(); // ← JÁ É AUTOMÁTICO!
 const photos = {};
 for (let year = startYear; year <= currentYear; year++) {
     photos[year] = `fotos/oktoberfest${year}.jpg`;
@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", function() {
     initializeApp();
 });
 
-function initializeApp() {
-    // Configurar anos
-    initializeYears();
+async function initializeApp() {
+    // Configurar anos com detecção automática
+    await initializeYearsWithDetection();
     
     // Configurar elementos da interface
     setupUIElements();
@@ -40,9 +40,45 @@ function initializeApp() {
     preloadMedia();
 }
 
+// ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
+async function checkYearExists(year) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = `fotos/oktoberfest${year}.jpg`;
+    });
+}
+
+async function initializeYearsWithDetection() {
+    allYears = [];
+    
+    // Verifica anos de fotos
+    for (let year = startYear; year <= currentYear; year++) {
+        const exists = await checkYearExists(year);
+        if (exists) {
+            allYears.push(year.toString());
+            if (!photos[year]) {
+                photos[year] = `fotos/oktoberfest${year}.jpg`;
+            }
+        }
+    }
+    
+    currentYearIndex = allYears.indexOf(currentYear.toString());
+    if (currentYearIndex === -1 && allYears.length > 0) {
+        currentYearIndex = allYears.length - 1;
+    }
+}
+
 function initializeYears() {
+    // Substitua todo o conteúdo por:
     allYears = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
     currentYearIndex = allYears.indexOf(currentYear.toString());
+    
+    // Se o ano atual não existir, usa o último disponível
+    if (currentYearIndex === -1 && allYears.length > 0) {
+        currentYearIndex = allYears.length - 1;
+    }
 }
 
 function setupUIElements() {
