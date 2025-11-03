@@ -755,31 +755,20 @@ function mostrarCartazes() {
     let index = 0;
 
     function carregarCartazComFallback(ano) {
-        const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-        const testImage = new Image();
-        
-        testImage.onload = function() {
-            img.style.opacity = 0;
-            setTimeout(() => {
-                img.src = cartazUrl;
-                img.alt = `Cartaz ${ano}`;
-                img.style.opacity = 1;
-                cartazAtual = ano;
-            }, fadeDuration);
-        };
-        
-        testImage.onerror = function() {
-            console.warn(`Cartaz ${ano} não encontrado, usando fallback`);
-            img.style.opacity = 0;
-            setTimeout(() => {
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+            img.alt = `Cartaz ${ano}`;
+            
+            img.onerror = () => {
+                console.warn(`Cartaz ${ano} não encontrado`);
                 img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
                 img.alt = `Cartaz ${ano} - Não disponível`;
-                img.style.opacity = 1;
-                cartazAtual = ano;
-            }, fadeDuration);
-        };
-        
-        testImage.src = cartazUrl;
+            };
+            
+            img.style.opacity = 1;
+            cartazAtual = ano;
+        }, fadeDuration);
     }
 
     carregarCartazComFallback(cartazAtual);
@@ -822,30 +811,19 @@ function mostrarCartazAno() {
         return;
     }
 
-    const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-    const testImage = new Image();
-    
-    testImage.onload = function() {
-        img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = cartazUrl;
-            img.alt = `Cartaz ${year}`;
-            img.style.opacity = 1;
-            input.value = "";
-        }, 400);
-    };
-    
-    testImage.onerror = function() {
-        console.warn(`Cartaz ${year} não encontrado`);
-        img.style.opacity = 0;
-        setTimeout(() => {
+    img.style.opacity = 0;
+    setTimeout(() => {
+        img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
+        img.alt = `Cartaz ${year}`;
+        
+        img.onerror = () => {
+            console.warn(`Cartaz ${year} não encontrado`);
             img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
             img.alt = `Cartaz ${year} - Não disponível`;
-            img.style.opacity = 1;
-            input.value = "";
             showModal("cartaz_nao_encontrado");
-        }, 400);
-    };
-    
-    testImage.src = cartazUrl;
+        };
+        
+        img.style.opacity = 1;
+        input.value = "";
+    }, 400);
 }
