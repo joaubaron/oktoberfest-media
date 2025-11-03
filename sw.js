@@ -1,5 +1,5 @@
-// sw.js - VERSÃO QUE USA TODAS AS MÍDIAS DO MEDIAS.JSON
-const CACHE_VERSION = '2025';
+// VERSÃO QUE USA TODAS AS MÍDIAS DO MEDIAS.JSON
+const CACHE_VERSION = '2025'; // ← ATUALIZAR TODO ANO
 const CACHE_NAME = `oktoberfest-${CACHE_VERSION}`;
 
 self.addEventListener('install', event => {
@@ -127,3 +127,4 @@ self.addEventListener('activate', event => {
         })
     );
 });
+
