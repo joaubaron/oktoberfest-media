@@ -1,90 +1,89 @@
-// app.js - SISTEMA OKTOBERFEST ATUALIZÁVEL
-console.log('🎪 Oktoberfest App - Carregado!');
+// ======== CONFIGURAÇÃO DE LINKS DIRETOS ========
+const baseURL = "https://joaubaron.github.io/oktoberfest-media/";
 
-const CONFIG = {
-    // ✅ ATUALIZE ESTA LISTA COM NOVOS ANOS
-    ANOS_DISPONIVEIS: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
-    
-    // ✅ ATUALIZE COM NOVOS CARTAZES
-    CARTASES_DISPONIVEIS: [1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 
-                          1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-                          2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
-                          2020, 2021, 2022, 2023, 2024, 2025],
-    
-    // ✅ ATUALIZE COM NOVAS MÚSICAS
-    MUSICAS: ['Anneliese.mp3', 'Donnawedda.mp3', 'Imogdiso.mp3', 'Kanguru.mp3'],
-    
-    URL_BASE: 'https://SEU-USUARIO.github.io/oktoberfest-media',
-    
-    // 🎯 DETECÇÃO AUTOMÁTICA DO ANO VIGENTE
-    get ANO_VIGENTE() {
-        const agora = new Date();
-        return agora.getMonth() >= 9 ? agora.getFullYear() : agora.getFullYear() - 1;
-    }
-};
+const fotosURL = baseURL + "fotos/";
+const musicasURL = baseURL + "musicas/";
+const videosURL = baseURL + "videos/";
+const cartazesURL = baseURL + "cartazes/";
 
-// 🚀 INICIALIZAÇÃO
-function inicializarApp() {
-    console.log(`📅 Iniciando App - Ano Vigente: ${CONFIG.ANO_VIGENTE}`);
-    
-    const input = document.getElementById('yearInput');
-    const botao = document.getElementById('botaoClara');
-    const container = document.getElementById('mediaContainer');
-    
-    // Configura interface
-    const anoMaximo = Math.max(...CONFIG.ANOS_DISPONIVEIS);
-    input.placeholder = `2017-${anoMaximo}`;
-    input.min = 2017;
-    input.max = anoMaximo;
-    
-    // Ação do botão
-    botao.onclick = async function() {
-        const ano = parseInt(input.value);
-        
-        if (!ano || ano < 2017 || ano > anoMaximo) {
-            alert(`🎯 Digite um ano entre 2017 e ${anoMaximo}`);
-            return;
-        }
-        
-        if (!CONFIG.ANOS_DISPONIVEIS.includes(ano)) {
-            alert(`📅 ${ano} ainda não disponível!`);
-            return;
-        }
-        
-        await carregarFoto(ano);
-    };
+// ======== VARIÁVEIS ========
+const photo = document.getElementById("photo");
+const backgroundMusic = document.getElementById("backgroundMusic");
+let loopFoto2007 = null;
+
+// ======== ANO ATUAL ========
+document.getElementById("textYear").textContent = new Date().getFullYear();
+
+// ======== MÚSICAS ========
+const songs = ["Anneliese.mp3","Donnawedda.mp3","Imogdiso.mp3","Kanguru.mp3"];
+let lastSong = null;
+
+function changeMusic() {
+  let next = songs.filter(s => s !== lastSong);
+  const pick = next[Math.floor(Math.random() * next.length)];
+  backgroundMusic.src = musicasURL + pick;
+  backgroundMusic.play();
+  lastSong = pick;
+}
+changeMusic();
+backgroundMusic.onended = changeMusic;
+
+// ======== FOTOS CLARA ========
+function startDraw() {
+  const year = parseInt(document.getElementById("yearInput").value);
+  if (isNaN(year) || year < 2017 || year > new Date().getFullYear()) {
+    alert("Digite um ano válido entre 2017 e o atual 🍺");
+    return;
+  }
+  photo.src = fotosURL + "oktoberfest" + year + ".jpg";
 }
 
-// 🖼️ CARREGAR FOTO
-async function carregarFoto(ano) {
-    const container = document.getElementById('mediaContainer');
-    const url = `${CONFIG.URL_BASE}/fotos/oktoberfest${ano}.jpg`;
-    
-    container.innerHTML = '<p>🍺 Carregando...</p>';
-    
-    try {
-        const response = await fetch(url);
-        if (response.ok) {
-            container.innerHTML = `<img src="${url}" alt="Oktoberfest ${ano}" style="max-width: 100%; border-radius: 8px;">`;
-        } else {
-            container.innerHTML = `<img src="fotos/oktoberfest${ano}.jpg" alt="Oktoberfest ${ano}">`;
-        }
-    } catch (error) {
-        container.innerHTML = `<p>❌ Erro ao carregar ${ano}</p>`;
-    }
+// ======== FOTO 2007 ========
+function mostrarFoto2007() {
+  if (loopFoto2007) clearInterval(loopFoto2007);
+  const imagens = [
+    "oktoberfest2007.jpg",
+    "oktoberfestkaka1.jpg",
+    "oktoberfestkaka2.jpg"
+  ];
+  let i = 0;
+  photo.src = fotosURL + imagens[i];
+  loopFoto2007 = setInterval(() => {
+    i = (i + 1) % imagens.length;
+    photo.src = fotosURL + imagens[i];
+  }, 3000);
 }
 
-// 🎵 SISTEMA DE MÚSICA
-function tocarMusica(nomeMusica) {
-    if (CONFIG.MUSICAS.includes(nomeMusica)) {
-        const audio = new Audio(`${CONFIG.URL_BASE}/musicas/${nomeMusica}`);
-        audio.play().catch(e => console.log('Clique para ativar áudio'));
-    }
+// ======== CARTAZES ========
+function mostrarCartazes() {
+  let ano = 1984;
+  const atual = new Date().getFullYear();
+  photo.src = cartazesURL + "cartaz" + ano + ".jpg";
+  const loop = setInterval(() => {
+    ano++;
+    if (ano > atual) ano = 1984;
+    photo.src = cartazesURL + "cartaz" + ano + ".jpg";
+  }, 2500);
 }
 
-// ▶️ INICIALIZAR
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarApp);
-} else {
-    inicializarApp();
+function mostrarCartazAno() {
+  const year = parseInt(document.getElementById("cartazInput").value);
+  const atual = new Date().getFullYear();
+  if (isNaN(year) || year < 1984 || year > atual) {
+    alert("Digite um ano entre 1984 e " + atual + " 🍺");
+    return;
+  }
+  photo.src = cartazesURL + "cartaz" + year + ".jpg";
+}
+
+// ======== VÍDEO ========
+function playVideo() {
+  const videoURL = videosURL + "clara.mp4";
+  window.open(videoURL, "_blank");
+}
+
+// ======== RESET ========
+function resetApp() {
+  if (loopFoto2007) clearInterval(loopFoto2007);
+  photo.src = fotosURL + "oktoberfest.png";
 }
