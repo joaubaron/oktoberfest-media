@@ -315,7 +315,7 @@ function mostrarFoto2007() {
     const intervalo = 3000;
     const imagens = [
         { src: "fotos/oktoberfest2007.jpg", alt: "Oktoberfest 2007" },
-        { src: "fotos/oktoberfestkaka1.jpg", alt: "oktoberfest.png" },
+        { src: "fotos/oktoberfest.png", alt: "oktoberfest.png" },
         { src: "fotos/oktoberfestkaka1.jpg", alt: "Oktoberfest Kaka 1" },
         { src: "fotos/oktoberfestkaka2.jpg", alt: "Oktoberfest Kaka 2" }
         ];
