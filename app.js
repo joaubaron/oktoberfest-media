@@ -10,12 +10,149 @@ let allYears = [];
 let interval = null;
 let isDrawing = false;
 
+// ======== CONFIGURAÇÃO DE CACHE OFFLINE ========
+const CACHE_NAME = 'oktoberfest-cache-v1';
+
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
 const currentYear = new Date().getFullYear();
 const photos = {};
 for (let year = startYear; year <= currentYear; year++) {
     photos[year] = `fotos/oktoberfest${year}.jpg`;
+}
+
+// ======== SERVICE WORKER OFFLINE ========
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('ServiceWorker registro falhou: ', error);
+            });
+    });
+}
+
+// ======== FUNÇÕES DE CACHE OFFLINE ========
+async function cacheMedia(url) {
+    try {
+        // Verifica se a URL é uma mídia que queremos cachear
+        if (isMediaUrl(url)) {
+            const cache = await caches.open(CACHE_NAME);
+            const response = await fetch(url);
+            if (response.status === 200) {
+                await cache.put(url, response);
+                console.log('✅ Mídia em cache:', getFileName(url));
+            }
+        }
+    } catch (error) {
+        console.log('❌ Erro ao cachear:', getFileName(url), error);
+    }
+}
+
+function isMediaUrl(url) {
+    return url.includes('/fotos/') || 
+           url.includes('/cartazes/') || 
+           url.includes('/videos/') || 
+           url.includes('.mp3') || 
+           url.includes('clara.mp4');
+}
+
+function getFileName(url) {
+    return url.split('/').pop();
+}
+
+// Intercepta carregamento de mídias para cache automático
+function setupMediaCaching() {
+    // Intercepta Image
+    const originalImage = window.Image;
+    window.Image = function() {
+        const img = new originalImage();
+        const originalSrc = Object.getOwnPropertyDescriptor(originalImage.prototype, 'src');
+        
+        Object.defineProperty(img, 'src', {
+            get: function() { return originalSrc.get.call(this); },
+            set: function(value) {
+                if (value && isMediaUrl(value)) {
+                    cacheMedia(value);
+                }
+                originalSrc.set.call(this, value);
+            }
+        });
+        return img;
+    };
+
+    // Intercepta Audio
+    const originalAudio = window.Audio;
+    window.Audio = function() {
+        const audio = new originalAudio();
+        const originalSrc = Object.getOwnPropertyDescriptor(originalAudio.prototype, 'src');
+        
+        Object.defineProperty(audio, 'src', {
+            get: function() { return originalSrc.get.call(this); },
+            set: function(value) {
+                if (value && isMediaUrl(value)) {
+                    cacheMedia(value);
+                }
+                originalSrc.set.call(this, value);
+            }
+        });
+        return audio;
+    };
+}
+
+// Pré-carrega conteúdo essencial para offline
+async function preloadEssentialContent() {
+    if (!navigator.onLine) return; // Só pré-carrega se online
+    
+    try {
+        console.log('🔄 Pré-carregando conteúdo essencial...');
+        
+        // Pré-carrega foto atual e anterior
+        const yearsToPreload = [currentYear, currentYear - 1, startYear];
+        for (const year of yearsToPreload) {
+            if (photos[year]) {
+                await cacheMedia(photos[year]);
+            }
+        }
+        
+        // Pré-carrega músicas
+        const songs = ["Anneliese.mp3", "Donnawedda.mp3", "Imogdiso.mp3", "Kanguru.mp3"];
+        for (const song of songs) {
+            await cacheMedia(song);
+        }
+        
+        // Pré-carrega cartaz atual
+        await cacheMedia(`cartazes/cartaz${currentYear}.jpg`);
+        
+        // Pré-carrega vídeo
+        await cacheMedia('videos/clara.mp4');
+        
+        console.log('✅ Conteúdo essencial pré-carregado!');
+    } catch (error) {
+        console.log('❌ Erro no pré-carregamento:', error);
+    }
+}
+
+// ======== VERIFICAÇÃO DE STATUS OFFLINE ========
+function setupOfflineStatus() {
+    const updateStatus = () => {
+        const statusElement = document.getElementById('offlineStatus');
+        if (statusElement) {
+            if (navigator.onLine) {
+                statusElement.innerHTML = '🟢 Online';
+                statusElement.style.color = '#00aa00';
+            } else {
+                statusElement.innerHTML = '🔴 Offline';
+                statusElement.style.color = '#ff4444';
+            }
+        }
+    };
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus(); // Status inicial
 }
 
 // ======== INICIALIZAÇÃO ========
@@ -36,8 +173,15 @@ function initializeApp() {
     // Iniciar música
     setupMusic();
     
+    // Configurar cache offline
+    setupMediaCaching();
+    setupOfflineStatus();
+    
     // Pré-carregar mídias
     preloadMedia();
+    
+    // Pré-carregar conteúdo essencial para offline
+    setTimeout(preloadEssentialContent, 2000); // Delay para não travar UI
 }
 
 function initializeYears() {
@@ -70,6 +214,15 @@ function setupUIElements() {
     const cartazInput = getElementSafe("cartazInput");
     if (cartazInput) {
         cartazInput.max = currentYear;
+    }
+    
+    // Adicionar elemento de status offline se não existir
+    if (!document.getElementById('offlineStatus')) {
+        const statusElement = document.createElement('div');
+        statusElement.id = 'offlineStatus';
+        statusElement.style.cssText = 'font-size:10px; margin-top:5px; color:#00aa00;';
+        statusElement.innerHTML = '🟢 Online';
+        document.body.appendChild(statusElement);
     }
 }
 
@@ -130,6 +283,11 @@ function setupMusic() {
         backgroundMusic.volume = 0.5;
         changeMusic();
         backgroundMusic.addEventListener('ended', changeMusic);
+        
+        // Cache da música quando carregada
+        backgroundMusic.addEventListener('canplay', function() {
+            cacheMedia(backgroundMusic.src);
+        });
     }
 }
 
@@ -137,12 +295,18 @@ function preloadMedia() {
     // Pré-carrega fotos Oktoberfest
     Object.values(photos).forEach(src => {
         const img = new Image();
+        img.onload = function() {
+            cacheMedia(src); // Cache quando carrega
+        };
         img.src = src;
     });
 
     // Pré-carrega cartazes
     for (let y = 1984; y <= currentYear; y++) {
         const img = new Image();
+        img.onload = function() {
+            cacheMedia(`cartazes/cartaz${y}.jpg`);
+        };
         img.src = `cartazes/cartaz${y}.jpg`;
     }
 }
@@ -195,6 +359,9 @@ function changeMusic() {
         music.play().catch(error => {
             console.error("Erro ao trocar música:", error);
         });
+        
+        // Cache da nova música
+        cacheMedia(nextSong);
     }
 }
 
@@ -226,6 +393,11 @@ function playVideo() {
     video.onended = function() {
         stopVideo();
     };
+    
+    // Cache do vídeo quando começa a tocar
+    video.addEventListener('canplay', function() {
+        cacheMedia('videos/clara.mp4');
+    });
 }
 
 function stopVideo() {
