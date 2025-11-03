@@ -1,67 +1,81 @@
-// VERSÃO QUE USA TODAS AS MÍDIAS DO MEDIAS.JSON
+// VERSÃO OTIMIZADA - CACHE INTELIGENTE
 const CACHE_VERSION = '2025'; // ← ATUALIZAR TODO ANO
 const CACHE_NAME = `oktoberfest-${CACHE_VERSION}`;
 
+// RECURSOS ESSENCIAIS (sempre em cache)
+const ESSENTIAL_URLS = [
+    './',
+    './index.html', 
+    './app.js',
+    './medias.json',
+    './fotos/oktoberfest.png',
+    './videos/clara.mp4',  // ← VÍDEO PRIORITÁRIO
+    './musicas/Anneliese.mp3'
+];
+
 self.addEventListener('install', event => {
-    console.log('📦 Service Worker instalando com TODAS as mídias...');
+    console.log('📦 Service Worker instalando...');
     
     event.waitUntil(
-        // Busca a lista completa do medias.json
-        fetch('./medias.json')
-            .then(response => {
-                if (!response.ok) throw new Error('medias.json não encontrado');
-                return response.json();
-            })
-            .then(media => {
-                // Array para todas as URLs
-                const allUrls = [
-                    './',
-                    './index.html',
-                    './app.js', 
-                    './sw.js',
-                    './medias.json'
-                ];
-                
-                // Adiciona TODAS as mídias de todas as categorias
-                Object.values(media).forEach(category => {
-                    category.forEach(item => {
-                        // Garante que o path está correto
-                        if (!item.startsWith('./')) {
-                            allUrls.push('./' + item);
-                        } else {
-                            allUrls.push(item);
-                        }
-                    });
-                });
-                
-                console.log('🔄 Cacheando', allUrls.length, 'arquivos...');
-                console.log('📸 Fotos:', media.fotos.length);
-                console.log('🖼️ Cartazes:', media.cartazes.length);
-                console.log('🎵 Músicas:', media.musicas.length);
-                console.log('🎥 Vídeos:', media.videos.length);
-                
-                return caches.open(CACHE_NAME)
-                    .then(cache => {
-                        return cache.addAll(allUrls)
-                            .then(() => {
-                                console.log('✅ TODAS as mídias cacheadas com sucesso!');
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                // Primeiro cacheia os ESSENCIAIS
+                return cache.addAll(ESSENTIAL_URLS)
+                    .then(() => {
+                        console.log('✅ Recursos essenciais cacheados');
+                        
+                        // DEPOIS tenta carregar o medias.json para cache adicional
+                        return fetch('./medias.json')
+                            .then(response => {
+                                if (!response.ok) throw new Error('medias.json não carregado');
+                                return response.json();
                             })
-                            .catch(cacheError => {
-                                console.error('❌ Erro no cache individual:', cacheError);
-                                // Continua mesmo com alguns erros
+                            .then(media => {
+                                console.log('🔄 Carregando mídias adicionais...');
+                                
+                                // Seleciona apenas alguns recursos adicionais
+                                const additionalUrls = [];
+                                
+                                // Apenas fotos mais recentes (últimos 3 anos)
+                                const recentPhotos = media.fotos.slice(-3);
+                                recentPhotos.forEach(photo => {
+                                    additionalUrls.push('./' + photo);
+                                });
+                                
+                                // Apenas cartazes recentes (últimos 3 anos)  
+                                const recentPosters = media.cartazes.slice(-3);
+                                recentPosters.forEach(poster => {
+                                    additionalUrls.push('./' + poster);
+                                });
+                                
+                                // Apenas 2 músicas adicionais
+                                const someSongs = media.musicas.slice(0, 2);
+                                someSongs.forEach(song => {
+                                    additionalUrls.push('./' + song);
+                                });
+                                
+                                console.log('📸 Fotos adicionais:', recentPhotos.length);
+                                console.log('🖼️ Cartazes adicionais:', recentPosters.length);
+                                console.log('🎵 Músicas adicionais:', someSongs.length);
+                                
+                                // Cacheia recursos adicionais (não bloqueante)
+                                return cache.addAll(additionalUrls)
+                                    .then(() => {
+                                        console.log('✅ Recursos adicionais cacheados');
+                                    })
+                                    .catch(err => {
+                                        console.warn('⚠️ Alguns recursos adicionais falharam:', err);
+                                        // Não falha a instalação por isso
+                                    });
+                            })
+                            .catch(error => {
+                                console.warn('⚠️ medias.json não disponível, usando cache básico');
+                                // Continua com cache básico
                             });
                     });
             })
             .catch(error => {
-                console.error('❌ Erro ao carregar medias.json:', error);
-                // Fallback básico se medias.json não estiver disponível
-                return caches.open(CACHE_NAME)
-                    .then(cache => cache.addAll([
-                        './',
-                        './index.html',
-                        './app.js',
-                        './fotos/oktoberfest.png'
-                    ]));
+                console.error('❌ Falha crítica na instalação:', error);
             })
     );
 });
@@ -77,10 +91,10 @@ self.addEventListener('fetch', event => {
                     return cachedResponse;
                 }
                 
-                // Se não está no cache, busca da rede
+                // Busca da rede
                 return fetch(event.request)
                     .then(networkResponse => {
-                        // Cacheia novas respostas para conteúdo futuro
+                        // Cache dinâmico para sucesso
                         if (networkResponse && networkResponse.status === 200) {
                             const responseToCache = networkResponse.clone();
                             caches.open(CACHE_NAME)
@@ -91,9 +105,9 @@ self.addEventListener('fetch', event => {
                         return networkResponse;
                     })
                     .catch(error => {
-                        console.log('🌐 Offline - não foi possível buscar:', event.request.url);
+                        console.log('🌐 Offline - recurso não disponível:', event.request.url);
                         
-                        // Fallbacks específicos
+                        // Fallbacks inteligentes
                         if (event.request.destination === 'image') {
                             return caches.match('./fotos/oktoberfest.png');
                         }
@@ -102,8 +116,11 @@ self.addEventListener('fetch', event => {
                             return caches.match('./musicas/Anneliese.mp3');
                         }
                         
-                        // Para outros tipos, retorna resposta de erro
-                        return new Response('Conteúdo não disponível offline', { 
+                        if (event.request.url.includes('.mp4')) {
+                            return caches.match('./videos/clara.mp4');
+                        }
+                        
+                        return new Response('Recurso offline', {
                             status: 503,
                             headers: { 'Content-Type': 'text/plain' }
                         });
@@ -112,7 +129,6 @@ self.addEventListener('fetch', event => {
     );
 });
 
-// Limpeza de caches antigos
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -127,4 +143,3 @@ self.addEventListener('activate', event => {
         })
     );
 });
-
