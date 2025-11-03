@@ -60,10 +60,10 @@
     
   ],
   "musicas": [
-    "musicas/Anneliese.mp3",
-    "musicas/Donnawedda.mp3",
-    "musicas/HalloBlumenau.mp3",
-    "musicas/Imogdiso.mp3"
+    "musicas/anneliese.mp3",
+    "musicas/donnawedda.mp3",
+    "musicas/imogdiso.mp3",
+    "musicas/kanguru.mp3"
   ],
   "videos": [
     "videos/clara.mp4"
