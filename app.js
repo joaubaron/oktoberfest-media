@@ -257,7 +257,7 @@ function playVideo() {
     const videoSource = video.querySelector('source');
     if (videoSource) {
         videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
-        video.load(); // Recarrega o vídeo com o novo source
+        video.load();
     }
 
     imageContainer.style.visibility = "hidden";
