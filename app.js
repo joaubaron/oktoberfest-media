@@ -1,3 +1,6 @@
+index no monaca pra gerar apk
+midias no github
+meu app.js: (veja clara.mp4 - nao esta mais tocando)
 // ======== VARIÁVEIS GLOBAIS ========
 let loopFoto2007 = null;
 let backgroundMusic = null;
@@ -9,7 +12,6 @@ let currentYearIndex = 0;
 let allYears = [];
 let interval = null;
 let isDrawing = false;
-let isVideoPlaying = false; // NOVA VARIÁVEL PARA CONTROLAR ESTADO DO VÍDEO
 
 // ======== CONFIGURAÇÃO DE CACHE OFFLINE ========
 const CACHE_NAME = 'oktoberfest-cache-v1';
@@ -38,6 +40,7 @@ if ('serviceWorker' in navigator) {
 // ======== FUNÇÕES DE CACHE OFFLINE ========
 async function cacheMedia(url) {
     try {
+        // Verifica se a URL é uma mídia que queremos cachear
         if (isMediaUrl(url)) {
             const cache = await caches.open(CACHE_NAME);
             const response = await fetch(url);
@@ -63,7 +66,9 @@ function getFileName(url) {
     return url.split('/').pop();
 }
 
+// Intercepta carregamento de mídias para cache automático
 function setupMediaCaching() {
+    // Intercepta Image
     const originalImage = window.Image;
     window.Image = function() {
         const img = new originalImage();
@@ -81,6 +86,7 @@ function setupMediaCaching() {
         return img;
     };
 
+    // Intercepta Audio
     const originalAudio = window.Audio;
     window.Audio = function() {
         const audio = new originalAudio();
@@ -99,12 +105,14 @@ function setupMediaCaching() {
     };
 }
 
+// Pré-carrega conteúdo essencial para offline
 async function preloadEssentialContent() {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) return; // Só pré-carrega se online
     
     try {
         console.log('🔄 Pré-carregando conteúdo essencial...');
         
+        // Pré-carrega foto atual e anterior
         const yearsToPreload = [currentYear, currentYear - 1, startYear];
         for (const year of yearsToPreload) {
             if (photos[year]) {
@@ -112,12 +120,16 @@ async function preloadEssentialContent() {
             }
         }
         
+        // Pré-carrega músicas
         const songs = ["Anneliese.mp3", "Donnawedda.mp3", "Imogdiso.mp3", "Kanguru.mp3"];
         for (const song of songs) {
             await cacheMedia(song);
         }
         
+        // Pré-carrega cartaz atual
         await cacheMedia(`cartazes/cartaz${currentYear}.jpg`);
+        
+        // Pré-carrega vídeo
         await cacheMedia('videos/clara.mp4');
         
         console.log('✅ Conteúdo essencial pré-carregado!');
@@ -143,7 +155,7 @@ function setupOfflineStatus() {
 
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
-    updateStatus();
+    updateStatus(); // Status inicial
 }
 
 // ======== INICIALIZAÇÃO ========
@@ -152,14 +164,27 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function initializeApp() {
+    // Configurar anos
     initializeYears();
+    
+    // Configurar elementos da interface
     setupUIElements();
+    
+    // Configurar event listeners
     setupEventListeners();
+    
+    // Iniciar música
     setupMusic();
+    
+    // Configurar cache offline
     setupMediaCaching();
     setupOfflineStatus();
+    
+    // Pré-carregar mídias
     preloadMedia();
-    setTimeout(preloadEssentialContent, 2000);
+    
+    // Pré-carregar conteúdo essencial para offline
+    setTimeout(preloadEssentialContent, 2000); // Delay para não travar UI
 }
 
 function initializeYears() {
@@ -183,6 +208,7 @@ function setupUIElements() {
         modalYear.textContent = currentYear;
     }
 
+    // Configurar inputs
     const yearInput = getElementSafe("yearInput");
     if (yearInput) {
         yearInput.max = currentYear;
@@ -193,6 +219,7 @@ function setupUIElements() {
         cartazInput.max = currentYear;
     }
     
+    // Adicionar elemento de status offline se não existir
     if (!document.getElementById('offlineStatus')) {
         const statusElement = document.createElement('div');
         statusElement.id = 'offlineStatus';
@@ -203,6 +230,7 @@ function setupUIElements() {
 }
 
 function setupEventListeners() {
+    // Botões principais
     const drawButton = getElementSafe("drawButton");
     if (drawButton) drawButton.addEventListener("click", startDraw);
 
@@ -224,6 +252,7 @@ function setupEventListeners() {
     const musicButton = getElementSafe("musicButton");
     if (musicButton) musicButton.addEventListener("click", changeMusic);
 
+    // Inputs com Enter
     const yearInput = getElementSafe("yearInput");
     if (yearInput) {
         yearInput.addEventListener("keypress", (event) => {
@@ -238,12 +267,16 @@ function setupEventListeners() {
         });
     }
 
+    // Modal
     const modalButton = document.querySelector("#alertModal button");
     if (modalButton) {
         modalButton.addEventListener("click", closeModal);
     }
 
+    // Swipe na foto
     adicionarSwipes();
+
+    // Redimensionamento
     window.addEventListener('resize', updateVideoPositionAndSize);
 }
 
@@ -254,6 +287,7 @@ function setupMusic() {
         changeMusic();
         backgroundMusic.addEventListener('ended', changeMusic);
         
+        // Cache da música quando carregada
         backgroundMusic.addEventListener('canplay', function() {
             cacheMedia(backgroundMusic.src);
         });
@@ -261,14 +295,16 @@ function setupMusic() {
 }
 
 function preloadMedia() {
+    // Pré-carrega fotos Oktoberfest
     Object.values(photos).forEach(src => {
         const img = new Image();
         img.onload = function() {
-            cacheMedia(src);
+            cacheMedia(src); // Cache quando carrega
         };
         img.src = src;
     });
 
+    // Pré-carrega cartazes
     for (let y = 1984; y <= currentYear; y++) {
         const img = new Image();
         img.onload = function() {
@@ -327,11 +363,12 @@ function changeMusic() {
             console.error("Erro ao trocar música:", error);
         });
         
+        // Cache da nova música
         cacheMedia(nextSong);
     }
 }
 
-// ======== FUNÇÕES DE VÍDEO - CORRIGIDAS ========
+// ======== FUNÇÕES DE VÍDEO ========
 function playVideo() {
     const videoContainer = getElementSafe("video-container");
     const video = getElementSafe("claraVideo");
@@ -339,81 +376,31 @@ function playVideo() {
 
     if (!videoContainer || !video || !imageContainer) return;
 
-    // Pausar música de fundo
     if (backgroundMusic) {
         backgroundMusic.pause();
     }
 
-    // Parar qualquer animação em andamento
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
         loopFoto2007 = null;
     }
 
-    // Mostrar container do vídeo e esconder imagem
     imageContainer.style.visibility = "hidden";
     videoContainer.style.display = "flex";
     updateVideoPositionAndSize();
 
-    // Configurar o vídeo
-    video.currentTime = 0; // Reiniciar para o início
-    video.controls = true; // Garantir que os controles estejam visíveis
-    
-    // Tentar reproduzir o vídeo
-    const playPromise = video.play();
-    
-    if (playPromise !== undefined) {
-        playPromise.then(() => {
-            // Vídeo começou a tocar com sucesso
-            isVideoPlaying = true;
-            console.log("✅ Vídeo começou a tocar");
-        }).catch(error => {
-            // Autoplay foi bloqueado - mostrar controles para usuário iniciar manualmente
-            console.log("❌ Autoplay bloqueado, mostrando controles:", error);
-            video.controls = true;
-            isVideoPlaying = false;
-            
-            // Mostrar mensagem para o usuário
-            showVideoHelpMessage();
-        });
-    }
+    video.play().catch(error => {
+        console.error("Erro ao reproduzir vídeo:", error);
+    });
 
-    // Evento quando o vídeo termina
     video.onended = function() {
         stopVideo();
     };
     
-    // Cache do vídeo quando carregado
+    // Cache do vídeo quando começa a tocar
     video.addEventListener('canplay', function() {
         cacheMedia('videos/clara.mp4');
     });
-}
-
-function showVideoHelpMessage() {
-    // Criar uma mensagem de ajuda temporária
-    const helpMessage = document.createElement('div');
-    helpMessage.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        z-index: 1002;
-        font-size: 14px;
-        text-align: center;
-    `;
-    helpMessage.innerHTML = 'Clique no botão play para iniciar o vídeo';
-    document.body.appendChild(helpMessage);
-    
-    // Remover a mensagem após 3 segundos
-    setTimeout(() => {
-        if (document.body.contains(helpMessage)) {
-            document.body.removeChild(helpMessage);
-        }
-    }, 3000);
 }
 
 function stopVideo() {
@@ -423,18 +410,13 @@ function stopVideo() {
 
     if (!videoContainer || !video || !imageContainer) return;
 
-    // Parar vídeo
     video.pause();
     video.currentTime = 0;
-    isVideoPlaying = false;
-    
-    // Esconder container do vídeo e mostrar imagem
     videoContainer.style.display = "none";
     imageContainer.style.visibility = "visible";
     videoContainer.style.top = '0';
     videoContainer.style.left = '0';
 
-    // Retomar música de fundo
     if (backgroundMusic) {
         backgroundMusic.play().catch(error => {
             console.error("Erro ao retomar música:", error);
@@ -498,7 +480,208 @@ function removerSwipes() {
     photo.removeEventListener("mousedown", handleMouseDown, false);
 }
 
-// ... (o restante das funções permanece igual - mostrarFoto2007, handleTouchStart, handleTouchEnd, etc.)
+// ======== FOTOS 2007 ========
+function mostrarFoto2007() {
+    stopVideo();
+    const img = limparListenersEClone();
+    if (!img) return;
+
+    const fadeDuration = 500;
+    const intervalo = 3000;
+    const imagens = [
+        { src: "fotos/oktoberfest2007.jpg", alt: "Oktoberfest 2007" },
+        { src: "fotos/oktoberfestkaka1.jpg", alt: "Oktoberfest Kaka 1" },
+        { src: "fotos/oktoberfestkaka2.jpg", alt: "Oktoberfest Kaka 2" }
+        ];
+
+    let indice = 0;
+    let paused = false;
+
+    function iniciarImagemInicial() {
+        const primeiraImagem = imagens[0];
+        img.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
+        img.style.opacity = 0;
+
+        setTimeout(() => {
+            img.src = primeiraImagem.src;
+            img.alt = primeiraImagem.alt;
+            img.style.opacity = 1;
+            indice = 1;
+            iniciarLoop();
+        }, fadeDuration / 2);
+    }
+
+    function iniciarLoop() {
+        if (paused) return;
+
+        function trocarImagem() {
+            if (paused) return;
+
+            const proxima = imagens[indice];
+            img.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
+            img.style.opacity = 0.3;
+
+            setTimeout(() => {
+                img.src = proxima.src;
+                img.alt = proxima.alt;
+                img.style.opacity = 1;
+                indice = (indice + 1) % imagens.length;
+
+                if (!paused) {
+                    loopFoto2007 = setTimeout(trocarImagem, intervalo);
+                }
+            }, fadeDuration / 2);
+        }
+
+        if (!paused) {
+            loopFoto2007 = setTimeout(trocarImagem, intervalo);
+        }
+    }
+
+    const pauseLoop = () => {
+        paused = true;
+        if (loopFoto2007) {
+            clearTimeout(loopFoto2007);
+            loopFoto2007 = null;
+        }
+    };
+
+    const resumeLoop = () => {
+        if (paused) {
+            paused = false;
+            iniciarLoop();
+        }
+    };
+
+    img.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        pauseLoop();
+    });
+    img.addEventListener("mouseup", (e) => {
+        e.preventDefault();
+        resumeLoop();
+    });
+    img.addEventListener("mouseleave", resumeLoop);
+    img.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        pauseLoop();
+    }, { passive: false });
+    img.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        resumeLoop();
+    }, { passive: false });
+    img.addEventListener("touchcancel", (e) => {
+        e.preventDefault();
+        resumeLoop();
+    }, { passive: false });
+
+    iniciarImagemInicial();
+}
+
+// ======== SWIPE E NAVEGAÇÃO ========
+function handleTouchStart(e) {
+    touchStartX = e.changedTouches[0].screenX;
+}
+
+function handleTouchEnd(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+}
+
+function handleMouseDown(e) {
+    touchStartX = e.screenX;
+    document.addEventListener('mouseup', handleMouseUp);
+}
+
+function handleMouseUp(e) {
+    touchEndX = e.screenX;
+    handleSwipe();
+    document.removeEventListener('mouseup', handleMouseUp);
+}
+
+function handleSwipe() {
+    const minSwipeDistance = 50;
+    if (touchEndX < touchStartX - minSwipeDistance) {
+        prevYear();
+    }
+    if (touchEndX > touchStartX + minSwipeDistance) {
+        nextYear();
+    }
+}
+
+function navigateToYear(year) {
+    stopVideo();
+    if (loopFoto2007) {
+        clearTimeout(loopFoto2007);
+        loopFoto2007 = null;
+    }
+
+    const img = getElementSafe("photo");
+    if (!img) return;
+
+    const yearIndex = allYears.indexOf(year.toString());
+    if (yearIndex !== -1) {
+        currentYearIndex = yearIndex;
+    }
+
+    img.style.opacity = 0;
+    setTimeout(() => {
+        img.src = photos[year];
+        img.alt = `Oktoberfest ${year}`;
+        img.style.opacity = 1;
+    }, 200);
+}
+
+function nextYear() {
+    if (currentYearIndex < allYears.length - 1) {
+        currentYearIndex++;
+    } else {
+        currentYearIndex = 0;
+    }
+    navigateToYear(parseInt(allYears[currentYearIndex]));
+}
+
+function prevYear() {
+    if (currentYearIndex > 0) {
+        currentYearIndex--;
+    } else {
+        currentYearIndex = allYears.length - 1;
+    }
+    navigateToYear(parseInt(allYears[currentYearIndex]));
+}
+
+// ======== MODAL ========
+function showModal(context = "oktoberfest") {
+    const modal = getElementSafe("alertModal");
+    if (!modal) return;
+
+    const modalYearSpan = document.getElementById("modalYear");
+    if (modalYearSpan) modalYearSpan.textContent = currentYear;
+
+    const firstLine = modal.querySelector(".modal-content div:first-child");
+    const secondLine = modal.querySelector(".modal-content div:nth-child(2)");
+
+    if (firstLine && secondLine) {
+        if (context === "cartaz") {
+            firstLine.innerText = "Digite um ano entre";
+            secondLine.innerHTML = `<strong>1984 e ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
+        } else if (context === "oktoberfest") {
+            firstLine.innerText = "Digite um ano entre";
+            secondLine.innerHTML = `<strong>2017 e ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
+        }
+    }
+
+    modal.style.display = "flex";
+    setTimeout(() => modal.classList.add("show"), 10);
+}
+
+function closeModal() {
+    const modal = getElementSafe("alertModal");
+    if (!modal) return;
+
+    modal.classList.remove("show");
+    setTimeout(() => (modal.style.display = "none"), 300);
+}
 
 // ======== SORTEIO ========
 function startDraw() {
@@ -767,35 +950,55 @@ function mostrarCartazAno() {
     }, fadeDuration);
 }
 
-// ======== MODAL ========
-function showModal(context = "oktoberfest") {
-    const modal = getElementSafe("alertModal");
-    if (!modal) return;
+meu sw.js:
 
-    const modalYearSpan = document.getElementById("modalYear");
-    if (modalYearSpan) modalYearSpan.textContent = currentYear;
+const CACHE_NAME = 'oktoberfest-cache-v1';
 
-    const firstLine = modal.querySelector(".modal-content div:first-child");
-    const secondLine = modal.querySelector(".modal-content div:nth-child(2)");
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll([
+                '/',
+                '/index.html'
+            ]))
+    );
+});
 
-    if (firstLine && secondLine) {
-        if (context === "cartaz") {
-            firstLine.innerText = "Digite um ano entre";
-            secondLine.innerHTML = `<strong>1984 e ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
-        } else if (context === "oktoberfest") {
-            firstLine.innerText = "Digite um ano entre";
-            secondLine.innerHTML = `<strong>2017 e ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
-        }
-    }
-
-    modal.style.display = "flex";
-    setTimeout(() => modal.classList.add("show"), 10);
-}
-
-function closeModal() {
-    const modal = getElementSafe("alertModal");
-    if (!modal) return;
-
-    modal.classList.remove("show");
-    setTimeout(() => (modal.style.display = "none"), 300);
-}
+self.addEventListener('fetch', event => {
+    // Ignora requisições que não são GET
+    if (event.request.method !== 'GET') return;
+    
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                // Retorna do cache se encontrou
+                if (response) {
+                    return response;
+                }
+                
+                // Se não encontrou no cache, busca na rede
+                return fetch(event.request).then(response => {
+                    // Não cacheamos respostas inválidas
+                    if (!response || response.status !== 200) {
+                        return response;
+                    }
+                    
+                    // Clona a resposta para cachear
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    
+                    return response;
+                });
+            })
+            .catch(() => {
+                // Fallback offline melhorado
+                if (event.request.url.includes('/fotos/')) {
+                    return caches.match('/fotos/oktoberfest.png');
+                }
+                // Pode adicionar mais fallbacks se necessário
+            })
+    );
+});
