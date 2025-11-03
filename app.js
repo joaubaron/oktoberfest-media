@@ -1,3 +1,6 @@
+// ======== CONFIGURAÇÃO DE CAMINHOS ========
+const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
+
 // ======== VARIÁVEIS GLOBAIS ========
 let loopFoto2007 = null;
 let backgroundMusic = null;
@@ -12,10 +15,10 @@ let isDrawing = false;
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
-const currentYear = new Date().getFullYear(); // ← JÁ É AUTOMÁTICO!
+const currentYear = new Date().getFullYear();
 const photos = {};
 for (let year = startYear; year <= currentYear; year++) {
-    photos[year] = `fotos/oktoberfest${year}.jpg`;
+    photos[year] = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
 }
 
 // ======== INICIALIZAÇÃO ========
@@ -24,13 +27,10 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    // ✅ CORREÇÃO: Registrar Service Worker apenas se NÃO for localhost
     if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost')) {
         try {
-            // ✅ CORREÇÃO: Usar caminho relativo './sw.js' para GitHub Pages
             const registration = await navigator.serviceWorker.register('./sw.js');
             
-            // VERIFICAR ATUALIZAÇÕES
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 console.log('🔄 Nova versão do Service Worker encontrada!');
@@ -38,7 +38,6 @@ async function initializeApp() {
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'activated') {
                         console.log('🎉 Nova versão do Service Worker ativada!');
-                        // Opcional: mostrar alerta para usuário
                         showUpdateNotification();
                     }
                 });
@@ -53,72 +52,37 @@ async function initializeApp() {
         console.log('ℹ️ Service Worker não registrado (localhost ou não suportado)');
     }
     
-    // Configurar anos com detecção automática
     await initializeYearsWithDetection();
-    
-    // Configurar elementos da interface
     setupUIElements();
-    
-    // Configurar event listeners
     setupEventListeners();
-    
-    // Iniciar música
     setupMusic();
-    
-    // Pré-carregar mídias
     preloadMedia();
 }
 
-// Função opcional para notificar atualizações
 function showUpdateNotification() {
-    // Opcional: mostrar um toast ou mensagem para o usuário
     console.log('📱 Nova versão disponível! Recarregue a página.');
 }
 
 // ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
 async function checkYearExists(year) {
     return new Promise((resolve) => {
-        // Tenta carregar do cache primeiro
-        if ('caches' in window) {
-            caches.match(`/fotos/oktoberfest${year}.jpg`)
-                .then(response => {
-                    if (response) {
-                        resolve(true);
-                    } else {
-                        // Se não está no cache, verifica online
-                        const img = new Image();
-                        img.onload = () => resolve(true);
-                        img.onerror = () => resolve(false);
-                        img.src = `fotos/oktoberfest${year}.jpg`;
-                    }
-                })
-                .catch(() => {
-                    // Fallback para verificação online
-                    const img = new Image();
-                    img.onload = () => resolve(true);
-                    img.onerror = () => resolve(false);
-                    img.src = `fotos/oktoberfest${year}.jpg`;
-                });
-        } else {
-            // Fallback para verificação online
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = `fotos/oktoberfest${year}.jpg`;
-        }
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
+        setTimeout(() => resolve(false), 3000);
     });
 }
 
 async function initializeYearsWithDetection() {
     allYears = [];
     
-    // Verifica anos de fotos
     for (let year = startYear; year <= currentYear; year++) {
         const exists = await checkYearExists(year);
         if (exists) {
             allYears.push(year.toString());
             if (!photos[year]) {
-                photos[year] = `fotos/oktoberfest${year}.jpg`;
+                photos[year] = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
             }
         }
     }
@@ -130,11 +94,9 @@ async function initializeYearsWithDetection() {
 }
 
 function initializeYears() {
-    // Substitua todo o conteúdo por:
     allYears = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
     currentYearIndex = allYears.indexOf(currentYear.toString());
     
-    // Se o ano atual não existir, usa o último disponível
     if (currentYearIndex === -1 && allYears.length > 0) {
         currentYearIndex = allYears.length - 1;
     }
@@ -142,34 +104,22 @@ function initializeYears() {
 
 function setupUIElements() {
     const anoVigente = getElementSafe("anoVigente");
-    if (anoVigente) {
-        anoVigente.textContent = currentYear;
-    }
+    if (anoVigente) anoVigente.textContent = currentYear;
 
     const textYear = getElementSafe("textYear");
-    if (textYear) {
-        textYear.textContent = currentYear;
-    }
+    if (textYear) textYear.textContent = currentYear;
 
     const modalYear = getElementSafe("modalYear");
-    if (modalYear) {
-        modalYear.textContent = currentYear;
-    }
+    if (modalYear) modalYear.textContent = currentYear;
 
-    // Configurar inputs
     const yearInput = getElementSafe("yearInput");
-    if (yearInput) {
-        yearInput.max = currentYear;
-    }
+    if (yearInput) yearInput.max = currentYear;
 
     const cartazInput = getElementSafe("cartazInput");
-    if (cartazInput) {
-        cartazInput.max = currentYear;
-    }
+    if (cartazInput) cartazInput.max = currentYear;
 }
 
 function setupEventListeners() {
-    // Botões principais
     const drawButton = getElementSafe("drawButton");
     if (drawButton) drawButton.addEventListener("click", startDraw);
 
@@ -191,7 +141,6 @@ function setupEventListeners() {
     const musicButton = getElementSafe("musicButton");
     if (musicButton) musicButton.addEventListener("click", changeMusic);
 
-    // Inputs com Enter
     const yearInput = getElementSafe("yearInput");
     if (yearInput) {
         yearInput.addEventListener("keypress", (event) => {
@@ -206,16 +155,10 @@ function setupEventListeners() {
         });
     }
 
-    // Modal
     const modalButton = document.querySelector("#alertModal button");
-    if (modalButton) {
-        modalButton.addEventListener("click", closeModal);
-    }
+    if (modalButton) modalButton.addEventListener("click", closeModal);
 
-    // Swipe na foto
     adicionarSwipes();
-
-    // Redimensionamento
     window.addEventListener('resize', updateVideoPositionAndSize);
 }
 
@@ -229,16 +172,16 @@ function setupMusic() {
 }
 
 function preloadMedia() {
-    // Pré-carrega fotos Oktoberfest
+    // Pré-carrega fotos do GitHub
     Object.values(photos).forEach(src => {
         const img = new Image();
         img.src = src;
     });
 
-    // Pré-carrega cartazes
+    // Pré-carrega cartazes do GitHub
     for (let y = 1984; y <= currentYear; y++) {
         const img = new Image();
-        img.src = `cartazes/cartaz${y}.jpg`;
+        img.src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
     }
 }
 
@@ -248,10 +191,10 @@ function changeMusic() {
     if (!music) return;
 
     const songs = [
-        "Anneliese.mp3",
-        "Donnawedda.mp3", 
-        "Imogdiso.mp3",
-        "Kanguru.mp3"
+        `${GITHUB_BASE}/musicas/Anneliese.mp3`,
+        `${GITHUB_BASE}/musicas/Donnawedda.mp3`, 
+        `${GITHUB_BASE}/musicas/Imogdiso.mp3`,
+        `${GITHUB_BASE}/musicas/Kanguru.mp3`
     ];
 
     if (availableSongs.length === 0) {
@@ -259,7 +202,7 @@ function changeMusic() {
     }
 
     const currentSong = music.src.split('/').pop();
-    const currentIndex = availableSongs.indexOf(currentSong);
+    const currentIndex = availableSongs.findIndex(song => song.includes(currentSong));
     if (currentIndex > -1) {
         availableSongs.splice(currentIndex, 1);
     }
@@ -271,7 +214,7 @@ function changeMusic() {
     if (availableSongs.length === 0) {
         availableSongs = [...songs];
         musicHistory = [];
-        const newCurrentIndex = availableSongs.indexOf(currentSong);
+        const newCurrentIndex = availableSongs.findIndex(song => song.includes(currentSong));
         if (newCurrentIndex > -1) {
             availableSongs.splice(newCurrentIndex, 1);
         }
@@ -282,10 +225,6 @@ function changeMusic() {
         const nextSong = availableSongs[randomIndex];
         availableSongs.splice(randomIndex, 1);
         
-        if (!musicHistory.includes(nextSong)) {
-            musicHistory.push(nextSong);
-        }
-
         music.src = nextSong;
         music.play().catch(error => {
             console.error("Erro ao trocar música:", error);
@@ -301,9 +240,7 @@ function playVideo() {
 
     if (!videoContainer || !video || !imageContainer) return;
 
-    if (backgroundMusic) {
-        backgroundMusic.pause();
-    }
+    if (backgroundMusic) backgroundMusic.pause();
 
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
@@ -409,10 +346,10 @@ function mostrarFoto2007() {
     const fadeDuration = 500;
     const intervalo = 3000;
     const imagens = [
-        { src: "fotos/oktoberfest2007.jpg", alt: "Oktoberfest 2007" },
-        { src: "fotos/oktoberfestkaka1.jpg", alt: "Oktoberfest Kaka 1" },
-        { src: "fotos/oktoberfestkaka2.jpg", alt: "Oktoberfest Kaka 2" }
-        ];
+        { src: `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`, alt: "Oktoberfest 2007" },
+        { src: `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, alt: "Oktoberfest Kaka 1" },
+        { src: `${GITHUB_BASE}/fotos/oktoberfestkaka2.jpg`, alt: "Oktoberfest Kaka 2" }
+    ];
 
     let indice = 0;
     let paused = false;
@@ -549,10 +486,9 @@ function navigateToYear(year) {
         img.src = photos[year];
         img.alt = `Oktoberfest ${year}`;
         
-        // ADICIONADO: tratamento de erro offline
         img.onerror = () => {
             console.warn(`Imagem de ${year} não carregada, usando fallback`);
-            img.src = "fotos/oktoberfest.png";
+            img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
         };
         
         img.style.opacity = 1;
@@ -663,10 +599,9 @@ function startDraw() {
                     img.src = photos[year];
                     img.alt = `Oktoberfest ${year} - Sorteado!`;
                     
-                    // ADICIONADO: tratamento de erro offline
                     img.onerror = () => {
                         console.warn(`Imagem de ${year} não carregada, usando fallback`);
-                        img.src = "fotos/oktoberfest.png";
+                        img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
                         img.alt = "Foto da Oktoberfest - Fallback";
                     };
 
@@ -779,7 +714,7 @@ function resetApp() {
     if (currentImg) {
         currentImg.style.opacity = 0;
         setTimeout(() => {
-            currentImg.src = "fotos/oktoberfest.png";
+            currentImg.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
             currentImg.alt = "Foto da Oktoberfest";
             currentImg.style.opacity = 1;
         }, 100);
@@ -819,13 +754,11 @@ function mostrarCartazes() {
     const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
     let index = 0;
 
-    // CORREÇÃO: Verificar se o cartaz existe antes de carregar
     function carregarCartazComFallback(ano) {
-        const cartazUrl = `cartazes/cartaz${ano}.jpg`;
+        const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
         const testImage = new Image();
         
         testImage.onload = function() {
-            // Cartaz existe, carrega normalmente
             img.style.opacity = 0;
             setTimeout(() => {
                 img.src = cartazUrl;
@@ -836,11 +769,10 @@ function mostrarCartazes() {
         };
         
         testImage.onerror = function() {
-            // Cartaz não existe, usa fallback
             console.warn(`Cartaz ${ano} não encontrado, usando fallback`);
             img.style.opacity = 0;
             setTimeout(() => {
-                img.src = "fotos/oktoberfest.png";
+                img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
                 img.alt = `Cartaz ${ano} - Não disponível`;
                 img.style.opacity = 1;
                 cartazAtual = ano;
@@ -850,7 +782,6 @@ function mostrarCartazes() {
         testImage.src = cartazUrl;
     }
 
-    // Carrega o primeiro cartaz
     carregarCartazComFallback(cartazAtual);
 
     let startX = 0;
@@ -891,12 +822,10 @@ function mostrarCartazAno() {
         return;
     }
 
-    // CORREÇÃO: Verificar se o cartaz existe
-    const cartazUrl = `cartazes/cartaz${year}.jpg`;
+    const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
     const testImage = new Image();
     
     testImage.onload = function() {
-        // Cartaz existe, carrega normalmente
         img.style.opacity = 0;
         setTimeout(() => {
             img.src = cartazUrl;
@@ -907,32 +836,16 @@ function mostrarCartazAno() {
     };
     
     testImage.onerror = function() {
-        // Cartaz não existe, mostra mensagem
         console.warn(`Cartaz ${year} não encontrado`);
         img.style.opacity = 0;
         setTimeout(() => {
-            img.src = "fotos/oktoberfest.png";
+            img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
             img.alt = `Cartaz ${year} - Não disponível`;
             img.style.opacity = 1;
             input.value = "";
-            
-            // Mostra mensagem de erro
             showModal("cartaz_nao_encontrado");
         }, 400);
     };
     
     testImage.src = cartazUrl;
-}
-
-// Adicionar esta função auxiliar
-async function verificarCartazExiste(ano) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = `cartazes/cartaz${ano}.jpg`;
-        
-        // Timeout para não travar
-        setTimeout(() => resolve(false), 2000);
-    });
 }
