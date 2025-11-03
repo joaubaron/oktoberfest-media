@@ -153,10 +153,10 @@ function changeMusic() {
     if (!music) return;
 
     const songs = [
-        "Anneliese.mp3",
-        "Donnawedda.mp3", 
-        "Imogdiso.mp3",
-        "Kanguru.mp3"
+        "anneliese.mp3",
+        "donnawedda.mp3", 
+        "imogdiso.mp3",
+        "kanguru.mp3"
     ];
 
     if (availableSongs.length === 0) {
