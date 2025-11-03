@@ -11,6 +11,9 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+    // Ignora requisições que não são GET
+    if (event.request.method !== 'GET') return;
+    
     event.respondWith(
         caches.match(event.request)
             .then(response => {
@@ -22,7 +25,7 @@ self.addEventListener('fetch', event => {
                 // Se não encontrou no cache, busca na rede
                 return fetch(event.request).then(response => {
                     // Não cacheamos respostas inválidas
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                    if (!response || response.status !== 200) {
                         return response;
                     }
                     
@@ -37,10 +40,11 @@ self.addEventListener('fetch', event => {
                 });
             })
             .catch(() => {
-                // Fallback offline
-                if (event.request.destination === 'image') {
+                // Fallback offline melhorado
+                if (event.request.url.includes('/fotos/')) {
                     return caches.match('/fotos/oktoberfest.png');
                 }
+                // Pode adicionar mais fallbacks se necessário
             })
     );
 });
