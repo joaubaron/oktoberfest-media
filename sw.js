@@ -1,4 +1,3 @@
-﻿// NO sw.js - MODIFICAR o evento fetch:
 self.addEventListener('fetch', event => {
     // Ignora requisições não GET
     if (event.request.method !== 'GET') return;
@@ -37,4 +36,5 @@ self.addEventListener('fetch', event => {
                     });
             })
     );
+
 });
