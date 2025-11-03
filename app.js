@@ -27,11 +27,12 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    // ✅ CORRIGIDO: Registra Service Worker exceto em localhost desktop
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1';
+    // ✅ CORRIGIDO: Detecta apenas localhost real (não Monaca/Cordova)
+    const isRealLocalhost = (window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1') &&
+                            !window.cordova; // Permite Cordova/Monaca
     
-    if ('serviceWorker' in navigator && !isLocalhost) {
+    if ('serviceWorker' in navigator && !isRealLocalhost) {
         try {
             const registration = await navigator.serviceWorker.register('./sw.js');
             
@@ -52,8 +53,8 @@ async function initializeApp() {
         } catch (error) {
             console.log('❌ Erro no Service Worker:', error);
         }
-    } else if (isLocalhost) {
-        console.log('ℹ️ Service Worker não registrado (localhost)');
+    } else if (isRealLocalhost) {
+        console.log('ℹ️ Service Worker não registrado (localhost desktop)');
     } else {
         console.log('ℹ️ Service Worker não suportado neste navegador');
     }
