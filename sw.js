@@ -1,12 +1,12 @@
-// VERSÃO OTIMIZADA - CACHE INTELIGENTE
+// VERSÃO CORRIGIDA - BATE COM SUA ESTRUTURA REAL
 const CACHE_VERSION = '2025'; // ← ATUALIZAR TODO ANO
 const CACHE_NAME = `oktoberfest-${CACHE_VERSION}`;
 
-// RECURSOS ESSENCIAIS (sempre em cache)
+// RECURSOS ESSENCIAIS - CAMINHOS CORRETOS
 const ESSENTIAL_URLS = [
-    './',
     './index.html', 
     './app.js',
+    './sw.js',
     './medias.json',
     './fotos/oktoberfest.png',
     './videos/clara.mp4',  // ← VÍDEO PRIORITÁRIO
@@ -31,42 +31,51 @@ self.addEventListener('install', event => {
                                 return response.json();
                             })
                             .then(media => {
-                                console.log('🔄 Carregando mídias adicionais...');
+                                console.log('🔄 Carregando mídias adicionais do medias.json...');
                                 
                                 // Seleciona apenas alguns recursos adicionais
                                 const additionalUrls = [];
                                 
                                 // Apenas fotos mais recentes (últimos 3 anos)
-                                const recentPhotos = media.fotos.slice(-3);
-                                recentPhotos.forEach(photo => {
-                                    additionalUrls.push('./' + photo);
-                                });
+                                if (media.fotos && media.fotos.length > 0) {
+                                    const recentPhotos = media.fotos.slice(-3);
+                                    recentPhotos.forEach(photo => {
+                                        additionalUrls.push('./' + photo);
+                                    });
+                                    console.log('📸 Fotos adicionais:', recentPhotos.length);
+                                }
                                 
                                 // Apenas cartazes recentes (últimos 3 anos)  
-                                const recentPosters = media.cartazes.slice(-3);
-                                recentPosters.forEach(poster => {
-                                    additionalUrls.push('./' + poster);
-                                });
+                                if (media.cartazes && media.cartazes.length > 0) {
+                                    const recentPosters = media.cartazes.slice(-3);
+                                    recentPosters.forEach(poster => {
+                                        additionalUrls.push('./' + poster);
+                                    });
+                                    console.log('🖼️ Cartazes adicionais:', recentPosters.length);
+                                }
                                 
                                 // Apenas 2 músicas adicionais
-                                const someSongs = media.musicas.slice(0, 2);
-                                someSongs.forEach(song => {
-                                    additionalUrls.push('./' + song);
-                                });
+                                if (media.musicas && media.musicas.length > 0) {
+                                    const someSongs = media.musicas.slice(0, 2);
+                                    someSongs.forEach(song => {
+                                        additionalUrls.push('./' + song);
+                                    });
+                                    console.log('🎵 Músicas adicionais:', someSongs.length);
+                                }
                                 
-                                console.log('📸 Fotos adicionais:', recentPhotos.length);
-                                console.log('🖼️ Cartazes adicionais:', recentPosters.length);
-                                console.log('🎵 Músicas adicionais:', someSongs.length);
+                                console.log('📁 Total de URLs adicionais:', additionalUrls.length);
                                 
                                 // Cacheia recursos adicionais (não bloqueante)
-                                return cache.addAll(additionalUrls)
-                                    .then(() => {
-                                        console.log('✅ Recursos adicionais cacheados');
-                                    })
-                                    .catch(err => {
-                                        console.warn('⚠️ Alguns recursos adicionais falharam:', err);
-                                        // Não falha a instalação por isso
-                                    });
+                                if (additionalUrls.length > 0) {
+                                    return cache.addAll(additionalUrls)
+                                        .then(() => {
+                                            console.log('✅ Recursos adicionais cacheados');
+                                        })
+                                        .catch(err => {
+                                            console.warn('⚠️ Alguns recursos adicionais falharam:', err);
+                                            // Não falha a instalação por isso
+                                        });
+                                }
                             })
                             .catch(error => {
                                 console.warn('⚠️ medias.json não disponível, usando cache básico');
