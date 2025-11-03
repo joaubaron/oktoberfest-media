@@ -247,6 +247,13 @@ function playVideo() {
         loopFoto2007 = null;
     }
 
+    // Define o source do vídeo do GitHub
+    const videoSource = video.querySelector('source');
+    if (videoSource) {
+        videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
+        video.load(); // Recarrega o vídeo com o novo source
+    }
+
     imageContainer.style.visibility = "hidden";
     videoContainer.style.display = "flex";
     updateVideoPositionAndSize();
@@ -362,6 +369,12 @@ function mostrarFoto2007() {
         setTimeout(() => {
             img.src = primeiraImagem.src;
             img.alt = primeiraImagem.alt;
+            
+            img.onerror = () => {
+                console.warn(`Foto 2007 não encontrada`);
+                img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+            };
+            
             img.style.opacity = 1;
             indice = 1;
             iniciarLoop();
@@ -381,6 +394,12 @@ function mostrarFoto2007() {
             setTimeout(() => {
                 img.src = proxima.src;
                 img.alt = proxima.alt;
+                
+                img.onerror = () => {
+                    console.warn(`Foto não encontrada: ${proxima.alt}`);
+                    img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+                };
+                
                 img.style.opacity = 1;
                 indice = (indice + 1) % imagens.length;
 
