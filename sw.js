@@ -1,16 +1,21 @@
-// VERSÃO CORRIGIDA - BATE COM SUA ESTRUTURA REAL
-const CACHE_VERSION = '2025'; // ← ATUALIZAR TODO ANO
+// VERSÃO CORRIGIDA - CACHE DE CARTAZES
+const CACHE_VERSION = '2025';
 const CACHE_NAME = `oktoberfest-${CACHE_VERSION}`;
 
-// RECURSOS ESSENCIAIS - CAMINHOS CORRETOS
+// RECURSOS ESSENCIAIS - INCLUINDO ALGUNS CARTAZES
 const ESSENTIAL_URLS = [
+    './',
     './index.html', 
     './app.js',
     './sw.js',
     './medias.json',
     './fotos/oktoberfest.png',
-    './videos/clara.mp4',  // ← VÍDEO PRIORITÁRIO
-    './musicas/Anneliese.mp3'
+    './videos/clara.mp4',
+    './musicas/Anneliese.mp3',
+    // Adiciona alguns cartazes essenciais
+    './cartazes/cartaz2024.jpg',
+    './cartazes/cartaz2023.jpg',
+    './cartazes/cartaz2022.jpg'
 ];
 
 self.addEventListener('install', event => {
@@ -19,72 +24,14 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                // Primeiro cacheia os ESSENCIAIS
                 return cache.addAll(ESSENTIAL_URLS)
                     .then(() => {
                         console.log('✅ Recursos essenciais cacheados');
-                        
-                        // DEPOIS tenta carregar o medias.json para cache adicional
-                        return fetch('./medias.json')
-                            .then(response => {
-                                if (!response.ok) throw new Error('medias.json não carregado');
-                                return response.json();
-                            })
-                            .then(media => {
-                                console.log('🔄 Carregando mídias adicionais do medias.json...');
-                                
-                                // Seleciona apenas alguns recursos adicionais
-                                const additionalUrls = [];
-                                
-                                // Apenas fotos mais recentes (últimos 3 anos)
-                                if (media.fotos && media.fotos.length > 0) {
-                                    const recentPhotos = media.fotos.slice(-3);
-                                    recentPhotos.forEach(photo => {
-                                        additionalUrls.push('./' + photo);
-                                    });
-                                    console.log('📸 Fotos adicionais:', recentPhotos.length);
-                                }
-                                
-                                // Apenas cartazes recentes (últimos 3 anos)  
-                                if (media.cartazes && media.cartazes.length > 0) {
-                                    const recentPosters = media.cartazes.slice(-3);
-                                    recentPosters.forEach(poster => {
-                                        additionalUrls.push('./' + poster);
-                                    });
-                                    console.log('🖼️ Cartazes adicionais:', recentPosters.length);
-                                }
-                                
-                                // Apenas 2 músicas adicionais
-                                if (media.musicas && media.musicas.length > 0) {
-                                    const someSongs = media.musicas.slice(0, 2);
-                                    someSongs.forEach(song => {
-                                        additionalUrls.push('./' + song);
-                                    });
-                                    console.log('🎵 Músicas adicionais:', someSongs.length);
-                                }
-                                
-                                console.log('📁 Total de URLs adicionais:', additionalUrls.length);
-                                
-                                // Cacheia recursos adicionais (não bloqueante)
-                                if (additionalUrls.length > 0) {
-                                    return cache.addAll(additionalUrls)
-                                        .then(() => {
-                                            console.log('✅ Recursos adicionais cacheados');
-                                        })
-                                        .catch(err => {
-                                            console.warn('⚠️ Alguns recursos adicionais falharam:', err);
-                                            // Não falha a instalação por isso
-                                        });
-                                }
-                            })
-                            .catch(error => {
-                                console.warn('⚠️ medias.json não disponível, usando cache básico');
-                                // Continua com cache básico
-                            });
+                        return self.skipWaiting();
                     });
             })
             .catch(error => {
-                console.error('❌ Falha crítica na instalação:', error);
+                console.error('❌ Falha na instalação:', error);
             })
     );
 });
@@ -92,18 +39,19 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
     
+    // ESTRATÉGIA: CACHE FIRST COM FALLBACK PARA REDE
     event.respondWith(
         caches.match(event.request)
             .then(cachedResponse => {
-                // Retorna do cache se existir
+                // Se está no cache, retorna do cache
                 if (cachedResponse) {
                     return cachedResponse;
                 }
                 
-                // Busca da rede
+                // Se não está no cache, busca da rede
                 return fetch(event.request)
                     .then(networkResponse => {
-                        // Cache dinâmico para sucesso
+                        // Se a requisição foi bem sucedida, adiciona ao cache
                         if (networkResponse && networkResponse.status === 200) {
                             const responseToCache = networkResponse.clone();
                             caches.open(CACHE_NAME)
@@ -116,17 +64,20 @@ self.addEventListener('fetch', event => {
                     .catch(error => {
                         console.log('🌐 Offline - recurso não disponível:', event.request.url);
                         
-                        // Fallbacks inteligentes
+                        // FALLBACKS ESPECÍFICOS PARA CARTAZES
+                        if (event.request.url.includes('cartaz')) {
+                            return caches.match('./cartazes/cartaz2024.jpg')
+                                .then(fallback => {
+                                    if (fallback) return fallback;
+                                    return new Response('Cartaz não disponível offline', {
+                                        status: 503,
+                                        headers: { 'Content-Type': 'text/plain' }
+                                    });
+                                });
+                        }
+                        
                         if (event.request.destination === 'image') {
                             return caches.match('./fotos/oktoberfest.png');
-                        }
-                        
-                        if (event.request.url.includes('.mp3')) {
-                            return caches.match('./musicas/Anneliese.mp3');
-                        }
-                        
-                        if (event.request.url.includes('.mp4')) {
-                            return caches.match('./videos/clara.mp4');
                         }
                         
                         return new Response('Recurso offline', {
@@ -149,6 +100,6 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
