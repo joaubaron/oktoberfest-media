@@ -24,13 +24,26 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    // Registrar Service Worker para cache offline
     if ('serviceWorker' in navigator) {
         try {
-            await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registrado com sucesso');
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            
+            // VERIFICAR ATUALIZAÇÕES
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Nova versão do Service Worker encontrada!');
+                
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated') {
+                        console.log('🎉 Conteúdo de 2026 disponível!');
+                        // Opcional: mostrar alerta para usuário
+                        showUpdateNotification();
+                    }
+                });
+            });
+            
         } catch (error) {
-            console.log('Falha ao registrar Service Worker:', error);
+            console.log('❌ Erro no Service Worker:', error);
         }
     }
     
@@ -48,6 +61,11 @@ async function initializeApp() {
     
     // Pré-carregar mídias
     preloadMedia();
+}
+
+function showUpdateNotification() {
+    // Mostrar um alerta bonito que tem novo conteúdo
+    console.log('📢 Novo conteúdo de 2026 disponível!');
 }
 
 // ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
