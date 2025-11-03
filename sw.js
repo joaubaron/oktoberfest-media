@@ -1,40 +1,39 @@
-self.addEventListener('fetch', event => {
-    // Ignora requisições não GET
-    if (event.request.method !== 'GET') return;
+const CACHE_VERSION = '2026'; // ATUALIZAR  TODO ANO
+const CACHE_NAME = `oktoberfest-${CACHE_VERSION}`;
+
+self.addEventListener('install', event => {
+    console.log(`📦 Instalando cache ${CACHE_VERSION}...`);
     
-    event.respondWith(
-        caches.match(event.request)
-            .then(cachedResponse => {
-                // Retorna do cache se existir
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
+    event.waitUntil(
+        fetch('./medias.json')
+            .then(response => response.json())
+            .then(media => {
+                const allUrls = [
+                    './', './index.html', './app.js', './sw.js', './medias.json'
+                ];
                 
-                // Se não está no cache, busca da rede e cache
-                return fetch(event.request)
-                    .then(networkResponse => {
-                        // Só cachea se a resposta for válida
-                        if (networkResponse && networkResponse.status === 200) {
-                            const responseToCache = networkResponse.clone();
-                            caches.open(CACHE_NAME)
-                                .then(cache => {
-                                    cache.put(event.request, responseToCache);
-                                });
-                        }
-                        return networkResponse;
-                    })
-                    .catch(() => {
-                        // Fallback para imagens
-                        if (event.request.destination === 'image') {
-                            return caches.match('/fotos/oktoberfest.png');
-                        }
-                        // Para outros tipos, retorna resposta vazia
-                        return new Response('Offline', { 
-                            status: 503, 
-                            statusText: 'Service Unavailable' 
-                        });
-                    });
+                Object.values(media).forEach(category => {
+                    category.forEach(item => allUrls.push('./' + item));
+                });
+                
+                return caches.open(CACHE_NAME)
+                    .then(cache => cache.addAll(allUrls));
             })
     );
+});
 
+// Limpeza automática de versões antigas
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME && cacheName.startsWith('oktoberfest-')) {
+                        console.log('🗑️ Removendo cache antigo:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
 });
