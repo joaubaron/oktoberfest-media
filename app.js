@@ -24,6 +24,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
+    // Registrar Service Worker para cache offline
+    if ('serviceWorker' in navigator) {
+        try {
+            await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registrado com sucesso');
+        } catch (error) {
+            console.log('Falha ao registrar Service Worker:', error);
+        }
+    }
+    
     // Configurar anos com detecção automática
     await initializeYearsWithDetection();
     
@@ -43,10 +53,34 @@ async function initializeApp() {
 // ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
 async function checkYearExists(year) {
     return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = `fotos/oktoberfest${year}.jpg`;
+        // Tenta carregar do cache primeiro
+        if ('caches' in window) {
+            caches.match(`/fotos/oktoberfest${year}.jpg`)
+                .then(response => {
+                    if (response) {
+                        resolve(true);
+                    } else {
+                        // Se não está no cache, verifica online
+                        const img = new Image();
+                        img.onload = () => resolve(true);
+                        img.onerror = () => resolve(false);
+                        img.src = `fotos/oktoberfest${year}.jpg`;
+                    }
+                })
+                .catch(() => {
+                    // Fallback para verificação online
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = `fotos/oktoberfest${year}.jpg`;
+                });
+        } else {
+            // Fallback para verificação online
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = `fotos/oktoberfest${year}.jpg`;
+        }
     });
 }
 
@@ -489,6 +523,13 @@ function navigateToYear(year) {
     setTimeout(() => {
         img.src = photos[year];
         img.alt = `Oktoberfest ${year}`;
+        
+        // ADICIONADO: tratamento de erro offline
+        img.onerror = () => {
+            console.warn(`Imagem de ${year} não carregada, usando fallback`);
+            img.src = "fotos/oktoberfest.png";
+        };
+        
         img.style.opacity = 1;
     }, 200);
 }
@@ -593,10 +634,15 @@ function startDraw() {
                 setTimeout(() => {
                     img.src = photos[year];
                     img.alt = `Oktoberfest ${year} - Sorteado!`;
-                    img.onerror = () => { img.src = "fotos/oktoberfest.png"; };
+                    
+                    // ADICIONADO: tratamento de erro offline
+                    img.onerror = () => {
+                        console.warn(`Imagem de ${year} não carregada, usando fallback`);
+                        img.src = "fotos/oktoberfest.png";
+                        img.alt = "Foto da Oktoberfest - Fallback";
+                    };
 
                     img.style.opacity = 1;
-                    img.onerror = null;
                     button.disabled = false;
                     isDrawing = false;
                     document.getElementById("yearInput").value = "";
@@ -806,6 +852,14 @@ function mostrarCartazAno() {
     setTimeout(() => {
         img.src = `cartazes/cartaz${year}.jpg`;
         img.alt = `Cartaz ${year}`;
+        
+        // ADICIONADO: tratamento de erro offline
+        img.onerror = () => {
+            console.warn(`Cartaz de ${year} não carregado`);
+            img.src = "fotos/oktoberfest.png";
+            img.alt = "Cartaz não disponível";
+        };
+        
         img.style.opacity = 1;
         input.value = "";
     }, fadeDuration);
