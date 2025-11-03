@@ -923,3 +923,16 @@ function mostrarCartazAno() {
     
     testImage.src = cartazUrl;
 }
+
+// Adicionar esta função auxiliar
+async function verificarCartazExiste(ano) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = `cartazes/cartaz${ano}.jpg`;
+        
+        // Timeout para não travar
+        setTimeout(() => resolve(false), 2000);
+    });
+}
