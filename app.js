@@ -595,6 +595,9 @@ function showModal(context = "oktoberfest") {
         } else if (context === "oktoberfest") {
             firstLine.innerText = "Digite um ano entre";
             secondLine.innerHTML = `<strong>2017 e ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
+        } else if (context === "cartaz_nao_encontrado") {
+            firstLine.innerText = "Cartaz não encontrado";
+            secondLine.innerHTML = `<strong>Tente outro ano! <span style="font-size: 20px;">📋</span></strong>`;
         }
     }
 
@@ -816,12 +819,39 @@ function mostrarCartazes() {
     const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
     let index = 0;
 
-    img.style.opacity = 0;
-    setTimeout(() => {
-        img.src = `cartazes/cartaz${cartazAtual}.jpg`;
-        img.alt = `Cartaz ${cartazAtual}`;
-        img.style.opacity = 1;
-    }, fadeDuration);
+    // CORREÇÃO: Verificar se o cartaz existe antes de carregar
+    function carregarCartazComFallback(ano) {
+        const cartazUrl = `cartazes/cartaz${ano}.jpg`;
+        const testImage = new Image();
+        
+        testImage.onload = function() {
+            // Cartaz existe, carrega normalmente
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = cartazUrl;
+                img.alt = `Cartaz ${ano}`;
+                img.style.opacity = 1;
+                cartazAtual = ano;
+            }, fadeDuration);
+        };
+        
+        testImage.onerror = function() {
+            // Cartaz não existe, usa fallback
+            console.warn(`Cartaz ${ano} não encontrado, usando fallback`);
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = "fotos/oktoberfest.png";
+                img.alt = `Cartaz ${ano} - Não disponível`;
+                img.style.opacity = 1;
+                cartazAtual = ano;
+            }, fadeDuration);
+        };
+        
+        testImage.src = cartazUrl;
+    }
+
+    // Carrega o primeiro cartaz
+    carregarCartazComFallback(cartazAtual);
 
     let startX = 0;
 
@@ -836,25 +866,15 @@ function mostrarCartazes() {
     img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
 
     function proximoCartaz() {
-        img.style.opacity = 0;
-        setTimeout(() => {
-            index = (index + 1) % cartazes.length;
-            cartazAtual = cartazes[index];
-            img.src = `cartazes/cartaz${cartazAtual}.jpg`;
-            img.alt = `Cartaz ${cartazAtual}`;
-            img.style.opacity = 1;
-        }, fadeDuration);
+        index = (index + 1) % cartazes.length;
+        const proximoAno = cartazes[index];
+        carregarCartazComFallback(proximoAno);
     }
 
     function anteriorCartaz() {
-        img.style.opacity = 0;
-        setTimeout(() => {
-            index = (index - 1 + cartazes.length) % cartazes.length;
-            cartazAtual = cartazes[index];
-            img.src = `cartazes/cartaz${cartazAtual}.jpg`;
-            img.alt = `Cartaz ${cartazAtual}`;
-            img.style.opacity = 1;
-        }, fadeDuration);
+        index = (index - 1 + cartazes.length) % cartazes.length;
+        const anoAnterior = cartazes[index];
+        carregarCartazComFallback(anoAnterior);
     }
 }
 
@@ -871,21 +891,35 @@ function mostrarCartazAno() {
         return;
     }
 
-    const fadeDuration = 400;
-    img.style.opacity = 0;
-
-    setTimeout(() => {
-        img.src = `cartazes/cartaz${year}.jpg`;
-        img.alt = `Cartaz ${year}`;
-        
-        // ADICIONADO: tratamento de erro offline
-        img.onerror = () => {
-            console.warn(`Cartaz de ${year} não carregado`);
+    // CORREÇÃO: Verificar se o cartaz existe
+    const cartazUrl = `cartazes/cartaz${year}.jpg`;
+    const testImage = new Image();
+    
+    testImage.onload = function() {
+        // Cartaz existe, carrega normalmente
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = cartazUrl;
+            img.alt = `Cartaz ${year}`;
+            img.style.opacity = 1;
+            input.value = "";
+        }, 400);
+    };
+    
+    testImage.onerror = function() {
+        // Cartaz não existe, mostra mensagem
+        console.warn(`Cartaz ${year} não encontrado`);
+        img.style.opacity = 0;
+        setTimeout(() => {
             img.src = "fotos/oktoberfest.png";
-            img.alt = "Cartaz não disponível";
-        };
-        
-        img.style.opacity = 1;
-        input.value = "";
-    }, fadeDuration);
+            img.alt = `Cartaz ${year} - Não disponível`;
+            img.style.opacity = 1;
+            input.value = "";
+            
+            // Mostra mensagem de erro
+            showModal("cartaz_nao_encontrado");
+        }, 400);
+    };
+    
+    testImage.src = cartazUrl;
 }
