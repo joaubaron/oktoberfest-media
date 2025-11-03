@@ -1,6 +1,3 @@
-index no monaca pra gerar apk
-midias no github
-meu app.js: (veja clara.mp4 - nao esta mais tocando)
 // ======== VARIÁVEIS GLOBAIS ========
 let loopFoto2007 = null;
 let backgroundMusic = null;
