@@ -27,7 +27,11 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost')) {
+    // ✅ CORRIGIDO: Registra Service Worker exceto em localhost desktop
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+    
+    if ('serviceWorker' in navigator && !isLocalhost) {
         try {
             const registration = await navigator.serviceWorker.register('./sw.js');
             
@@ -48,8 +52,10 @@ async function initializeApp() {
         } catch (error) {
             console.log('❌ Erro no Service Worker:', error);
         }
+    } else if (isLocalhost) {
+        console.log('ℹ️ Service Worker não registrado (localhost)');
     } else {
-        console.log('ℹ️ Service Worker não registrado (localhost ou não suportado)');
+        console.log('ℹ️ Service Worker não suportado neste navegador');
     }
     
     await initializeYearsWithDetection();
