@@ -24,9 +24,11 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    if ('serviceWorker' in navigator) {
+    // ✅ CORREÇÃO: Registrar Service Worker apenas se NÃO for localhost
+    if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost')) {
         try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
+            // ✅ CORREÇÃO: Usar caminho relativo './sw.js' para GitHub Pages
+            const registration = await navigator.serviceWorker.register('./sw.js');
             
             // VERIFICAR ATUALIZAÇÕES
             registration.addEventListener('updatefound', () => {
@@ -35,16 +37,20 @@ async function initializeApp() {
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'activated') {
-                        console.log('🎉 Conteúdo de 2026 disponível!');
+                        console.log('🎉 Nova versão do Service Worker ativada!');
                         // Opcional: mostrar alerta para usuário
                         showUpdateNotification();
                     }
                 });
             });
             
+            console.log('✅ Service Worker registrado com sucesso!');
+            
         } catch (error) {
             console.log('❌ Erro no Service Worker:', error);
         }
+    } else {
+        console.log('ℹ️ Service Worker não registrado (localhost ou não suportado)');
     }
     
     // Configurar anos com detecção automática
@@ -63,9 +69,10 @@ async function initializeApp() {
     preloadMedia();
 }
 
+// Função opcional para notificar atualizações
 function showUpdateNotification() {
-    // Mostrar um alerta bonito que tem novo conteúdo
-    console.log('📢 Novo conteúdo de 2026 disponível!');
+    // Opcional: mostrar um toast ou mensagem para o usuário
+    console.log('📱 Nova versão disponível! Recarregue a página.');
 }
 
 // ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
