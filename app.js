@@ -201,6 +201,7 @@ function changeMusic() {
         `${GITHUB_BASE}/musicas/Anneliese.mp3`,
         `${GITHUB_BASE}/musicas/Donnawedda.mp3`, 
         `${GITHUB_BASE}/musicas/Imogdiso.mp3`,
+        `${GITHUB_BASE}/musicas/FliegerliedSoeinschonerTag.mp3`,
         `${GITHUB_BASE}/musicas/Kanguru.mp3`
     ];
 
