@@ -12,6 +12,7 @@ let currentYearIndex = 0;
 let allYears = [];
 let interval = null;
 let isDrawing = false;
+let cacheManager = null; // Gerenciador de cache
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
@@ -27,10 +28,27 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function initializeApp() {
-    // ✅ CORRIGIDO: Detecta apenas localhost real (não Monaca/Cordova)
+    // Inicializa CacheManager
+    if (window.CacheManager) {
+        try {
+            cacheManager = await window.CacheManager.init();
+            console.log('✅ CacheManager inicializado');
+            
+            // Mostra estatísticas de cache
+            const stats = await cacheManager.getCacheStats();
+            console.log('📊 Cache Stats:', stats);
+            console.log(`   Total: ${stats.total} arquivos (${formatBytes(stats.totalSize)})`);
+            console.log(`   Fotos: ${stats.photos} | Cartazes: ${stats.posters}`);
+            console.log(`   Vídeos: ${stats.videos} | Músicas: ${stats.music}`);
+        } catch (error) {
+            console.error('❌ Erro ao inicializar CacheManager:', error);
+        }
+    }
+    
+    // Service Worker
     const isRealLocalhost = (window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1') &&
-                            !window.cordova; // Permite Cordova/Monaca
+                            !window.cordova;
     
     if ('serviceWorker' in navigator && !isRealLocalhost) {
         try {
@@ -95,15 +113,6 @@ async function initializeYearsWithDetection() {
     }
     
     currentYearIndex = allYears.indexOf(currentYear.toString());
-    if (currentYearIndex === -1 && allYears.length > 0) {
-        currentYearIndex = allYears.length - 1;
-    }
-}
-
-function initializeYears() {
-    allYears = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
-    currentYearIndex = allYears.indexOf(currentYear.toString());
-    
     if (currentYearIndex === -1 && allYears.length > 0) {
         currentYearIndex = allYears.length - 1;
     }
@@ -179,21 +188,51 @@ function setupMusic() {
 }
 
 function preloadMedia() {
-    // Pré-carrega fotos do GitHub
+    // Pré-carrega fotos do GitHub (agora com cache)
     Object.values(photos).forEach(src => {
-        const img = new Image();
-        img.src = src;
+        loadImageWithCache(src, 'photo');
     });
 
     // Pré-carrega cartazes do GitHub
     for (let y = 1984; y <= currentYear; y++) {
+        const src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
+        loadImageWithCache(src, 'poster', y);
+    }
+}
+
+// ======== CARREGAMENTO COM CACHE ========
+async function loadImageWithCache(src, type, year = null) {
+    if (!cacheManager) {
+        // Fallback sem cache
         const img = new Image();
-        img.src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
+        img.src = src;
+        return;
+    }
+    
+    try {
+        await cacheManager.getMedia(src, type, year);
+    } catch (error) {
+        console.warn(`⚠️ Erro ao carregar ${src}:`, error);
+    }
+}
+
+async function loadMediaWithCache(element, src, type, year = null) {
+    if (!cacheManager) {
+        element.src = src;
+        return;
+    }
+    
+    try {
+        const cachedUrl = await cacheManager.getMedia(src, type, year);
+        element.src = cachedUrl || src;
+    } catch (error) {
+        console.error(`❌ Erro ao carregar mídia:`, error);
+        element.src = src; // Fallback
     }
 }
 
 // ======== FUNÇÕES DE MÚSICA ========
-function changeMusic() {
+async function changeMusic() {
     const music = getElementSafe("backgroundMusic");
     if (!music) return;
 
@@ -232,7 +271,9 @@ function changeMusic() {
         const nextSong = availableSongs[randomIndex];
         availableSongs.splice(randomIndex, 1);
         
-        music.src = nextSong;
+        // Carrega música com cache
+        await loadMediaWithCache(music, nextSong, 'music');
+        
         music.play().catch(error => {
             console.error("Erro ao trocar música:", error);
         });
@@ -240,7 +281,7 @@ function changeMusic() {
 }
 
 // ======== FUNÇÕES DE VÍDEO ========
-function playVideo() {
+async function playVideo() {
     const videoContainer = getElementSafe("video-container");
     const video = getElementSafe("claraVideo");
     const imageContainer = getElementSafe("image-container");
@@ -254,10 +295,18 @@ function playVideo() {
         loopFoto2007 = null;
     }
 
-    // Define o source do vídeo do GitHub
     const videoSource = video.querySelector('source');
     if (videoSource) {
-        videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
+        const videoUrl = `${GITHUB_BASE}/videos/clara.mp4`;
+        
+        // Carrega vídeo com cache
+        if (cacheManager) {
+            const cachedUrl = await cacheManager.getMedia(videoUrl, 'video');
+            videoSource.src = cachedUrl || videoUrl;
+        } else {
+            videoSource.src = videoUrl;
+        }
+        
         video.load();
     }
 
@@ -317,6 +366,14 @@ function getElementSafe(id) {
     return element;
 }
 
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
 function limparListenersEClone() {
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
@@ -352,7 +409,7 @@ function removerSwipes() {
 }
 
 // ======== FOTOS 2007 ========
-function mostrarFoto2007() {
+async function mostrarFoto2007() {
     stopVideo();
     const img = limparListenersEClone();
     if (!img) return;
@@ -368,15 +425,20 @@ function mostrarFoto2007() {
     let indice = 0;
     let paused = false;
 
-    function iniciarImagemInicial() {
+    async function iniciarImagemInicial() {
         const primeiraImagem = imagens[0];
         img.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
         img.style.opacity = 0;
 
-        setTimeout(() => {
-            img.src = primeiraImagem.src;
-            img.alt = primeiraImagem.alt;
+        setTimeout(async () => {
+            if (cacheManager) {
+                const cachedUrl = await cacheManager.getMedia(primeiraImagem.src, 'photo', 2007);
+                img.src = cachedUrl || primeiraImagem.src;
+            } else {
+                img.src = primeiraImagem.src;
+            }
             
+            img.alt = primeiraImagem.alt;
             img.onerror = () => {
                 console.warn(`Foto 2007 não encontrada`);
                 img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
@@ -391,17 +453,22 @@ function mostrarFoto2007() {
     function iniciarLoop() {
         if (paused) return;
 
-        function trocarImagem() {
+        async function trocarImagem() {
             if (paused) return;
 
             const proxima = imagens[indice];
             img.style.transition = `opacity ${fadeDuration}ms ease-in-out`;
             img.style.opacity = 0.3;
 
-            setTimeout(() => {
-                img.src = proxima.src;
-                img.alt = proxima.alt;
+            setTimeout(async () => {
+                if (cacheManager) {
+                    const cachedUrl = await cacheManager.getMedia(proxima.src, 'photo', 2007);
+                    img.src = cachedUrl || proxima.src;
+                } else {
+                    img.src = proxima.src;
+                }
                 
+                img.alt = proxima.alt;
                 img.onerror = () => {
                     console.warn(`Foto não encontrada: ${proxima.alt}`);
                     img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
@@ -492,7 +559,7 @@ function handleSwipe() {
     }
 }
 
-function navigateToYear(year) {
+async function navigateToYear(year) {
     stopVideo();
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
@@ -508,10 +575,17 @@ function navigateToYear(year) {
     }
 
     img.style.opacity = 0;
-    setTimeout(() => {
-        img.src = photos[year];
-        img.alt = `Oktoberfest ${year}`;
+    setTimeout(async () => {
+        const photoUrl = photos[year];
         
+        if (cacheManager) {
+            const cachedUrl = await cacheManager.getMedia(photoUrl, 'photo', year);
+            img.src = cachedUrl || photoUrl;
+        } else {
+            img.src = photoUrl;
+        }
+        
+        img.alt = `Oktoberfest ${year}`;
         img.onerror = () => {
             console.warn(`Imagem de ${year} não carregada, usando fallback`);
             img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
@@ -576,7 +650,7 @@ function closeModal() {
 }
 
 // ======== SORTEIO ========
-function startDraw() {
+async function startDraw() {
     stopVideo();
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
@@ -605,11 +679,20 @@ function startDraw() {
     const maxIterations = 15;
     let currentSpeed = 100;
 
-    interval = setInterval(() => {
+    interval = setInterval(async () => {
         const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
         img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = photos[randomYear];
+        
+        setTimeout(async () => {
+            const photoUrl = photos[randomYear];
+            
+            if (cacheManager) {
+                const cachedUrl = await cacheManager.getMedia(photoUrl, 'photo', randomYear);
+                img.src = cachedUrl || photoUrl;
+            } else {
+                img.src = photoUrl;
+            }
+            
             img.alt = `Oktoberfest ${randomYear}`;
             img.style.opacity = 1;
         }, 100);
@@ -619,12 +702,19 @@ function startDraw() {
 
         if (iterations >= maxIterations) {
             clearInterval(interval);
-            setTimeout(() => {
+            setTimeout(async () => {
                 img.style.opacity = 0;
-                setTimeout(() => {
-                    img.src = photos[year];
-                    img.alt = `Oktoberfest ${year} - Sorteado!`;
+                setTimeout(async () => {
+                    const finalPhotoUrl = photos[year];
                     
+                    if (cacheManager) {
+                        const cachedUrl = await cacheManager.getMedia(finalPhotoUrl, 'photo', year);
+                        img.src = cachedUrl || finalPhotoUrl;
+                    } else {
+                        img.src = finalPhotoUrl;
+                    }
+                    
+                    img.alt = `Oktoberfest ${year} - Sorteado!`;
                     img.onerror = () => {
                         console.warn(`Imagem de ${year} não carregada, usando fallback`);
                         img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
@@ -733,14 +823,22 @@ function startFireworks() {
 }
 
 // ======== RESET ========
-function resetApp() {
+async function resetApp() {
     stopVideo();
 
     const currentImg = limparListenersEClone();
     if (currentImg) {
         currentImg.style.opacity = 0;
-        setTimeout(() => {
-            currentImg.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+        setTimeout(async () => {
+            const fallbackUrl = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+            
+            if (cacheManager) {
+                const cachedUrl = await cacheManager.getMedia(fallbackUrl, 'photo');
+                currentImg.src = cachedUrl || fallbackUrl;
+            } else {
+                currentImg.src = fallbackUrl;
+            }
+            
             currentImg.alt = "Foto da Oktoberfest";
             currentImg.style.opacity = 1;
         }, 100);
@@ -764,11 +862,11 @@ function resetApp() {
         }
     }
 
-    initializeYears();
+    initializeYearsWithDetection();
 }
 
 // ======== CARTAZES ========
-function mostrarCartazes() {
+async function mostrarCartazes() {
     stopVideo();
     const img = limparListenersEClone();
     if (!img) return;
@@ -780,12 +878,19 @@ function mostrarCartazes() {
     const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
     let index = 0;
 
-    function carregarCartazComFallback(ano) {
+    async function carregarCartazComFallback(ano) {
         img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-            img.alt = `Cartaz ${ano}`;
+        setTimeout(async () => {
+            const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
             
+            if (cacheManager) {
+                const cachedUrl = await cacheManager.getMedia(cartazUrl, 'poster', ano);
+                img.src = cachedUrl || cartazUrl;
+            } else {
+                img.src = cartazUrl;
+            }
+            
+            img.alt = `Cartaz ${ano}`;
             img.onerror = () => {
                 console.warn(`Cartaz ${ano} não encontrado`);
                 img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
@@ -824,7 +929,7 @@ function mostrarCartazes() {
     }
 }
 
-function mostrarCartazAno() {
+async function mostrarCartazAno() {
     stopVideo();
     const input = getElementSafe("cartazInput");
     const img = limparListenersEClone();
@@ -838,10 +943,17 @@ function mostrarCartazAno() {
     }
 
     img.style.opacity = 0;
-    setTimeout(() => {
-        img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-        img.alt = `Cartaz ${year}`;
+    setTimeout(async () => {
+        const cartazUrl = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
         
+        if (cacheManager) {
+            const cachedUrl = await cacheManager.getMedia(cartazUrl, 'poster', year);
+            img.src = cachedUrl || cartazUrl;
+        } else {
+            img.src = cartazUrl;
+        }
+        
+        img.alt = `Cartaz ${year}`;
         img.onerror = () => {
             console.warn(`Cartaz ${year} não encontrado`);
             img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
