@@ -1,0 +1,6 @@
+# Exemplo de conteúdo do song_list.txt no GitHub:
+Anneliese.mp3
+Donnawedda.mp3
+Imogdiso.mp3
+Kanguru.mp3
+FliegerliedSoeinschonerTag.mp3
