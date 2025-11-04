@@ -1,0 +1,11 @@
+{
+  "songs": [
+    "Anneliese.mp3",
+    "Donnawedda.mp3",
+    "Imogdiso.mp3",
+    "FliegerliedSoeinschonerTag.mp3",
+    "Kanguru.mp3"
+    // Adicione os nomes de arquivo dos seus MP3s aqui.
+    // O app buscará automaticamente.
+  ]
+}
