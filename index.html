@@ -459,12 +459,23 @@ max-width: 90%;
 margin: 10px auto;
 }
 
+/* 🔥 ESPAÇO NAS LATERAIS - BOTÕES NÃO FICAM COLADOS */
+.div-clara-video,
+.div-botoes-inferiores,
+.div-cartaz-musica {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+}
+
 /* Ajuste para telas pequenas */
 @media (max-width: 600px) {
 .div-clara-video,
 .div-botoes-inferiores,
 .div-cartaz-musica {
 gap: 8px;
+padding-left: 12px !important;
+padding-right: 12px !important;
 }
 }
 
@@ -480,7 +491,7 @@ class="oktoberfest-title"
 
 <p class="texto-azul" id="claraOktoberfestText"></p>
 
-<!-- Linha 1: Campo Clara + Botão Vídeo - agora ocupando 100% da largura -->
+<!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
 <input type="number" id="yearInput" min="2017" placeholder="Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;">
 <button id="videoButton">Vídeo</button>
@@ -508,14 +519,14 @@ alt="Foto da Oktoberfest"
 />
 </div>
 
-<!-- Linha 2: Botões Prosit, 2007, Ver cartazes - agora ocupando 100% da largura -->
+<!-- Linha 2: Botões Prosit, 2007, Ver cartazes -->
 <div class="div-botoes-inferiores">
 <button id="resetButton" style="width: 100px;">Prosit&nbsp;<span id="anoVigente"></span></button>
 <button id="foto2007Button" style="width: 80px;">❤️ 2007</button>
 <button id="cartazes" style="width: 110px;">Ver cartazes</button>
 </div>
 
-<!-- Linha 3: Campo Cartazes + Botão Música - agora ocupando 100% da largura -->
+<!-- Linha 3: Campo Cartazes + Botão Música -->
 <div class="div-cartaz-musica">
 <input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 - 2026" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;">
 <button id="musicButton">🎵🎶</button>
