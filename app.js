@@ -125,27 +125,27 @@ document.addEventListener('click', playOnFirstInteraction, { once: true });
 
 // ======== INICIALIZAÇÃO DA APLICAÇÃO ========
 async function initializeApp() {
-    // 1. Atualizar UI IMEDIATAMENTE
-    setupUIElements(); // ← MOVER PARA CIMA
-    
-    // 2. Detecção do Ambiente
-    const isRealLocalhost = (window.location.hostname === 'localhost' || 
-        window.location.hostname === '127.0.0.1') &&
-        !window.cordova;
+// 1. Atualizar UI IMEDIATAMENTE
+setupUIElements(); // ← MOVER PARA CIMA
 
-    // 3. Service Worker (não-blocking)
-    if ('serviceWorker' in navigator && !isRealLocalhost) {
-        // ... código do service worker
-    }
+// 2. Detecção do Ambiente
+const isRealLocalhost = (window.location.hostname === 'localhost' || 
+window.location.hostname === '127.0.0.1') &&
+!window.cordova;
 
-    // 4. Inicialização dos anos (pode demorar, mas não bloqueia mais o texto)
-    await initializeYearsWithDetection();
-    
-    // 5. Resto da inicialização
-    setupEventListeners();
-    await setupMusic();
-    setupCanvasAndFireworks();
-    setupLazyLoading();
+// 3. Service Worker (não-blocking)
+if ('serviceWorker' in navigator && !isRealLocalhost) {
+// ... código do service worker
+}
+
+// 4. Inicialização dos anos (pode demorar, mas não bloqueia mais o texto)
+await initializeYearsWithDetection();
+
+// 5. Resto da inicialização
+setupEventListeners();
+await setupMusic();
+setupCanvasAndFireworks();
+setupLazyLoading();
 }
 
 // ======== DETECÇÃO AUTOMÁTICA DE ANOS ========
@@ -188,23 +188,24 @@ currentYearIndex = allYears.length - 1;
 }
 
 function setupUIElements() {
-    const anoVigente = getElementSafe("anoVigente");
-    if (anoVigente) anoVigente.textContent = currentYear;
+const anoVigente = getElementSafe("anoVigente");
+if (anoVigente) anoVigente.textContent = currentYear;
 
-    const modalYear = getElementSafe("modalYear");
-    if (modalYear) modalYear.textContent = currentYear;
+const modalYear = getElementSafe("modalYear");
+if (modalYear) modalYear.textContent = currentYear;
 
-    // NOVO: Atualizar o texto completo do parágrafo
-    const claraText = getElementSafe("claraOktoberfestText");
-    if (claraText) {
-        claraText.innerHTML = `Clara na Oktoberfest de <strong>2017</strong> a <strong>${currentYear}</strong>`;
-    }
+// NOVO: Atualizar o texto completo do parágrafo
+const claraText = getElementSafe("claraOktoberfestText");
+if (claraText) {
+const anosDeOktoberfest = currentYear - 1984;
+claraText.innerHTML = `<strong>41ª edição</strong> da Oktoberfest Blumenau. <strong>1984</strong> a <strong>${currentYear}</strong>`;
+}
 
-    const yearInput = getElementSafe("yearInput");
-    if (yearInput) yearInput.max = currentYear;
+const yearInput = getElementSafe("yearInput");
+if (yearInput) yearInput.max = currentYear;
 
-    const cartazInput = getElementSafe("cartazInput");
-    if (cartazInput) cartazInput.max = currentYear;
+const cartazInput = getElementSafe("cartazInput");
+if (cartazInput) cartazInput.max = currentYear;
 }
 
 function setupEventListeners() {
@@ -630,57 +631,57 @@ detectarTodasImagensKaka(iniciarComImagens);
 
 // ======== SWIPE E NAVEGAÇÃO CORRIGIDOS (Fotos/Ano) ========
 function handleTouchStart(e) {
-    //e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
-    touchStartX = e.changedTouches[0].screenX;
+//e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
+touchStartX = e.changedTouches[0].screenX;
 }
 
 function handleTouchEnd(e) {
-    //e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
+//e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
+touchEndX = e.changedTouches[0].screenX;
+handleSwipe();
 }
 
 function handleMouseDown(e) {
-    e.preventDefault();
-    touchStartX = e.screenX;
-    document.addEventListener('mouseup', handleMouseUp, { once: true });
+e.preventDefault();
+touchStartX = e.screenX;
+document.addEventListener('mouseup', handleMouseUp, { once: true });
 }
 
 function handleMouseUp(e) {
-    // e.preventDefault(); // Não é necessário aqui, já que o mousedown tinha preventDefault
-    touchEndX = e.screenX;
-    handleSwipe();
-    document.removeEventListener('mouseup', handleMouseUp);
+// e.preventDefault(); // Não é necessário aqui, já que o mousedown tinha preventDefault
+touchEndX = e.screenX;
+handleSwipe();
+document.removeEventListener('mouseup', handleMouseUp);
 }
 
 // Prevenir múltiplos swipes simultâneos (CORRIGIDO)
 function handleSwipe() {
-    if (isSwiping) return; // Já está processando um swipe
-    
-    const minSwipeDistance = 50;
-    const swipeDistance = touchEndX - touchStartX;
-    
-    // Swipe muito pequeno - ignorar
-    if (Math.abs(swipeDistance) < minSwipeDistance) {
-        console.log('[SWIPE] Movimento muito pequeno, ignorando');
-        return;
-    }
-    
-    isSwiping = true;
-    
-    // Swipe para DIREITA (swipeDistance > 0) = próximo ano (crescente)
-    if (swipeDistance > 0) {
-        nextYear(); // 2024 → 2025
-    }
-    // Swipe para ESQUERDA (swipeDistance < 0) = ano anterior (decrescente)  
-    else {
-        prevYear(); // 2025 → 2024
-    }
-    
-    // Reset após um tempo para permitir novo swipe
-    setTimeout(() => {
-        isSwiping = false;
-    }, 500);
+if (isSwiping) return; // Já está processando um swipe
+
+const minSwipeDistance = 50;
+const swipeDistance = touchEndX - touchStartX;
+
+// Swipe muito pequeno - ignorar
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE] Movimento muito pequeno, ignorando');
+return;
+}
+
+isSwiping = true;
+
+// Swipe para DIREITA (swipeDistance > 0) = próximo ano (crescente)
+if (swipeDistance > 0) {
+nextYear(); // 2024 → 2025
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = ano anterior (decrescente)  
+else {
+prevYear(); // 2025 → 2024
+}
+
+// Reset após um tempo para permitir novo swipe
+setTimeout(() => {
+isSwiping = false;
+}, 500);
 }
 
 
@@ -736,28 +737,28 @@ navigateToYear(parseInt(allYears[currentYearIndex]));
 
 // ======== MODAL ========
 function showModal(context = "oktoberfest") {
-    const modal = getElementSafe("alertModal");
-    if (!modal) return;
+const modal = getElementSafe("alertModal");
+if (!modal) return;
 
-    const modalYearSpan = document.getElementById("modalYear");
-    if (modalYearSpan) modalYearSpan.textContent = currentYear;
+const modalYearSpan = document.getElementById("modalYear");
+if (modalYearSpan) modalYearSpan.textContent = currentYear;
 
-    const firstLine = modal.querySelector(".modal-content div:first-child");
-    const secondLine = modal.querySelector(".modal-content div:nth-child(2)");
+const firstLine = modal.querySelector(".modal-content div:first-child");
+const secondLine = modal.querySelector(".modal-content div:nth-child(2)");
 
-    if (firstLine && secondLine) {
-        if (context === "cartaz") {
-            firstLine.innerText = "Cartazes Oktoberfest de";
-            secondLine.innerHTML = `<strong>1984 a ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
-        } else if (context === "oktoberfest") {
-            firstLine.innerText = "Clara na Oktoberfest de";
-            secondLine.innerHTML = `<strong>2017 a ${currentYear}! <span style="font-size: 20px;">🍺</span></strong>`;
-        }
-        // REMOVA o caso "cartaz_nao_encontrado" - não é mais usado
-    }
+if (firstLine && secondLine) {
+if (context === "cartaz") {
+firstLine.innerText = "Cartazes da Oktoberfest entre";
+secondLine.innerHTML = `<strong>1984 a ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
+} else if (context === "oktoberfest") {
+firstLine.innerText = "Clara foi na Oktoberfest de";
+secondLine.innerHTML = `<strong>2017 a ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
+}
+// REMOVA o caso "cartaz_nao_encontrado" - não é mais usado
+}
 
-    modal.style.display = "flex";
-    setTimeout(() => modal.classList.add("show"), 10);
+modal.style.display = "flex";
+setTimeout(() => modal.classList.add("show"), 10);
 }
 
 function closeModal() {
@@ -770,81 +771,81 @@ setTimeout(() => (modal.style.display = "none"), 300);
 
 // ======== SORTEIO ========
 function startDraw() {
-    stopVideo();
-    if (loopFoto2007) {
-        clearTimeout(loopFoto2007);
-        loopFoto2007 = null;
-    }
-    // Garante que o swipe de fotos esteja ativo
-    adicionarSwipes();
+stopVideo();
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+// Garante que o swipe de fotos esteja ativo
+adicionarSwipes();
 
-    if (isDrawing) return;
+if (isDrawing) return;
 
-    const year = parseInt(document.getElementById("yearInput").value);
-    const img = limparListenersEClone();
-    const button = getElementSafe("drawButton");
+const year = parseInt(document.getElementById("yearInput").value);
+const img = limparListenersEClone();
+const button = getElementSafe("drawButton");
 
-    if (!img || !button) return;
+if (!img || !button) return;
 
-    // ✅ Permite anos acima do atual (ex: 2026) sem travar
-    if (isNaN(year) || year < startYear) {
-        showModal("oktoberfest");
-        return;
-    }
+// ✅ Permite anos acima do atual (ex: 2026) sem travar
+if (isNaN(year) || year < startYear) {
+showModal("oktoberfest");
+return;
+}
 
-    clearInterval(interval);
-    isDrawing = true;
-    button.disabled = true;
+clearInterval(interval);
+isDrawing = true;
+button.disabled = true;
 
-    const yearsArray = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
-    let iterations = 0;
-    const maxIterations = 15;
-    let currentSpeed = 100;
+const yearsArray = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
+let iterations = 0;
+const maxIterations = 15;
+let currentSpeed = 100;
 
-    interval = setInterval(() => {
-        const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
-        img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = photos[randomYear];
-            img.alt = `Oktoberfest ${randomYear}`;
-            img.style.opacity = 1;
-        }, 100);
+interval = setInterval(() => {
+const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = photos[randomYear];
+img.alt = `Oktoberfest ${randomYear}`;
+img.style.opacity = 1;
+}, 100);
 
-        iterations++;
-        currentSpeed = Math.min(100 + (iterations * 25), 500);
+iterations++;
+currentSpeed = Math.min(100 + (iterations * 25), 500);
 
-        if (iterations >= maxIterations) {
-            clearInterval(interval);
-            setTimeout(() => {
-                img.style.opacity = 0;
-                setTimeout(() => {
-                    img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
-                    img.alt = `Oktoberfest ${year} - Sorteado!`;
+if (iterations >= maxIterations) {
+clearInterval(interval);
+setTimeout(() => {
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
+img.alt = `Oktoberfest ${year} - Sorteado!`;
 
-                    // ✅ Fallback automático se a imagem não existir
-                    img.onerror = () => {
-                        console.warn(`Foto Clara ${year} não encontrada`);
-                        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-                        img.alt = `Oktoberfest ${year} - Upload pendente`;
-                        // Nenhum modal — deixa a imagem visível
-                    };
+// ✅ Fallback automático se a imagem não existir
+img.onerror = () => {
+console.warn(`Foto Clara ${year} não encontrada`);
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Oktoberfest ${year} - Upload pendente`;
+// Nenhum modal — deixa a imagem visível
+};
 
-                    img.style.opacity = 1;
-                    button.disabled = false;
-                    isDrawing = false;
-                    document.getElementById("yearInput").value = "";
-                    startFireworks();
+img.style.opacity = 1;
+button.disabled = false;
+isDrawing = false;
+document.getElementById("yearInput").value = "";
+startFireworks();
 
-                    const yearIndex = yearsArray.indexOf(year.toString());
-                    if (yearIndex !== -1) {
-                        currentYearIndex = yearIndex;
-                    }
+const yearIndex = yearsArray.indexOf(year.toString());
+if (yearIndex !== -1) {
+currentYearIndex = yearIndex;
+}
 
-                    adicionarSwipes();
-                }, 200);
-            }, 200);
-        }
-    }, currentSpeed);
+adicionarSwipes();
+}, 200);
+}, 200);
+}
+}, currentSpeed);
 }
 
 // ======== FOGOS DE ARTIFÍCIO ========
@@ -918,320 +919,320 @@ if (i === 0) animateFireworks();
 
 // ======== RESET COM RELOAD ========
 function resetApp() {
-    console.log('[APP] Resetando e recarregando para atualizar conteúdo...');
-    
-    // Limpa todos os processos em andamento
-    stopVideo();
-    if (loopFoto2007) {
-        clearTimeout(loopFoto2007);
-        loopFoto2007 = null;
-    }
-    clearInterval(interval);
-    interval = null;
-    isDrawing = false;
-    isSwiping = false;
-    
-    // Limpa fogos
-    particles = [];
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-        if (ctx) {
-            ctx.clearRect(0, 0, w, h);
-        }
-    }
-    
-    // Feedback visual
-    const resetButton = getElementSafe("resetButton");
-    if (resetButton) {
-        resetButton.innerHTML = 'Atualizando';
-        resetButton.style.background = '#D8B115';
-        resetButton.disabled = true;
-    }
-    
-    // Recarrega para buscar conteúdo NOVO do GitHub
-    setTimeout(() => {
-        window.location.reload(true);
-    }, 400);
+console.log('[APP] Resetando e recarregando para atualizar conteúdo...');
+
+// Limpa todos os processos em andamento
+stopVideo();
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+clearInterval(interval);
+interval = null;
+isDrawing = false;
+isSwiping = false;
+
+// Limpa fogos
+particles = [];
+if (animationId) {
+cancelAnimationFrame(animationId);
+animationId = null;
+if (ctx) {
+ctx.clearRect(0, 0, w, h);
+}
+}
+
+// Feedback visual
+const resetButton = getElementSafe("resetButton");
+if (resetButton) {
+resetButton.innerHTML = 'Atualizando';
+resetButton.style.background = '#D8B115';
+resetButton.disabled = true;
+}
+
+// Recarrega para buscar conteúdo NOVO do GitHub
+setTimeout(() => {
+window.location.reload(true);
+}, 400);
 }
 
 // ======== CARTAZES CORRIGIDOS ========
 function mostrarCartazes() {
-    stopVideo();
-    const img = limparListenersEClone();
-    if (!img) return;
+stopVideo();
+const img = limparListenersEClone();
+if (!img) return;
 
-    // Remove listeners padrão de swipe de ano
-    removerSwipes();
+// Remove listeners padrão de swipe de ano
+removerSwipes();
 
-    const fadeDuration = 500;
-    let cartazAtual = currentYear; // Começar pelo ano atual
-    const ultimoCartaz = currentYear;
-    const totalCartazes = ultimoCartaz - 1984 + 1;
-    const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
-    let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
-    let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
+const fadeDuration = 500;
+let cartazAtual = currentYear; // Começar pelo ano atual
+const ultimoCartaz = currentYear;
+const totalCartazes = ultimoCartaz - 1984 + 1;
+const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
+let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
+let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
 
-    function carregarCartazComFallback(ano) {
-        if (isCartazSwiping) return;
-        isCartazSwiping = true;
+function carregarCartazComFallback(ano) {
+if (isCartazSwiping) return;
+isCartazSwiping = true;
 
-        img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-            img.alt = `Cartaz ${ano}`;
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+img.alt = `Cartaz ${ano}`;
 
-            img.onerror = () => {
-                console.warn(`Cartaz ${ano} não encontrado`);
-                img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-                img.alt = `Cartaz ${ano} - Upload pendente`;
-            };
+img.onerror = () => {
+console.warn(`Cartaz ${ano} não encontrado`);
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Cartaz ${ano} - Upload pendente`;
+};
 
-            img.style.opacity = 1;
-            cartazAtual = ano;
-            index = cartazes.indexOf(ano);
-            setTimeout(() => { isCartazSwiping = false; }, fadeDuration); // Resetar após a transição
-        }, fadeDuration);
-    }
+img.style.opacity = 1;
+cartazAtual = ano;
+index = cartazes.indexOf(ano);
+setTimeout(() => { isCartazSwiping = false; }, fadeDuration); // Resetar após a transição
+}, fadeDuration);
+}
 
-    carregarCartazComFallback(cartazAtual);
+carregarCartazComFallback(cartazAtual);
 
-    let cartazStartX = 0;
+let cartazStartX = 0;
 
-    const cartazesTouchStart = (e) => {
-        // e.preventDefault(); // Comentar: pode interferir na rolagem
-        cartazStartX = e.changedTouches[0].screenX;
-    };
-    
-    const cartazesTouchEnd = (e) => {
-        // e.preventDefault(); // Comentar: pode interferir na rolagem
-        if (isCartazSwiping) return;
+const cartazesTouchStart = (e) => {
+// e.preventDefault(); // Comentar: pode interferir na rolagem
+cartazStartX = e.changedTouches[0].screenX;
+};
 
-        const cartazEndX = e.changedTouches[0].screenX;
-        const swipeDistance = cartazEndX - cartazStartX;
-        const minSwipeDistance = 50;
-        
-        if (Math.abs(swipeDistance) < minSwipeDistance) {
-            console.log('[SWIPE CARTAZ] Movimento muito pequeno, ignorando');
-            return;
-        }
+const cartazesTouchEnd = (e) => {
+// e.preventDefault(); // Comentar: pode interferir na rolagem
+if (isCartazSwiping) return;
 
-        // Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
-        if (swipeDistance > 0) {
-            proximoCartaz();
-        }
-        // Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-        else {
-            anteriorCartaz();
-        }
-    };
+const cartazEndX = e.changedTouches[0].screenX;
+const swipeDistance = cartazEndX - cartazStartX;
+const minSwipeDistance = 50;
 
-    img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-    img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-    
-    // Adicionar suporte a mouse drag (opcional)
-    let isDragging = false;
-    let dragStartX = 0;
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE CARTAZ] Movimento muito pequeno, ignorando');
+return;
+}
 
-    const cartazesMouseDown = (e) => {
-        e.preventDefault();
-        isDragging = true;
-        dragStartX = e.screenX;
-        img.addEventListener('mousemove', cartazesMouseMove);
-        img.addEventListener('mouseup', cartazesMouseUp, { once: true });
-        img.addEventListener('mouseleave', cartazesMouseUp, { once: true });
-    };
+// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+proximoCartaz();
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
+else {
+anteriorCartaz();
+}
+};
 
-    const cartazesMouseMove = (e) => {
-        if (!isDragging) return;
-        // Previne seleção de texto durante o drag
-    };
+img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
 
-    const cartazesMouseUp = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        img.removeEventListener('mousemove', cartazesMouseMove);
-        
-        if (isCartazSwiping) return;
+// Adicionar suporte a mouse drag (opcional)
+let isDragging = false;
+let dragStartX = 0;
 
-        const dragEndX = e.screenX;
-        const swipeDistance = dragEndX - dragStartX;
-        const minSwipeDistance = 50;
+const cartazesMouseDown = (e) => {
+e.preventDefault();
+isDragging = true;
+dragStartX = e.screenX;
+img.addEventListener('mousemove', cartazesMouseMove);
+img.addEventListener('mouseup', cartazesMouseUp, { once: true });
+img.addEventListener('mouseleave', cartazesMouseUp, { once: true });
+};
 
-        if (Math.abs(swipeDistance) < minSwipeDistance) {
-            console.log('[DRAG CARTAZ] Movimento muito pequeno, ignorando');
-            return;
-        }
+const cartazesMouseMove = (e) => {
+if (!isDragging) return;
+// Previne seleção de texto durante o drag
+};
 
-        // Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
-        if (swipeDistance > 0) {
-            proximoCartaz();
-        }
-        // Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-        else {
-            anteriorCartaz();
-        }
-    };
+const cartazesMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
+img.removeEventListener('mousemove', cartazesMouseMove);
 
-    img.addEventListener("mousedown", cartazesMouseDown, false);
+if (isCartazSwiping) return;
 
-    function proximoCartaz() {
-        index = (index + 1) % cartazes.length;
-        const proximoAno = cartazes[index];
-        carregarCartazComFallback(proximoAno);
-    }
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - dragStartX;
+const minSwipeDistance = 50;
 
-    function anteriorCartaz() {
-        index = (index - 1 + cartazes.length) % cartazes.length;
-        const anoAnterior = cartazes[index];
-        carregarCartazComFallback(anoAnterior);
-    }
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[DRAG CARTAZ] Movimento muito pequeno, ignorando');
+return;
+}
+
+// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+proximoCartaz();
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
+else {
+anteriorCartaz();
+}
+};
+
+img.addEventListener("mousedown", cartazesMouseDown, false);
+
+function proximoCartaz() {
+index = (index + 1) % cartazes.length;
+const proximoAno = cartazes[index];
+carregarCartazComFallback(proximoAno);
+}
+
+function anteriorCartaz() {
+index = (index - 1 + cartazes.length) % cartazes.length;
+const anoAnterior = cartazes[index];
+carregarCartazComFallback(anoAnterior);
+}
 }
 
 function mostrarCartazAno() {
-    stopVideo();
-    const input = getElementSafe("cartazInput");
-    const img = limparListenersEClone();
-    if (!input || !img) return;
+stopVideo();
+const input = getElementSafe("cartazInput");
+const img = limparListenersEClone();
+if (!input || !img) return;
 
-    // NÃO configurar swipes - usuário quer ver APENAS o cartaz digitado
-    // Também NÃO chamar adicionarSwipes() - manter sem navegação por swipe
+// NÃO configurar swipes - usuário quer ver APENAS o cartaz digitado
+// Também NÃO chamar adicionarSwipes() - manter sem navegação por swipe
 
-    const year = parseInt(input.value);
+const year = parseInt(input.value);
 
-    if (isNaN(year) || year < 1984) {
-        showModal("cartaz");
-        return;
-    }
+if (isNaN(year) || year < 1984) {
+showModal("cartaz");
+return;
+}
 
-    img.style.opacity = 0;
-    setTimeout(() => {
-        img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-        img.alt = `Cartaz ${year}`;
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
+img.alt = `Cartaz ${year}`;
 
-        img.onerror = () => {
-            console.warn(`Cartaz ${year} não encontrado`);
-            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-            img.alt = `Cartaz ${year} - Upload pendente`;
-        };
+img.onerror = () => {
+console.warn(`Cartaz ${year} não encontrado`);
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Cartaz ${year} - Upload pendente`;
+};
 
-        img.style.opacity = 1;
-        input.value = "";
-        
-        // ⚠️ SEM SWIPES - usuário quis ver APENAS este cartaz específico
-    }, 400);
+img.style.opacity = 1;
+input.value = "";
+
+// ⚠️ SEM SWIPES - usuário quis ver APENAS este cartaz específico
+}, 400);
 }
 
 // 🔥 NOVA FUNÇÃO: Configura swipes específicos para o cartaz mostrado
 function configurarSwipesCartazEspecifico(img, yearInicial) {
-    // Remove qualquer listener anterior
-    removerSwipes();
-    
-    const fadeDuration = 500;
-    let cartazAtual = yearInicial;
-    let isCartazSwiping = false;
+// Remove qualquer listener anterior
+removerSwipes();
 
-    function carregarCartazComFallback(ano) {
-        if (isCartazSwiping) return;
-        isCartazSwiping = true;
+const fadeDuration = 500;
+let cartazAtual = yearInicial;
+let isCartazSwiping = false;
 
-        img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-            img.alt = `Cartaz ${ano}`;
+function carregarCartazComFallback(ano) {
+if (isCartazSwiping) return;
+isCartazSwiping = true;
 
-            img.onerror = () => {
-                console.warn(`Cartaz ${ano} não encontrado`);
-                img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-                img.alt = `Cartaz ${ano} - Upload pendente`;
-            };
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+img.alt = `Cartaz ${ano}`;
 
-            img.style.opacity = 1;
-            cartazAtual = ano;
-            setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-        }, fadeDuration);
-    }
+img.onerror = () => {
+console.warn(`Cartaz ${ano} não encontrado`);
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Cartaz ${ano} - Upload pendente`;
+};
 
-    let cartazStartX = 0;
+img.style.opacity = 1;
+cartazAtual = ano;
+setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
+}, fadeDuration);
+}
 
-    const cartazesTouchStart = (e) => {
-        cartazStartX = e.changedTouches[0].screenX;
-    };
-    
-    const cartazesTouchEnd = (e) => {
-        if (isCartazSwiping) return;
+let cartazStartX = 0;
 
-        const cartazEndX = e.changedTouches[0].screenX;
-        const swipeDistance = cartazEndX - cartazStartX;
-        const minSwipeDistance = 50;
-        
-        if (Math.abs(swipeDistance) < minSwipeDistance) {
-            console.log('[SWIPE CARTAZ ESPECÍFICO] Movimento muito pequeno, ignorando');
-            return;
-        }
+const cartazesTouchStart = (e) => {
+cartazStartX = e.changedTouches[0].screenX;
+};
 
-        // Swipe para DIREITA = próximo cartaz (crescente)
-        if (swipeDistance > 0) {
-            const proximoAno = Math.min(cartazAtual + 1, currentYear);
-            if (proximoAno !== cartazAtual) {
-                carregarCartazComFallback(proximoAno);
-            }
-        }
-        // Swipe para ESQUERDA = cartaz anterior (decrescente)  
-        else {
-            const anoAnterior = Math.max(cartazAtual - 1, 1984);
-            if (anoAnterior !== cartazAtual) {
-                carregarCartazComFallback(anoAnterior);
-            }
-        }
-    };
+const cartazesTouchEnd = (e) => {
+if (isCartazSwiping) return;
 
-    // Mouse events
-    let isDragging = false;
-    let dragStartX = 0;
+const cartazEndX = e.changedTouches[0].screenX;
+const swipeDistance = cartazEndX - cartazStartX;
+const minSwipeDistance = 50;
 
-    const cartazesMouseDown = (e) => {
-        e.preventDefault();
-        isDragging = true;
-        dragStartX = e.screenX;
-    };
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE CARTAZ ESPECÍFICO] Movimento muito pequeno, ignorando');
+return;
+}
 
-    const cartazesMouseUp = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        
-        if (isCartazSwiping) return;
+// Swipe para DIREITA = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+const proximoAno = Math.min(cartazAtual + 1, currentYear);
+if (proximoAno !== cartazAtual) {
+carregarCartazComFallback(proximoAno);
+}
+}
+// Swipe para ESQUERDA = cartaz anterior (decrescente)  
+else {
+const anoAnterior = Math.max(cartazAtual - 1, 1984);
+if (anoAnterior !== cartazAtual) {
+carregarCartazComFallback(anoAnterior);
+}
+}
+};
 
-        const dragEndX = e.screenX;
-        const swipeDistance = dragEndX - dragStartX;
-        const minSwipeDistance = 50;
+// Mouse events
+let isDragging = false;
+let dragStartX = 0;
 
-        if (Math.abs(swipeDistance) < minSwipeDistance) {
-            return;
-        }
+const cartazesMouseDown = (e) => {
+e.preventDefault();
+isDragging = true;
+dragStartX = e.screenX;
+};
 
-        // Swipe para DIREITA = próximo cartaz (crescente)
-        if (swipeDistance > 0) {
-            const proximoAno = Math.min(cartazAtual + 1, currentYear);
-            if (proximoAno !== cartazAtual) {
-                carregarCartazComFallback(proximoAno);
-            }
-        }
-        // Swipe para ESQUERDA = cartaz anterior (decrescente)  
-        else {
-            const anoAnterior = Math.max(cartazAtual - 1, 1984);
-            if (anoAnterior !== cartazAtual) {
-                carregarCartazComFallback(anoAnterior);
-            }
-        }
-    };
+const cartazesMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
 
-    // Adicionar listeners específicos para cartaz
-    img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-    img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-    img.addEventListener("mousedown", cartazesMouseDown, false);
-    img.addEventListener("mouseup", cartazesMouseUp, false);
-    img.addEventListener("mouseleave", cartazesMouseUp, false);
+if (isCartazSwiping) return;
+
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - dragStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+return;
+}
+
+// Swipe para DIREITA = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+const proximoAno = Math.min(cartazAtual + 1, currentYear);
+if (proximoAno !== cartazAtual) {
+carregarCartazComFallback(proximoAno);
+}
+}
+// Swipe para ESQUERDA = cartaz anterior (decrescente)  
+else {
+const anoAnterior = Math.max(cartazAtual - 1, 1984);
+if (anoAnterior !== cartazAtual) {
+carregarCartazComFallback(anoAnterior);
+}
+}
+};
+
+// Adicionar listeners específicos para cartaz
+img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+img.addEventListener("mousedown", cartazesMouseDown, false);
+img.addEventListener("mouseup", cartazesMouseUp, false);
+img.addEventListener("mouseleave", cartazesMouseUp, false);
 }
 
 // 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
