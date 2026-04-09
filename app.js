@@ -204,8 +204,9 @@ if (modalYear) modalYear.textContent = currentYear;
 // NOVO: Atualizar o texto completo do parágrafo
 const claraText = getElementSafe("claraOktoberfestText");
 if (claraText) {
-const anosDeOktoberfest = currentYear - 1984;
-claraText.innerHTML = `<strong>41ª edição</strong> da Oktoberfest Blumenau. <strong>1984</strong> a <strong>${currentYear}</strong>`;
+const anosSemFesta = [2020, 2021];
+const edicao = currentYear - 1984 + 1 - anosSemFesta.filter(a => a <= currentYear).length;
+claraText.innerHTML = `<strong>${edicao}ª edição</strong> da Oktoberfest Blumenau. <strong>1984</strong> a <strong>${currentYear}</strong>`;
 }
 
 const yearInput = getElementSafe("yearInput");
