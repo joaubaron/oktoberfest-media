@@ -1,4 +1,4 @@
-// ======== CONFIGURAÇÃO DE CAMINHOS ========
+﻿// ======== CONFIGURAÇÃO DE CAMINHOS ========
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
 
 // ======== VARIÁVEIS GLOBAIS ========
@@ -23,11 +23,6 @@ let animationId = null;
 // VARIÁVEIS DE MÚSICA
 let musicList = [];
 let playedMusicIndices = new Set();
-
-// VARIÁVEIS DE VÍDEO (NOVO)
-let videoList = [];
-let currentVideoIndex = 0;
-let isVideoModeActive = false;
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
@@ -331,266 +326,40 @@ img.src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
 }
 
 // ======== FUNÇÕES DE VÍDEO ========
-// SISTEMA DE VÍDEOS DINÂMICOS (como fotos 2007 e cartazes)
-let videoList = [];           // Lista de URLs dos vídeos disponíveis
-let currentVideoIndex = 0;    // Índice do vídeo atual
-let isVideoModeActive = false; // Se está no modo de navegação de vídeos
+function playVideo() {
+const videoContainer = getElementSafe("video-container");
+const video = getElementSafe("claraVideo");
+const imageContainer = getElementSafe("image-container");
+const audio = document.getElementById("backgroundMusic");
 
-// Detectar todos os vídeos disponíveis (clara1.mp4, clara2.mp4, etc.)
-async function detectarTodosVideos() {
-const videos = [];
-let index = 1;
-const maxTentativas = 50;
+if (!videoContainer || !video || !imageContainer) return;
 
-return new Promise((resolve) => {
-function verificarProximoVideo() {
-if (index > maxTentativas) {
-    resolve(videos);
-    return;
+// Mutar a música de fundo enquanto o vídeo toca
+if (audio) audio.muted = true;
+
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
 }
 
-const videoUrl = `${GITHUB_BASE}/videos/clara${index}.mp4`;
-
-// Usa fetch com HEAD para verificar existência (mais rápido)
-fetch(videoUrl, { method: 'HEAD' })
-    .then(response => {
-        if (response.ok) {
-            console.log(`✅ Vídeo detectado: clara${index}.mp4`);
-            videos.push({
-                url: videoUrl,
-                nome: `clara${index}`,
-                index: index
-            });
-            index++;
-            verificarProximoVideo();
-        } else {
-            console.log(`❌ Vídeo não encontrado: clara${index}.mp4`);
-            resolve(videos);
-        }
-    })
-    .catch(() => {
-        resolve(videos);
-    });
+// Define o source do vídeo do GitHub
+const videoSource = video.querySelector('source');
+if (videoSource) {
+videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
+video.load();
 }
 
-verificarProximoVideo();
+imageContainer.style.visibility = "hidden";
+videoContainer.style.display = "flex";
+updateVideoPositionAndSize();
+
+video.play().catch(error => {
+console.error("Erro ao reproduzir vídeo:", error);
 });
-}
 
-// Tocar vídeo com suporte a múltiplos vídeos e swipe
-// Tocar vídeo com suporte a múltiplos vídeos e swipe
-async function playVideo() {
-    console.log('🎬 playVideo() chamada');
-    
-    const videoContainer = getElementSafe("video-container");
-    const video = getElementSafe("claraVideo");
-    const imageContainer = getElementSafe("image-container");
-    const audio = document.getElementById("backgroundMusic");
-    
-    if (!videoContainer || !video || !imageContainer) {
-        console.error('Elementos de vídeo não encontrados');
-        return;
-    }
-    
-    // Mutar a música de fundo enquanto o vídeo toca
-    if (audio) audio.muted = true;
-    
-    // Parar loop de fotos 2007 se estiver ativo
-    if (loopFoto2007) {
-        clearTimeout(loopFoto2007);
-        loopFoto2007 = null;
-    }
-    
-    // Primeira ativação ou reset: detectar vídeos
-    if (videoList.length === 0) {
-        console.log('🔍 Detectando vídeos...');
-        videoList = await detectarTodosVideos();
-        if (videoList.length === 0) {
-            console.warn('Nenhum vídeo encontrado');
-            if (audio) audio.muted = false;
-            return;
-        }
-        console.log(`🎬 ${videoList.length} vídeo(s) detectado(s)`);
-    }
-    
-    // Sempre começar do primeiro vídeo quando clicar no botão
-    currentVideoIndex = 0;
-    isVideoModeActive = true;
-    
-    // Esconder imagem e mostrar vídeo
-    imageContainer.style.visibility = "hidden";
-    videoContainer.style.display = "flex";
-    updateVideoPositionAndSize();
-    
-    // Carregar e tocar o vídeo
-    const videoUrl = videoList[0].url;
-    const videoSource = video.querySelector('source');
-    if (videoSource) {
-        videoSource.src = videoUrl;
-        video.load();
-    }
-    
-    // Adicionar listeners de swipe
-    video.removeEventListener("touchstart", handleVideoTouchStart);
-    video.removeEventListener("touchend", handleVideoTouchEnd);
-    
-    if (videoList.length > 1) {
-        video.addEventListener("touchstart", handleVideoTouchStart, { passive: false });
-        video.addEventListener("touchend", handleVideoTouchEnd, { passive: false });
-    }
-    
-    video.play().catch(error => {
-        console.error("Erro ao reproduzir vídeo:", error);
-    });
-    
-    video.onended = function() {
-        if (videoList.length > 1 && currentVideoIndex + 1 < videoList.length) {
-            currentVideoIndex++;
-            const nextUrl = videoList[currentVideoIndex].url;
-            videoSource.src = nextUrl;
-            video.load();
-            video.play();
-            mostrarIndicadorVideo();
-        } else if (videoList.length > 1 && currentVideoIndex + 1 >= videoList.length) {
-            // Volta para o primeiro
-            currentVideoIndex = 0;
-            const firstUrl = videoList[0].url;
-            videoSource.src = firstUrl;
-            video.load();
-            video.play();
-            mostrarIndicadorVideo();
-        } else {
-            stopVideo();
-        }
-    };
-    
-    mostrarIndicadorVideo();
-}
-
-function mostrarIndicadorVideo() {
-if (videoList.length <= 1) return;
-
-let indicator = document.getElementById('videoIndicator');
-if (!indicator) {
-indicator = document.createElement('div');
-indicator.id = 'videoIndicator';
-indicator.style.cssText = `
-position: fixed;
-bottom: 80px;
-left: 50%;
-transform: translateX(-50%);
-background: rgba(0,0,0,0.7);
-color: white;
-padding: 5px 12px;
-border-radius: 20px;
-font-size: 12px;
-z-index: 1002;
-pointer-events: none;
-font-family: monospace;
-`;
-document.body.appendChild(indicator);
-}
-indicator.textContent = `📹 ${currentVideoIndex + 1}/${videoList.length}`;
-indicator.style.display = 'block';
-
-// Esconder após 2 segundos
-clearTimeout(window.videoIndicatorTimeout);
-window.videoIndicatorTimeout = setTimeout(() => {
-if (indicator) indicator.style.display = 'none';
-}, 2000);
-}
-
-// Swipe handlers para vídeo
-let videoTouchStartX = 0;
-let isVideoSwiping = false;
-
-function handleVideoTouchStart(e) {
-videoTouchStartX = e.changedTouches[0].screenX;
-}
-
-function handleVideoTouchEnd(e) {
-if (isVideoSwiping || videoList.length <= 1) return;
-
-const videoEndX = e.changedTouches[0].screenX;
-const swipeDistance = videoEndX - videoTouchStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
-
-isVideoSwiping = true;
-
-// Swipe para DIREITA = próximo vídeo
-if (swipeDistance > 0) {
-nextVideo();
-}
-// Swipe para ESQUERDA = vídeo anterior
-else {
-previousVideo();
-}
-
-setTimeout(() => {
-isVideoSwiping = false;
-}, 500);
-}
-
-// Mouse drag para vídeo
-let videoDragStartX = 0;
-let isVideoDragging = false;
-
-function handleVideoMouseDown(e) {
-if (videoList.length <= 1) return;
-e.preventDefault();
-isVideoDragging = true;
-videoDragStartX = e.screenX;
-
-const video = getElementSafe("claraVideo");
-video.addEventListener('mousemove', handleVideoMouseMove);
-video.addEventListener('mouseup', handleVideoMouseUp, { once: true });
-video.addEventListener('mouseleave', handleVideoMouseUp, { once: true });
-}
-
-function handleVideoMouseMove(e) {
-// Apenas para rastrear, sem ação durante o movimento
-}
-
-function handleVideoMouseUp(e) {
-if (!isVideoDragging) return;
-isVideoDragging = false;
-
-const video = getElementSafe("claraVideo");
-video.removeEventListener('mousemove', handleVideoMouseMove);
-
-const dragEndX = e.screenX;
-const swipeDistance = dragEndX - videoDragStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) return;
-
-if (swipeDistance > 0) {
-nextVideo();
-} else {
-previousVideo();
-}
-}
-
-function nextVideo() {
-if (!isVideoModeActive || videoList.length === 0) return;
-
-if (currentVideoIndex + 1 < videoList.length) {
-currentVideoIndex++;
-playVideoByIndex(currentVideoIndex);
-}
-}
-
-function previousVideo() {
-if (!isVideoModeActive || videoList.length === 0) return;
-
-if (currentVideoIndex - 1 >= 0) {
-currentVideoIndex--;
-playVideoByIndex(currentVideoIndex);
-}
+video.onended = function() {
+stopVideo();
+};
 }
 
 function stopVideo() {
@@ -607,13 +376,6 @@ videoContainer.style.display = "none";
 imageContainer.style.visibility = "visible";
 videoContainer.style.top = '0';
 videoContainer.style.left = '0';
-
-// Limpar indicador
-const indicator = document.getElementById('videoIndicator');
-if (indicator) indicator.style.display = 'none';
-
-// Resetar modo vídeo
-isVideoModeActive = false;
 
 // Desmutar e retomar a música de fundo
 if (audio) {
