@@ -24,6 +24,11 @@ let animationId = null;
 let musicList = [];
 let playedMusicIndices = new Set();
 
+// VARIÁVEIS DE VÍDEO (NOVO)
+let videoList = [];
+let currentVideoIndex = 0;
+let isVideoModeActive = false;
+
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
 const currentYear = new Date().getFullYear();
@@ -373,103 +378,93 @@ verificarProximoVideo();
 }
 
 // Tocar vídeo com suporte a múltiplos vídeos e swipe
+// Tocar vídeo com suporte a múltiplos vídeos e swipe
 async function playVideo() {
-const videoContainer = getElementSafe("video-container");
-const video = getElementSafe("claraVideo");
-const imageContainer = getElementSafe("image-container");
-const audio = document.getElementById("backgroundMusic");
-
-if (!videoContainer || !video || !imageContainer) return;
-
-// Mutar a música de fundo enquanto o vídeo toca
-if (audio) audio.muted = true;
-
-// Parar loop de fotos 2007 se estiver ativo
-if (loopFoto2007) {
-clearTimeout(loopFoto2007);
-loopFoto2007 = null;
-}
-
-// Se já está no modo vídeo e tem vídeos, apenas reinicia o atual
-if (isVideoModeActive && videoList.length > 0 && currentVideoIndex < videoList.length) {
-playVideoByIndex(currentVideoIndex);
-return;
-}
-
-// Primeira ativação: detectar vídeos
-if (videoList.length === 0) {
-videoList = await detectarTodosVideos();
-if (videoList.length === 0) {
-console.warn('Nenhum vídeo encontrado');
-return;
-}
-console.log(`🎬 ${videoList.length} vídeo(s) detectado(s)`);
-}
-
-// Iniciar com o primeiro vídeo
-currentVideoIndex = 0;
-isVideoModeActive = true;
-playVideoByIndex(currentVideoIndex);
-}
-
-function playVideoByIndex(index) {
-if (!videoList[index]) {
-console.error(`Vídeo ${index} não existe`);
-return;
-}
-
-const videoContainer = getElementSafe("video-container");
-const video = getElementSafe("claraVideo");
-const imageContainer = getElementSafe("image-container");
-
-if (!videoContainer || !video || !imageContainer) return;
-
-const videoUrl = videoList[index].url;
-const videoNome = videoList[index].nome;
-console.log(`🎬 Tocando vídeo: ${videoNome} (${index + 1}/${videoList.length})`);
-
-// Define o source do vídeo
-const videoSource = video.querySelector('source');
-if (videoSource) {
-videoSource.src = videoUrl;
-video.load();
-}
-
-imageContainer.style.visibility = "hidden";
-videoContainer.style.display = "flex";
-updateVideoPositionAndSize();
-
-// Remover listeners antigos antes de adicionar novos
-video.removeEventListener("touchstart", handleVideoTouchStart);
-video.removeEventListener("touchend", handleVideoTouchEnd);
-video.removeEventListener("mousedown", handleVideoMouseDown);
-
-// Adicionar listeners de swipe para navegação entre vídeos (apenas se tiver mais de 1)
-if (videoList.length > 1) {
-video.addEventListener("touchstart", handleVideoTouchStart, { passive: false });
-video.addEventListener("touchend", handleVideoTouchEnd, { passive: false });
-video.addEventListener("mousedown", handleVideoMouseDown, false);
-}
-
-video.play().catch(error => {
-console.error("Erro ao reproduzir vídeo:", error);
-});
-
-// Quando terminar, vai para o próximo vídeo automaticamente
-video.onended = function() {
-if (videoList.length > 1 && currentVideoIndex + 1 < videoList.length) {
-nextVideo();
-} else if (videoList.length > 1 && currentVideoIndex + 1 >= videoList.length) {
-// Se for o último, volta para o primeiro
-currentVideoIndex = 0;
-playVideoByIndex(currentVideoIndex);
-} else {
-stopVideo();
-}
-};
-
-// Mostrar indicador visual
-mostrarIndicadorVideo();
+    console.log('🎬 playVideo() chamada');
+    
+    const videoContainer = getElementSafe("video-container");
+    const video = getElementSafe("claraVideo");
+    const imageContainer = getElementSafe("image-container");
+    const audio = document.getElementById("backgroundMusic");
+    
+    if (!videoContainer || !video || !imageContainer) {
+        console.error('Elementos de vídeo não encontrados');
+        return;
+    }
+    
+    // Mutar a música de fundo enquanto o vídeo toca
+    if (audio) audio.muted = true;
+    
+    // Parar loop de fotos 2007 se estiver ativo
+    if (loopFoto2007) {
+        clearTimeout(loopFoto2007);
+        loopFoto2007 = null;
+    }
+    
+    // Primeira ativação ou reset: detectar vídeos
+    if (videoList.length === 0) {
+        console.log('🔍 Detectando vídeos...');
+        videoList = await detectarTodosVideos();
+        if (videoList.length === 0) {
+            console.warn('Nenhum vídeo encontrado');
+            if (audio) audio.muted = false;
+            return;
+        }
+        console.log(`🎬 ${videoList.length} vídeo(s) detectado(s)`);
+    }
+    
+    // Sempre começar do primeiro vídeo quando clicar no botão
+    currentVideoIndex = 0;
+    isVideoModeActive = true;
+    
+    // Esconder imagem e mostrar vídeo
+    imageContainer.style.visibility = "hidden";
+    videoContainer.style.display = "flex";
+    updateVideoPositionAndSize();
+    
+    // Carregar e tocar o vídeo
+    const videoUrl = videoList[0].url;
+    const videoSource = video.querySelector('source');
+    if (videoSource) {
+        videoSource.src = videoUrl;
+        video.load();
+    }
+    
+    // Adicionar listeners de swipe
+    video.removeEventListener("touchstart", handleVideoTouchStart);
+    video.removeEventListener("touchend", handleVideoTouchEnd);
+    
+    if (videoList.length > 1) {
+        video.addEventListener("touchstart", handleVideoTouchStart, { passive: false });
+        video.addEventListener("touchend", handleVideoTouchEnd, { passive: false });
+    }
+    
+    video.play().catch(error => {
+        console.error("Erro ao reproduzir vídeo:", error);
+    });
+    
+    video.onended = function() {
+        if (videoList.length > 1 && currentVideoIndex + 1 < videoList.length) {
+            currentVideoIndex++;
+            const nextUrl = videoList[currentVideoIndex].url;
+            videoSource.src = nextUrl;
+            video.load();
+            video.play();
+            mostrarIndicadorVideo();
+        } else if (videoList.length > 1 && currentVideoIndex + 1 >= videoList.length) {
+            // Volta para o primeiro
+            currentVideoIndex = 0;
+            const firstUrl = videoList[0].url;
+            videoSource.src = firstUrl;
+            video.load();
+            video.play();
+            mostrarIndicadorVideo();
+        } else {
+            stopVideo();
+        }
+    };
+    
+    mostrarIndicadorVideo();
 }
 
 function mostrarIndicadorVideo() {
