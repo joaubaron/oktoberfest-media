@@ -522,7 +522,7 @@ verificarProximaImagem();
 function iniciarComImagens(imagensCarregadas) {
 if (imagensCarregadas.length === 0) {
 console.warn("Nenhuma imagem encontrada na pasta kaka");
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+img.src = `${GITHUB_BASE}/fotos/oktoberfest.webp`;
 img.alt = "Imagem padrão";
 return;
 }
@@ -538,7 +538,7 @@ img.alt = primeiraImagem.alt;
 
 img.onerror = () => {
 console.warn(`Erro ao carregar imagem: ${primeiraImagem.alt}`);
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+img.src = `${GITHUB_BASE}/fotos/oktoberfest.webp`;
 };
 
 img.classList.remove("push-left", "push-right");
@@ -566,7 +566,7 @@ img.alt = proxima.alt;
 
 img.onerror = () => {
 console.warn(`Erro ao carregar: ${proxima.alt}`);
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+img.src = `${GITHUB_BASE}/fotos/oktoberfest.webp`;
 };
 
 img.classList.remove("push-right");
