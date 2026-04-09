@@ -1,7 +1,8 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
-// ✅ NOME DO CACHE ESTÁTICO  
-const CACHE_NAME = 'oktoberfest-blumenau-v1';
+// ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
+const CACHE_VERSION = '09.04.2026-0848';
+const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
