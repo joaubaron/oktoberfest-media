@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '09.04.2026-1213';
+const CACHE_VERSION = '09.04.2026-1215';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -17,7 +17,7 @@ let essentialAssets = [
 './rodape.png',
 
 // Fotos de fallback
-`${GITHUB_BASE}/fotos/oktoberfest.png`,
+`${GITHUB_BASE}/fotos/oktoberfest.webp`,
 `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`,
 `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, 
 `${GITHUB_BASE}/fotos/oktoberfestkaka2.jpg`,
@@ -83,7 +83,7 @@ console.log('[SW] Usando cache (offline/fallback)');
 return cached;
 }
 // 🆘 Fallback final
-return caches.match(`${GITHUB_BASE}/fotos/oktoberfest.png`)
+return caches.match(`${GITHUB_BASE}/fotos/oktoberfest.webp`)
 .then(fallback => fallback || new Response('Imagem offline', { status: 503 }));
 });
 })
