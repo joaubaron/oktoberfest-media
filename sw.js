@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '09.04.2026-1338';
+const CACHE_VERSION = '09.04.2026-1339';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -26,7 +26,7 @@ let essentialAssets = [
 `${GITHUB_BASE}/musicas/song_list.json`,
 
 // Vídeo fixo
-`${GITHUB_BASE}/videos/clara.mp4`,
+`${GITHUB_BASE}/videos/clara1.mp4`,
 ];
 
 // ============== INSTALAÇÃO (Pré-Cache) ==============
