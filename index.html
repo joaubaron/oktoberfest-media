@@ -464,9 +464,9 @@ margin: 10px auto;
 .div-clara-video,
 .div-botoes-inferiores,
 .div-cartaz-musica {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    box-sizing: border-box !important;
+padding-left: 16px !important;
+padding-right: 16px !important;
+box-sizing: border-box !important;
 }
 
 /* Ajuste para telas pequenas */
@@ -494,7 +494,7 @@ class="oktoberfest-title"
 
 <!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
-<input type="number" id="yearInput" min="2017" placeholder="Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<input type="number" id="yearInput" min="2017" placeholder="Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
 <button id="drawButton" style="display: none;">Clara 💞</button>  <!-- ⬅️ ADICIONE ESTA LINHA -->
 <button id="videoButton">Vídeo</button>
 </div>
@@ -530,7 +530,7 @@ alt="Foto da Oktoberfest"
 
 <!-- Linha 3: Campo Cartazes + Botão Música -->
 <div class="div-cartaz-musica">
-<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 - 2026" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 - 2026" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
 <button id="musicButton">🎵🎶</button>
 </div>
 
@@ -546,6 +546,24 @@ alt="Foto da Oktoberfest"
 <button>OK</button>
 </div>
 </div>
+
+<script>
+// Fecha teclado ao pressionar Enter nos campos de input
+function handleEnter(event, inputElement) {
+if (event.key === 'Enter') {
+event.preventDefault();
+inputElement.blur();
+
+if (inputElement.id === 'yearInput') {
+const drawButton = document.getElementById('drawButton');
+if (drawButton) drawButton.click();
+} else if (inputElement.id === 'cartazInput') {
+const cartazButton = document.getElementById('cartazButton');
+if (cartazButton) cartazButton.click();
+}
+}
+}
+</script>
 
 <script>
 // O Service Worker é registrado pelo app.js
