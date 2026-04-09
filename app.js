@@ -26,6 +26,9 @@ let playedMusicIndices = new Set();
 
 // VARIÁVEIS DE VÍDEO
 let videoList = [];
+let currentVideoIndex = 0;
+let videoTouchStartX = 0;
+let isVideoSwiping = false;
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
@@ -379,28 +382,88 @@ loopFoto2007 = null;
 }
 
 // Sorteia aleatoriamente entre os vídeos disponíveis (ou usa clara1 como fallback)
+if (videoList.length > 0) {
+currentVideoIndex = Math.floor(Math.random() * videoList.length);
+} else {
+currentVideoIndex = 0;
+}
+
+carregarVideo(currentVideoIndex);
+
+imageContainer.style.visibility = "hidden";
+videoContainer.style.display = "flex";
+updateVideoPositionAndSize();
+
+// Configura swipe de vídeo
+configurarSwipeVideo(video);
+
+video.onended = function() {
+// Avança automaticamente para o próximo vídeo ao terminar
+if (videoList.length > 1) {
+currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
+carregarVideo(currentVideoIndex);
+} else {
+stopVideo();
+}
+};
+}
+
+function carregarVideo(index) {
+const video = getElementSafe("claraVideo");
+if (!video) return;
+
 const videoUrl = videoList.length > 0
-? videoList[Math.floor(Math.random() * videoList.length)]
+? videoList[index]
 : `${GITHUB_BASE}/videos/clara1.mp4`;
 
-// Define o source do vídeo do GitHub
 const videoSource = video.querySelector('source');
 if (videoSource) {
 videoSource.src = videoUrl;
 video.load();
 }
 
-imageContainer.style.visibility = "hidden";
-videoContainer.style.display = "flex";
-updateVideoPositionAndSize();
-
 video.play().catch(error => {
 console.error("Erro ao reproduzir vídeo:", error);
 });
 
-video.onended = function() {
-stopVideo();
-};
+console.log(`🎬 Vídeo ${index + 1}/${videoList.length}: ${videoUrl}`);
+}
+
+function configurarSwipeVideo(video) {
+// Remove listeners anteriores para não duplicar
+video.removeEventListener('touchstart', videoTouchStart);
+video.removeEventListener('touchend', videoTouchEnd);
+
+video.addEventListener('touchstart', videoTouchStart, { passive: true });
+video.addEventListener('touchend', videoTouchEnd, { passive: true });
+}
+
+function videoTouchStart(e) {
+videoTouchStartX = e.changedTouches[0].screenX;
+}
+
+function videoTouchEnd(e) {
+if (isVideoSwiping || videoList.length <= 1) return;
+
+const videoTouchEndX = e.changedTouches[0].screenX;
+const swipeDistance = videoTouchEndX - videoTouchStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) return;
+
+isVideoSwiping = true;
+
+if (swipeDistance < 0) {
+// Swipe para ESQUERDA = próximo vídeo
+currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
+} else {
+// Swipe para DIREITA = vídeo anterior
+currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
+}
+
+carregarVideo(currentVideoIndex);
+
+setTimeout(() => { isVideoSwiping = false; }, 600);
 }
 
 function stopVideo() {
@@ -410,6 +473,10 @@ const imageContainer = getElementSafe("image-container");
 const audio = document.getElementById("backgroundMusic");
 
 if (!videoContainer || !video || !imageContainer) return;
+
+// Remove swipe listeners do vídeo
+video.removeEventListener('touchstart', videoTouchStart);
+video.removeEventListener('touchend', videoTouchEnd);
 
 video.pause();
 video.currentTime = 0;
