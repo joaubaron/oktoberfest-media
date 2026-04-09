@@ -861,7 +861,7 @@ firstLine.innerText = "Cartazes da Oktoberfest entre";
 secondLine.innerHTML = `<strong>1984 a ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
 } else if (context === "oktoberfest") {
 firstLine.innerText = "Clara foi na Oktoberfest entre";
-secondLine.innerHTML = `<strong>2017 a ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
+secondLine.innerHTML = `<strong>2017 e ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
 }
 // REMOVA o caso "cartaz_nao_encontrado" - não é mais usado
 }
