@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Prosit</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prosit">
+<meta name="theme-color" content="#03687e">
+<link rel="icon" href="fotos/oktoberfest.png">
+<style>
+/* ====================== RESET / BODY ====================== */
+body {
+font-family: "Roboto", sans-serif;
+text-align: center;
+background: #f3f3f3;
+margin: 0;
+padding: 10px;
+overflow: hidden;
+}
+
+/* ====================== TITULOS ====================== */
+h1 {
+color: #03687e;
+margin-bottom: 10px;
+}
+
+/* ====================== RODAPÉ ====================== */
+.oktoberfest-title {
+max-width: 90%;
+height: auto;
+display: block;
+margin: 0 auto 10px auto;
+font-family: inherit;
+text-shadow: none;
+box-shadow: none;
+border-radius: 0;
+position: relative;
+z-index: 1000;
+margin-top: 10px;
+}
+
+/* ====================== INPUTS ====================== */
+input {
+padding: 10px;
+font-size: 15px;
+width: 160px;
+text-align: center;
+border: 2px solid #03687e;
+border-radius: 8px;
+color: #03687e;
+box-sizing: border-box;
+}
+
+input:focus {
+outline: none;
+border-color: #03687e;
+box-shadow: 0 0 0 3px rgba(11, 95, 165, 0.1);
+}
+
+/* ====================== BOTÕES PADRÃO ====================== */
+button {
+margin-left: 10px;
+padding: 6px 12px;
+font-size: 12px;
+height: 34px;
+background: #03687e;
+color: white;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+transition: background 0.3s;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+button:hover {
+background: #025a6e;
+}
+
+button:disabled {
+background: #ccc;
+cursor: not-allowed;
+}
+
+/* ====================== CONTAINER DA IMAGEM ====================== */
+#image-container {
+margin-top: 25px;
+position: relative;
+background-color: #f3f3f3;
+display: inline-block;
+z-index: 1;
+}
+
+#photo {
+max-width: 90%;
+max-height: 60vh;
+border: none;
+border-radius: 0;
+box-shadow: none;
+transform: translateY(-5px);
+transition: opacity 0.6s ease-in-out, transform 1.5s ease-in-out, filter 0.8s ease-in-out;
+}
+
+/* Remove filete e sombra apenas da imagem inicial oktoberfest.png */
+#photo[src="fotos/oktoberfest.png"] {
+border: none !important;
+box-shadow: none !important;
+border-radius: 0 !important;
+}
+
+/* ====================== TEXTOS ====================== */
+.amarelo {
+color: #D8B115;
+}
+
+.texto-azul {
+color: #03687e;
+font-size: 12.8px;
+}
+
+/* ====================== MODAL ====================== */
+#alertModal {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%) scale(0.7);
+background: #ffffff;
+padding: 20px 30px;
+border-radius: 16px;
+box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+text-align: center;
+color: #333333;
+font-size: 15px;
+font-weight: 400;
+display: none;
+z-index: 1000;
+max-width: 300px;
+opacity: 0;
+transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+#alertModal.show {
+display: flex;
+opacity: 1;
+transform: translate(-50%, -50%) scale(1);
+}
+
+#alertModal .modal-content {
+    min-width: 250px;
+    max-width: 320px;
+    text-align: center;
+    display: flex; /* 🔥 NOVO */
+    flex-direction: column; /* 🔥 NOVO */
+    align-items: center; /* 🔥 NOVO - centraliza horizontalmente */
+}
+
+#alertModal button {
+    margin-top: 14px;
+    padding: 6px 18px;
+    background: #03687e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.25s;
+    /* 🔥 O botão já ficará centralizado por causa do align-items acima */
+}
+
+#alertModal button:hover {
+    background: #03687e;
+}
+
+/* ====================== CANVAS FOGOS ====================== */
+canvas {
+position: fixed;
+top: 0;
+left: 0;
+pointer-events: none;
+z-index: 999;
+}
+
+/* ====================== RESPONSIVO ====================== */
+@media (max-width: 480px) {
+.oktoberfest-title {
+font-size: 1.5em;
+}
+input, button {
+font-size: 14px;
+padding: 8px 15px;
+}
+}
+
+/* ====================== BOTÕES SUPERIORES (Clara e Vídeo) ====================== */
+#drawButton, #videoButton {
+height: 35px;
+padding: 10px 20px;
+font-size: 12px;
+}
+
+#drawButton {
+background: #03687e;
+color: white;
+}
+
+#drawButton:hover {
+background: #025a6e;
+}
+
+#drawButton:disabled {
+background: #ccc;
+cursor: not-allowed;
+}
+
+#videoButton {
+background: #D8B115;
+color: white;
+}
+
+#videoButton:hover {
+background: #c19e10;
+}
+
+/* ====================== CAMPO "ano da Clara" ====================== */
+#yearInput {
+width: 130px;
+height: 35px;
+font-size: 12px;
+padding: 10px;
+border: 2px solid #03687e;
+border-radius: 8px;
+color: #03687e;
+text-align: center;
+box-sizing: border-box;
+}
+
+/* ====================== CONTAINER DO VÍDEO ====================== */
+#video-container {
+display: none;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+justify-content: center;
+align-items: center;
+z-index: 500;
+}
+
+/* ====================== VÍDEO ====================== */
+#claraVideo {
+border: 1.5px solid #000;
+border-radius: 0;
+box-shadow: none;
+max-width: 90%;
+max-height: 60vh;
+z-index: 501;
+}
+
+/* ====================== BOTÕES INFERIORES (Prosit, 2007, Cartazes) ====================== */
+#resetButton {
+width: 120px;
+}
+
+#foto2007Button {
+width: 90px;
+}
+
+#cartazes {
+width: 95px;
+}
+
+/* ====================== CAMPO "ano do cartaz" ====================== */
+#cartazInput {
+width: 130px;
+height: 34px;
+font-size: 12px;
+padding: 6px;
+text-align: center;
+border: 2px solid #03687e;
+border-radius: 8px;
+color: #03687e;
+box-sizing: border-box;
+}
+
+/* ====================== BOTÃO "Ver cartaz" ====================== */
+#cartazButton {
+width: 115px;
+}
+
+/* ====================== BOTÃO MÚSICA ====================== */
+#musicButton {
+background: #D8B115;
+color: white;
+font-size: 14px; 
+width: 70px;
+}
+
+#musicButton:hover {
+background: #c19e10;
+}
+
+/* ====================== INDICADOR DE OFFLINE ====================== */
+body.offline::before {
+content: "📴 Modo Offline";
+position: fixed;
+top: 10px;
+right: 10px;
+background: #ff4444;
+color: white;
+padding: 5px 10px;
+border-radius: 5px;
+font-size: 12px;
+z-index: 10000;
+animation: pulse 2s infinite;
+} 
+
+@keyframes pulse {
+0% { opacity: 0.7; }
+50% { opacity: 1; }
+100% { opacity: 0.7; }
+}
+
+/* Ajustes para modo offline */
+.offline .online-only {
+opacity: 0.5;
+pointer-events: none;
+}
+
+/* ====================== LAZY LOADING ====================== */
+.lazy {
+opacity: 0;
+transition: opacity 0.3s ease-in;
+}
+
+.lazy-loaded {
+opacity: 1;
+}
+
+/* Placeholder enquanto carrega */
+.lazy-placeholder {
+background: #f0f0f0;
+display: flex;
+align-items: center;
+justify-content: center;
+color: #03687e;
+font-size: 14px;
+}
+
+/* ====================== PUSH (Animações de Troca) ====================== */
+img {
+transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+transform: translateX(0);
+}
+
+img.push-left {
+transform: translateX(-100%);
+}
+
+img.push-right {
+transform: translateX(100%);
+}
+
+/* ====================== BORDA PARA CARTAZES ====================== */
+#photo[src*="cartaz"] {
+border: 1px solid #000 !important;
+border-radius: 0 !important;
+box-shadow: none !important;
+box-sizing: border-box;
+}
+
+/* ====================== BORDA PARA FOTOS DA CLARA ====================== */
+#photo[src*="oktoberfest20"] {
+border: 1px solid #000 !important;
+border-radius: 0 !important;
+box-shadow: none !important;
+box-sizing: border-box;
+}
+
+/* 🔽 Diminui fonte dos botões principais */
+#resetButton,
+#foto2007Button,
+#cartazes,
+#cartazButton {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+}
+
+</style>
+</head>
+<body>
+
+<img
+src="titulo.png"
+alt="Título Oktoberfest"
+class="oktoberfest-title"
+/>
+
+<p class="texto-azul" id="claraOktoberfestText"></p>
+
+<div style="margin-top: 10px; display: flex; justify-content: center; align-items: center;">
+<input type="number" id="yearInput" min="2017" placeholder="ano da Clara">
+<button id="drawButton">Clara 💞</button>
+<button id="videoButton">Vídeo</button>
+</div>
+
+<div id="video-container">
+<video id="claraVideo" width="400" controls>
+<source src="https://joaubaron.github.io/oktoberfest-media/videos/clara.mp4" type="video/mp4">
+Seu navegador não suporta o elemento de vídeo.
+</video>
+</div>
+
+<img
+src="rodape.png"
+alt="Título Oktoberfest"
+class="oktoberfest-title"
+style="margin-top:15px; position: relative; z-index: 1001;"
+/>
+
+<div id="image-container">
+<img
+id="photo"
+src="oktoberfest.png"
+alt="Foto da Oktoberfest"
+/>
+</div>
+
+<div
+id="buttons-container"
+style="margin-top: 15px; display: flex; width: 100%; justify-content: center; align-items: center; gap: 0px; margin-left: -5px;"
+>
+<button id="resetButton">Prosit&nbsp;<span id="anoVigente"></span></button>
+<button id="foto2007Button">❤️ 2007</button>
+<button id="cartazes">Cartazes</button>
+</div>
+
+<div
+id="cartazSearch"
+style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 0px;"
+>
+<input type="number" id="cartazInput" min="1984" placeholder="ano do cartaz" />
+<button id="cartazButton">Ver cartaz</button>
+<button id="musicButton">🎵🎶</button>
+</div>
+
+<audio id="backgroundMusic"></audio>
+<canvas id="fireworks"></canvas>
+
+<div id="alertModal">
+<div class="modal-content">
+<div style="margin-bottom: 8px;">Digite um ano entre</div>
+<div>
+<strong>2017 e <span id="modalYear"></span>! <span style="font-size: 20px;">🍺</span></strong>
+</div>
+<button>OK</button>
+</div>
+</div>
+
+<script>
+// O Service Worker é registrado pelo app.js
+// Detectar conectividade
+window.addEventListener('online', () => {
+    console.log('🌐 Online - sincronizando...');
+    document.body.classList.remove('offline');
+});
+
+window.addEventListener('offline', () => {
+    console.log('📴 Offline - usando cache');
+    document.body.classList.add('offline');
+});
+
+// Verificar estado inicial
+if (!navigator.onLine) {
+    document.body.classList.add('offline');
+    console.log('📱 Iniciando em modo offline');
+}
+</script>
+
+<script src="app.js"></script>
+</body>
+</html>
