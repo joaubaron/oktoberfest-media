@@ -345,7 +345,7 @@ loopFoto2007 = null;
 // Define o source do vídeo do GitHub
 const videoSource = video.querySelector('source');
 if (videoSource) {
-videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
+videoSource.src = `${GITHUB_BASE}/videos/clara1.mp4`;
 video.load();
 }
 
