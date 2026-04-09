@@ -326,7 +326,54 @@ img.src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
 }
 
 // ======== FUNÇÕES DE VÍDEO ========
-function playVideo() {
+// SISTEMA DE VÍDEOS DINÂMICOS (como fotos 2007 e cartazes)
+let videoList = [];           // Lista de URLs dos vídeos disponíveis
+let currentVideoIndex = 0;    // Índice do vídeo atual
+let isVideoModeActive = false; // Se está no modo de navegação de vídeos
+
+// Detectar todos os vídeos disponíveis (clara1.mp4, clara2.mp4, etc.)
+async function detectarTodosVideos() {
+const videos = [];
+let index = 1;
+const maxTentativas = 50;
+
+return new Promise((resolve) => {
+function verificarProximoVideo() {
+if (index > maxTentativas) {
+    resolve(videos);
+    return;
+}
+
+const videoUrl = `${GITHUB_BASE}/videos/clara${index}.mp4`;
+
+// Usa fetch com HEAD para verificar existência (mais rápido)
+fetch(videoUrl, { method: 'HEAD' })
+    .then(response => {
+        if (response.ok) {
+            console.log(`✅ Vídeo detectado: clara${index}.mp4`);
+            videos.push({
+                url: videoUrl,
+                nome: `clara${index}`,
+                index: index
+            });
+            index++;
+            verificarProximoVideo();
+        } else {
+            console.log(`❌ Vídeo não encontrado: clara${index}.mp4`);
+            resolve(videos);
+        }
+    })
+    .catch(() => {
+        resolve(videos);
+    });
+}
+
+verificarProximoVideo();
+});
+}
+
+// Tocar vídeo com suporte a múltiplos vídeos e swipe
+async function playVideo() {
 const videoContainer = getElementSafe("video-container");
 const video = getElementSafe("claraVideo");
 const imageContainer = getElementSafe("image-container");
@@ -337,15 +384,54 @@ if (!videoContainer || !video || !imageContainer) return;
 // Mutar a música de fundo enquanto o vídeo toca
 if (audio) audio.muted = true;
 
+// Parar loop de fotos 2007 se estiver ativo
 if (loopFoto2007) {
 clearTimeout(loopFoto2007);
 loopFoto2007 = null;
 }
 
-// Define o source do vídeo do GitHub
+// Se já está no modo vídeo e tem vídeos, apenas reinicia o atual
+if (isVideoModeActive && videoList.length > 0 && currentVideoIndex < videoList.length) {
+playVideoByIndex(currentVideoIndex);
+return;
+}
+
+// Primeira ativação: detectar vídeos
+if (videoList.length === 0) {
+videoList = await detectarTodosVideos();
+if (videoList.length === 0) {
+console.warn('Nenhum vídeo encontrado');
+return;
+}
+console.log(`🎬 ${videoList.length} vídeo(s) detectado(s)`);
+}
+
+// Iniciar com o primeiro vídeo
+currentVideoIndex = 0;
+isVideoModeActive = true;
+playVideoByIndex(currentVideoIndex);
+}
+
+function playVideoByIndex(index) {
+if (!videoList[index]) {
+console.error(`Vídeo ${index} não existe`);
+return;
+}
+
+const videoContainer = getElementSafe("video-container");
+const video = getElementSafe("claraVideo");
+const imageContainer = getElementSafe("image-container");
+
+if (!videoContainer || !video || !imageContainer) return;
+
+const videoUrl = videoList[index].url;
+const videoNome = videoList[index].nome;
+console.log(`🎬 Tocando vídeo: ${videoNome} (${index + 1}/${videoList.length})`);
+
+// Define o source do vídeo
 const videoSource = video.querySelector('source');
 if (videoSource) {
-videoSource.src = `${GITHUB_BASE}/videos/clara.mp4`;
+videoSource.src = videoUrl;
 video.load();
 }
 
@@ -353,13 +439,163 @@ imageContainer.style.visibility = "hidden";
 videoContainer.style.display = "flex";
 updateVideoPositionAndSize();
 
+// Remover listeners antigos antes de adicionar novos
+video.removeEventListener("touchstart", handleVideoTouchStart);
+video.removeEventListener("touchend", handleVideoTouchEnd);
+video.removeEventListener("mousedown", handleVideoMouseDown);
+
+// Adicionar listeners de swipe para navegação entre vídeos (apenas se tiver mais de 1)
+if (videoList.length > 1) {
+video.addEventListener("touchstart", handleVideoTouchStart, { passive: false });
+video.addEventListener("touchend", handleVideoTouchEnd, { passive: false });
+video.addEventListener("mousedown", handleVideoMouseDown, false);
+}
+
 video.play().catch(error => {
 console.error("Erro ao reproduzir vídeo:", error);
 });
 
+// Quando terminar, vai para o próximo vídeo automaticamente
 video.onended = function() {
+if (videoList.length > 1 && currentVideoIndex + 1 < videoList.length) {
+nextVideo();
+} else if (videoList.length > 1 && currentVideoIndex + 1 >= videoList.length) {
+// Se for o último, volta para o primeiro
+currentVideoIndex = 0;
+playVideoByIndex(currentVideoIndex);
+} else {
 stopVideo();
+}
 };
+
+// Mostrar indicador visual
+mostrarIndicadorVideo();
+}
+
+function mostrarIndicadorVideo() {
+if (videoList.length <= 1) return;
+
+let indicator = document.getElementById('videoIndicator');
+if (!indicator) {
+indicator = document.createElement('div');
+indicator.id = 'videoIndicator';
+indicator.style.cssText = `
+position: fixed;
+bottom: 80px;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(0,0,0,0.7);
+color: white;
+padding: 5px 12px;
+border-radius: 20px;
+font-size: 12px;
+z-index: 1002;
+pointer-events: none;
+font-family: monospace;
+`;
+document.body.appendChild(indicator);
+}
+indicator.textContent = `📹 ${currentVideoIndex + 1}/${videoList.length}`;
+indicator.style.display = 'block';
+
+// Esconder após 2 segundos
+clearTimeout(window.videoIndicatorTimeout);
+window.videoIndicatorTimeout = setTimeout(() => {
+if (indicator) indicator.style.display = 'none';
+}, 2000);
+}
+
+// Swipe handlers para vídeo
+let videoTouchStartX = 0;
+let isVideoSwiping = false;
+
+function handleVideoTouchStart(e) {
+videoTouchStartX = e.changedTouches[0].screenX;
+}
+
+function handleVideoTouchEnd(e) {
+if (isVideoSwiping || videoList.length <= 1) return;
+
+const videoEndX = e.changedTouches[0].screenX;
+const swipeDistance = videoEndX - videoTouchStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+return;
+}
+
+isVideoSwiping = true;
+
+// Swipe para DIREITA = próximo vídeo
+if (swipeDistance > 0) {
+nextVideo();
+}
+// Swipe para ESQUERDA = vídeo anterior
+else {
+previousVideo();
+}
+
+setTimeout(() => {
+isVideoSwiping = false;
+}, 500);
+}
+
+// Mouse drag para vídeo
+let videoDragStartX = 0;
+let isVideoDragging = false;
+
+function handleVideoMouseDown(e) {
+if (videoList.length <= 1) return;
+e.preventDefault();
+isVideoDragging = true;
+videoDragStartX = e.screenX;
+
+const video = getElementSafe("claraVideo");
+video.addEventListener('mousemove', handleVideoMouseMove);
+video.addEventListener('mouseup', handleVideoMouseUp, { once: true });
+video.addEventListener('mouseleave', handleVideoMouseUp, { once: true });
+}
+
+function handleVideoMouseMove(e) {
+// Apenas para rastrear, sem ação durante o movimento
+}
+
+function handleVideoMouseUp(e) {
+if (!isVideoDragging) return;
+isVideoDragging = false;
+
+const video = getElementSafe("claraVideo");
+video.removeEventListener('mousemove', handleVideoMouseMove);
+
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - videoDragStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) return;
+
+if (swipeDistance > 0) {
+nextVideo();
+} else {
+previousVideo();
+}
+}
+
+function nextVideo() {
+if (!isVideoModeActive || videoList.length === 0) return;
+
+if (currentVideoIndex + 1 < videoList.length) {
+currentVideoIndex++;
+playVideoByIndex(currentVideoIndex);
+}
+}
+
+function previousVideo() {
+if (!isVideoModeActive || videoList.length === 0) return;
+
+if (currentVideoIndex - 1 >= 0) {
+currentVideoIndex--;
+playVideoByIndex(currentVideoIndex);
+}
 }
 
 function stopVideo() {
@@ -376,6 +612,13 @@ videoContainer.style.display = "none";
 imageContainer.style.visibility = "visible";
 videoContainer.style.top = '0';
 videoContainer.style.left = '0';
+
+// Limpar indicador
+const indicator = document.getElementById('videoIndicator');
+if (indicator) indicator.style.display = 'none';
+
+// Resetar modo vídeo
+isVideoModeActive = false;
 
 // Desmutar e retomar a música de fundo
 if (audio) {
