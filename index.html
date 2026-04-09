@@ -150,30 +150,30 @@ transform: translate(-50%, -50%) scale(1);
 }
 
 #alertModal .modal-content {
-    min-width: 250px;
-    max-width: 320px;
-    text-align: center;
-    display: flex; /* 🔥 NOVO */
-    flex-direction: column; /* 🔥 NOVO */
-    align-items: center; /* 🔥 NOVO - centraliza horizontalmente */
+min-width: 250px;
+max-width: 320px;
+text-align: center;
+display: flex; /* 🔥 NOVO */
+flex-direction: column; /* 🔥 NOVO */
+align-items: center; /* 🔥 NOVO - centraliza horizontalmente */
 }
 
 #alertModal button {
-    margin-top: 14px;
-    padding: 6px 18px;
-    background: #03687e;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background 0.25s;
-    /* 🔥 O botão já ficará centralizado por causa do align-items acima */
+margin-top: 14px;
+padding: 6px 18px;
+background: #03687e;
+color: #fff;
+border: none;
+border-radius: 12px;
+cursor: pointer;
+font-size: 14px;
+font-weight: 500;
+transition: background 0.25s;
+/* 🔥 O botão já ficará centralizado por causa do align-items acima */
 }
 
 #alertModal button:hover {
-    background: #03687e;
+background: #03687e;
 }
 
 /* ====================== CANVAS FOGOS ====================== */
@@ -387,8 +387,8 @@ box-sizing: border-box;
 #foto2007Button,
 #cartazes,
 #cartazButton {
-    font-size: 12px !important;
-    padding: 5px 10px !important;
+font-size: 12px !important;
+padding: 5px 10px !important;
 }
 
 </style>
@@ -403,9 +403,9 @@ class="oktoberfest-title"
 
 <p class="texto-azul" id="claraOktoberfestText"></p>
 
-<div style="margin-top: 10px; display: flex; justify-content: center; align-items: center;">
-<input type="number" id="yearInput" min="2017" placeholder="ano da Clara">
-<button id="drawButton">Clara 💞</button>
+<div style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+<input type="number" id="yearInput" min="2017" placeholder="Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<button id="drawButton" style="display: none;">Clara 💞</button>
 <button id="videoButton">Vídeo</button>
 </div>
 
@@ -420,7 +420,7 @@ Seu navegador não suporta o elemento de vídeo.
 src="rodape.png"
 alt="Título Oktoberfest"
 class="oktoberfest-title"
-style="margin-top:15px; position: relative; z-index: 1001;"
+style="margin-top:15px; position: relative; z-index: 1001; width: 70%; max-width: 350px;"
 />
 
 <div id="image-container">
@@ -433,19 +433,19 @@ alt="Foto da Oktoberfest"
 
 <div
 id="buttons-container"
-style="margin-top: 15px; display: flex; width: 100%; justify-content: center; align-items: center; gap: 0px; margin-left: -5px;"
+style="margin-top: 15px; display: flex; width: 100%; justify-content: center; align-items: center; gap: 10px;"
 >
-<button id="resetButton">Prosit&nbsp;<span id="anoVigente"></span></button>
-<button id="foto2007Button">❤️ 2007</button>
-<button id="cartazes">Cartazes</button>
+<button id="resetButton" style="width: 100px;">Prosit&nbsp;<span id="anoVigente"></span></button>
+<button id="foto2007Button" style="width: 80px;">❤️ 2007</button>
+<button id="cartazes" style="width: 110px;">Ver cartazes</button>
 </div>
 
 <div
 id="cartazSearch"
-style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 0px;"
+style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;"
 >
-<input type="number" id="cartazInput" min="1984" placeholder="ano do cartaz" />
-<button id="cartazButton">Ver cartaz</button>
+<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 - 2026" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<button id="cartazButton" style="display: none;">Ver cartaz</button>
 <button id="musicButton">🎵🎶</button>
 </div>
 
@@ -456,7 +456,7 @@ style="margin-top: 10px; display: flex; justify-content: center; align-items: ce
 <div class="modal-content">
 <div style="margin-bottom: 8px;">Digite um ano entre</div>
 <div>
-<strong>2017 e <span id="modalYear"></span>! <span style="font-size: 20px;">🍺</span></strong>
+<strong>2017 e <span id="modalYear"></span>! <span style="font-size: 20px;">🥨</span></strong>
 </div>
 <button>OK</button>
 </div>
@@ -466,19 +466,19 @@ style="margin-top: 10px; display: flex; justify-content: center; align-items: ce
 // O Service Worker é registrado pelo app.js
 // Detectar conectividade
 window.addEventListener('online', () => {
-    console.log('🌐 Online - sincronizando...');
-    document.body.classList.remove('offline');
+console.log('🌐 Online - sincronizando...');
+document.body.classList.remove('offline');
 });
 
 window.addEventListener('offline', () => {
-    console.log('📴 Offline - usando cache');
-    document.body.classList.add('offline');
+console.log('📴 Offline - usando cache');
+document.body.classList.add('offline');
 });
 
 // Verificar estado inicial
 if (!navigator.onLine) {
-    document.body.classList.add('offline');
-    console.log('📱 Iniciando em modo offline');
+document.body.classList.add('offline');
+console.log('📱 Iniciando em modo offline');
 }
 </script>
 
