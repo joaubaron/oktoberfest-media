@@ -101,11 +101,6 @@ if (!audio) return;
 audio.volume = 0.5;
 await loadMusicList();
 
-// Assim que as músicas carregarem, já toca automaticamente
-if (musicList.length > 0) {
-playRandomMusic();
-}
-
 // Quando terminar, toca outra automaticamente
 audio.addEventListener('ended', playRandomMusic);
 
@@ -114,6 +109,18 @@ const musicButton = document.getElementById('musicButton');
 if (musicButton) {
 musicButton.addEventListener('click', handleMusicButtonClick);
 }
+
+// Toca no primeiro toque/clique do usuário na página
+const playOnFirstInteraction = () => {
+if (musicList.length > 0) {
+playRandomMusic();
+}
+document.removeEventListener('touchstart', playOnFirstInteraction);
+document.removeEventListener('click', playOnFirstInteraction);
+};
+
+document.addEventListener('touchstart', playOnFirstInteraction, { once: true });
+document.addEventListener('click', playOnFirstInteraction, { once: true });
 }
 
 // ======== INICIALIZAÇÃO DA APLICAÇÃO ========
