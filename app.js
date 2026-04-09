@@ -24,6 +24,9 @@ let animationId = null;
 let musicList = [];
 let playedMusicIndices = new Set();
 
+// VARIÁVEIS DE VÍDEO
+let videoList = [];
+
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
 const currentYear = new Date().getFullYear();
@@ -144,6 +147,7 @@ await initializeYearsWithDetection();
 // 5. Resto da inicialização
 setupEventListeners();
 await setupMusic();
+loadVideoList(); // Detecta vídeos em background (não-blocking)
 setupCanvasAndFireworks();
 setupLazyLoading();
 }
@@ -326,6 +330,31 @@ img.src = `${GITHUB_BASE}/cartazes/cartaz${y}.jpg`;
 }
 
 // ======== FUNÇÕES DE VÍDEO ========
+
+// Detecta automaticamente todos os vídeos clara1.mp4, clara2.mp4, etc.
+async function loadVideoList() {
+videoList = [];
+let index = 1;
+const maxTentativas = 20;
+
+while (index <= maxTentativas) {
+const url = `${GITHUB_BASE}/videos/clara${index}.mp4`;
+try {
+const response = await fetch(url, { method: 'HEAD' });
+if (response.ok) {
+videoList.push(url);
+index++;
+} else {
+break;
+}
+} catch {
+break;
+}
+}
+
+console.log(`🎬 ${videoList.length} vídeo(s) encontrado(s)`);
+}
+
 function playVideo() {
 const videoContainer = getElementSafe("video-container");
 const video = getElementSafe("claraVideo");
@@ -342,10 +371,15 @@ clearTimeout(loopFoto2007);
 loopFoto2007 = null;
 }
 
+// Sorteia aleatoriamente entre os vídeos disponíveis (ou usa clara1 como fallback)
+const videoUrl = videoList.length > 0
+? videoList[Math.floor(Math.random() * videoList.length)]
+: `${GITHUB_BASE}/videos/clara1.mp4`;
+
 // Define o source do vídeo do GitHub
 const videoSource = video.querySelector('source');
 if (videoSource) {
-videoSource.src = `${GITHUB_BASE}/videos/clara1.mp4`;
+videoSource.src = videoUrl;
 video.load();
 }
 

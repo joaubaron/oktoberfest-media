@@ -24,9 +24,6 @@ let essentialAssets = [
 
 // JSON de músicas
 `${GITHUB_BASE}/musicas/song_list.json`,
-
-// Vídeo fixo
-`${GITHUB_BASE}/videos/clara1.mp4`,
 ];
 
 // ============== INSTALAÇÃO (Pré-Cache) ==============
@@ -61,7 +58,7 @@ const isGithubAsset = url.origin === 'https://joaubaron.github.io';
 
 if (isGithubAsset) {
 // 🎯 ESTRATÉGIA OTIMIZADA: Network-First para conteúdo dinâmico
-if (url.pathname.includes('/fotos/') || url.pathname.includes('/cartazes/')) {
+if (url.pathname.includes('/fotos/') || url.pathname.includes('/cartazes/') || url.pathname.includes('/videos/')) {
 event.respondWith(
 fetch(event.request) // 🔥 TENTA REDE PRIMEIRO
 .then(networkResponse => {
