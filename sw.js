@@ -26,7 +26,7 @@ let essentialAssets = [
 `${GITHUB_BASE}/musicas/song_list.json`,
 
 // Vídeo fixo
-`${GITHUB_BASE}/videos/clara.mp4`,
+`${GITHUB_BASE}/videos/clara1.mp4`,
 ];
 
 // ============== INSTALAÇÃO (Pré-Cache) ==============
