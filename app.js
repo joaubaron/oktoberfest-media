@@ -1,4 +1,4 @@
-﻿// ======== CONFIGURAÇÃO DE CAMINHOS ========
+// ======== CONFIGURAÇÃO DE CAMINHOS ========
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
 
 // ======== VARIÁVEIS GLOBAIS ========
@@ -337,17 +337,24 @@ videoList = [];
 let index = 1;
 const maxTentativas = 20;
 
+function verificarVideo(url) {
+return new Promise((resolve) => {
+const vid = document.createElement('video');
+vid.preload = 'metadata';
+const timeout = setTimeout(() => { vid.src = ''; resolve(false); }, 5000);
+vid.onloadedmetadata = () => { clearTimeout(timeout); vid.src = ''; resolve(true); };
+vid.onerror = () => { clearTimeout(timeout); resolve(false); };
+vid.src = url;
+});
+}
+
 while (index <= maxTentativas) {
 const url = `${GITHUB_BASE}/videos/clara${index}.mp4`;
-try {
-const response = await fetch(url, { method: 'HEAD' });
-if (response.ok) {
+const existe = await verificarVideo(url);
+if (existe) {
 videoList.push(url);
 index++;
 } else {
-break;
-}
-} catch {
 break;
 }
 }
