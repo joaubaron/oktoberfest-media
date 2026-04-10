@@ -17,7 +17,7 @@ let essentialAssets = [
 './rodape.png',
 
 // Fotos de fallback
-`${GITHUB_BASE}/fotos/oktoberfest.webp`,
+`${GITHUB_BASE}/fotos/oktoberfest.png`,
 `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`,
 `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, 
 `${GITHUB_BASE}/fotos/oktoberfestkaka2.jpg`,
@@ -80,7 +80,7 @@ console.log('[SW] Usando cache (offline/fallback)');
 return cached;
 }
 // 🆘 Fallback final
-return caches.match(`${GITHUB_BASE}/fotos/oktoberfest.webp`)
+return caches.match(`${GITHUB_BASE}/fotos/oktoberfest.png`)
 .then(fallback => fallback || new Response('Imagem offline', { status: 503 }));
 });
 })
