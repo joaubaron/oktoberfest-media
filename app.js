@@ -892,20 +892,21 @@ if (loopFoto2007) {
 clearTimeout(loopFoto2007);
 loopFoto2007 = null;
 }
-// Garante que o swipe de fotos esteja ativo
 adicionarSwipes();
 
 if (isDrawing) return;
 
-const year = parseInt(document.getElementById("yearInput").value);
+const yearInput = document.getElementById("yearInput");
+const year = parseInt(yearInput.value);
 const img = limparListenersEClone();
 const button = getElementSafe("drawButton");
 
 if (!img || !button) return;
 
-// ✅ Permite anos acima do atual (ex: 2026) sem travar
+// ✅ Permite anos acima do atual (ex: 2026) - apenas mostra fallback
 if (isNaN(year) || year < startYear) {
 showModal("oktoberfest");
+yearInput.value = "";
 return;
 }
 
@@ -1254,13 +1255,11 @@ const input = getElementSafe("cartazInput");
 const img = limparListenersEClone();
 if (!input || !img) return;
 
-// NÃO configurar swipes - usuário quer ver APENAS o cartaz digitado
-// Também NÃO chamar adicionarSwipes() - manter sem navegação por swipe
-
 const year = parseInt(input.value);
 
 if (isNaN(year) || year < 1984) {
 showModal("cartaz");
+input.value = "";  // 🔥 SÓ LIMPA SE FOR INVÁLIDO
 return;
 }
 
@@ -1276,7 +1275,7 @@ img.alt = `Cartaz ${year} - Upload pendente`;
 };
 
 img.style.opacity = 1;
-input.value = "";
+// ⚠️ NÃO LIMPA O CAMPO QUANDO VÁLIDO - mantém como está
 
 // ⚠️ SEM SWIPES - usuário quis ver APENAS este cartaz específico
 }, 400);
