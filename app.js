@@ -1072,13 +1072,50 @@ window.location.reload(true);
 }, 400);
 }
 
+// ======== TOAST MESSAGE ========
+function showToast(message, duration = 3000) {
+let toast = document.getElementById('toast-message');
+if (!toast) {
+toast = document.createElement('div');
+toast.id = 'toast-message';
+toast.style.cssText = `
+position: fixed;
+bottom: 30%;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(3, 104, 126, 0.95);
+color: white;
+padding: 12px 20px;
+border-radius: 30px;
+font-size: 14px;
+font-weight: 500;
+z-index: 2000;
+opacity: 0;
+transition: opacity 0.3s ease;
+white-space: nowrap;
+box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+pointer-events: none;
+font-family: "Roboto", sans-serif;
+`;
+document.body.appendChild(toast);
+}
+
+toast.textContent = message;
+toast.style.opacity = '1';
+
+setTimeout(() => {
+toast.style.opacity = '0';
+}, duration);
+}
+
 // ======== CARTAZES CORRIGIDOS ========
 function mostrarCartazes() {
 stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-// Remove listeners padrão de swipe de ano
+showToast('👆 Arraste para esquerda/direita para ver outros cartazes', 3000);
+
 removerSwipes();
 
 const fadeDuration = 500;
