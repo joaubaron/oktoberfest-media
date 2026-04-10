@@ -14,6 +14,8 @@ let essentialAssets = [
 './app.js',
 './sw.js',
 './titulo.png',
+'./azulbavaro.webp',
+'./fotos/oktoberfest.png',
 './rodape.png',
 
 // Fotos de fallback
