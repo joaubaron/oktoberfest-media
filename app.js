@@ -1114,8 +1114,6 @@ stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-showToast('Arraste esquerda/direita para ver outros cartazes', 3000);
-
 removerSwipes();
 
 const fadeDuration = 500;
@@ -1125,6 +1123,7 @@ const totalCartazes = ultimoCartaz - 1984 + 1;
 const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
 let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
 let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
+let toastExibido = false; // 🔥 NOVA FLAG: Garante que o toast seja exibido apenas uma vez
 
 function carregarCartazComFallback(ano) {
 if (isCartazSwiping) return;
@@ -1144,7 +1143,14 @@ img.alt = `Cartaz ${ano} - Upload pendente`;
 img.style.opacity = 1;
 cartazAtual = ano;
 index = cartazes.indexOf(ano);
-setTimeout(() => { isCartazSwiping = false; }, fadeDuration); // Resetar após a transição
+
+// 🔥 EXIBIR TOAST APÓS O PRIMEIRO CARREGAMENTO DO CARTAZ
+if (!toastExibido) {
+toastExibido = true;
+showToast('Arraste esquerda/direita para ver outros cartazes', 3000);
+}
+
+setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
 }, fadeDuration);
 }
 
