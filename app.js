@@ -148,7 +148,24 @@ window.location.hostname === '127.0.0.1') &&
 
 // 3. Service Worker (não-blocking)
 if ('serviceWorker' in navigator && !isRealLocalhost) {
-// ... código do service worker
+navigator.serviceWorker.register('./sw.js').then(reg => {
+// Detecta quando um novo SW foi encontrado
+reg.addEventListener('updatefound', () => {
+const newWorker = reg.installing;
+if (!newWorker) return;
+newWorker.addEventListener('statechange', () => {
+// Quando o novo SW ativar, recarrega a página para aplicar a atualização
+if (newWorker.state === 'activated') {
+window.location.reload();
+}
+});
+});
+}).catch(err => console.warn('[SW] Falha ao registrar:', err));
+
+// Recarrega também se o controller mudar (ex: após skipWaiting)
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+window.location.reload();
+});
 }
 
 // 4. Inicialização dos anos (pode demorar, mas não bloqueia mais o texto)
