@@ -23,6 +23,8 @@ let animationId = null;
 // VARIÁVEIS DE MÚSICA
 let musicList = [];
 let playedMusicIndices = new Set();
+let musicReady = false;         // true quando musicList já foi carregada
+let userInteracted = false;     // true quando usuário já tocou/clicou
 
 // VARIÁVEIS DE VÍDEO
 let videoList = [];
@@ -105,7 +107,6 @@ const audio = document.getElementById('backgroundMusic');
 if (!audio) return;
 
 audio.volume = 0.5;
-await loadMusicList();
 
 // Quando terminar, toca outra automaticamente
 audio.addEventListener('ended', playRandomMusic);
@@ -116,17 +117,23 @@ if (musicButton) {
 musicButton.addEventListener('click', handleMusicButtonClick);
 }
 
-// Toca no primeiro toque/clique do usuário na página
-const playOnFirstInteraction = () => {
-if (musicList.length > 0) {
+// Registra interação do usuário assim que ela acontecer
+const onFirstInteraction = () => {
+userInteracted = true;
+// Se a lista já estava pronta, toca imediatamente
+if (musicReady) {
 playRandomMusic();
 }
-document.removeEventListener('touchstart', playOnFirstInteraction);
-document.removeEventListener('click', playOnFirstInteraction);
 };
+document.addEventListener('touchstart', onFirstInteraction, { once: true });
+document.addEventListener('click',      onFirstInteraction, { once: true });
 
-document.addEventListener('touchstart', playOnFirstInteraction, { once: true });
-document.addEventListener('click', playOnFirstInteraction, { once: true });
+// Carrega a lista; se o usuário já interagiu enquanto carregava, toca agora
+await loadMusicList();
+musicReady = true;
+if (userInteracted) {
+playRandomMusic();
+}
 }
 
 // ======== INICIALIZAÇÃO DA APLICAÇÃO ========
