@@ -509,7 +509,7 @@ const imageContainer = getElementSafe("image-container");
 if (!videoContainer || !imageContainer || videoContainer.style.display === "none") return;
 
 const imageRect = imageContainer.getBoundingClientRect();
-videoContainer.style.top = (imageRect.top + window.scrollY - 5) + 'px';
+videoContainer.style.top = (imageRect.top + window.scrollY) + 'px';
 videoContainer.style.left = (imageRect.left + window.scrollX) + 'px';
 videoContainer.style.width = imageRect.width + 'px';
 videoContainer.style.height = imageRect.height + 'px';
