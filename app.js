@@ -1259,7 +1259,7 @@ const year = parseInt(input.value);
 
 if (isNaN(year) || year < 1984) {
 showModal("cartaz");
-input.value = "";  // 🔥 SÓ LIMPA SE FOR INVÁLIDO
+input.value = "";  // Limpa se inválido
 return;
 }
 
@@ -1275,9 +1275,8 @@ img.alt = `Cartaz ${year} - Upload pendente`;
 };
 
 img.style.opacity = 1;
-// ⚠️ NÃO LIMPA O CAMPO QUANDO VÁLIDO - mantém como está
+input.value = "";
 
-// ⚠️ SEM SWIPES - usuário quis ver APENAS este cartaz específico
 }, 400);
 }
 
