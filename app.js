@@ -1114,7 +1114,7 @@ stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-showToast('👆 Arraste para esquerda/direita para ver outros cartazes', 3000);
+showToast('Arraste esquerda/direita para ver outros cartazes', 3000);
 
 removerSwipes();
 
