@@ -1178,146 +1178,105 @@ toast.style.opacity = '0';
 }, duration);
 }
 
-// ======== CARTAZES CORRIGIDOS ========
-function mostrarCartazes() {
+// ======== SORTEIO (CLARA) CORRIGIDO ========
+function startDraw() {
 stopVideo();
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+adicionarSwipes();
+
+if (isDrawing) return;
+
+const yearInput = document.getElementById("yearInput");
+const year = parseInt(yearInput.value);
 const img = limparListenersEClone();
-if (!img) return;
+const button = getElementSafe("drawButton");
 
-removerSwipes();
+if (!img || !button) return;
 
-const fadeDuration = 500;
-let cartazAtual = currentYear; // Começar pelo ano atual
-const ultimoCartaz = currentYear;
-const totalCartazes = ultimoCartaz - 1984 + 1;
-const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
-let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
-let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
-let toastExibido = false; // 🔥 NOVA FLAG: Garante que o toast seja exibido apenas uma vez
+// 🔥 VALIDAÇÃO: ano inválido (menor que 2017)
+if (isNaN(year) || year < startYear) {
+showModal("oktoberfest");
+yearInput.value = "";
+return;
+}
 
-function carregarCartazComFallback(ano) {
-if (isCartazSwiping) return;
-isCartazSwiping = true;
-
+// 🔥 ANO FUTURO (depois do ano atual)
+if (year > currentYear) {
+// Mostra imagem vilagermanica.jpg para anos futuros
 img.style.opacity = 0;
 setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Ano futuro: ${year}`;
+img.style.opacity = 1;
+button.disabled = false;
+yearInput.value = "";
+}, 200);
+return;
+}
+
+// Se chegou aqui, ano é válido (entre startYear e currentYear)
+clearInterval(interval);
+isDrawing = true;
+button.disabled = true;
+
+const yearsArray = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
+let iterations = 0;
+const maxIterations = 15;
+let currentSpeed = 100;
+
+interval = setInterval(() => {
+const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = photos[randomYear];
+img.alt = `Oktoberfest ${randomYear}`;
+img.style.opacity = 1;
+}, 100);
+
+iterations++;
+currentSpeed = Math.min(100 + (iterations * 25), 500);
+
+if (iterations >= maxIterations) {
+clearInterval(interval);
+setTimeout(() => {
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
+img.alt = `Oktoberfest ${year} - Sorteado!`;
 
 img.onerror = () => {
-console.warn(`Cartaz ${ano} não encontrado`);
+console.warn(`Foto Clara ${year} não encontrada`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
+img.alt = `Oktoberfest ${year} - Upload pendente`;
+};
+
 img.style.opacity = 1;
-};
+button.disabled = false;
+isDrawing = false;
+yearInput.value = "";
+startFireworks();
 
-img.onload = () => { img.style.opacity = 1; };
-cartazAtual = ano;
-index = cartazes.indexOf(ano);
-
-if (!toastCartazesExibido) {
-toastCartazesExibido = true;
-showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+const yearIndex = yearsArray.indexOf(year.toString());
+if (yearIndex !== -1) {
+currentYearIndex = yearIndex;
 }
 
-setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-}, fadeDuration);
+adicionarSwipes();
+
+if (!toastClaraExibido) {
+toastClaraExibido = true;
+showToast('👈 Arraste para navegar entre os anos 👉', 2500);
+}
+}, 200);
+}, 200);
+}
+}, currentSpeed);
 }
 
-carregarCartazComFallback(cartazAtual);
-
-let cartazStartX = 0;
-
-const cartazesTouchStart = (e) => {
-// e.preventDefault(); // Comentar: pode interferir na rolagem
-cartazStartX = e.changedTouches[0].screenX;
-};
-
-const cartazesTouchEnd = (e) => {
-// e.preventDefault(); // Comentar: pode interferir na rolagem
-if (isCartazSwiping) return;
-
-const cartazEndX = e.changedTouches[0].screenX;
-const swipeDistance = cartazEndX - cartazStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-console.log('[SWIPE CARTAZ] Movimento muito pequeno, ignorando');
-return;
-}
-
-// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
-if (swipeDistance > 0) {
-proximoCartaz();
-}
-// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-else {
-anteriorCartaz();
-}
-};
-
-img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-
-// Adicionar suporte a mouse drag (opcional)
-let isDragging = false;
-let dragStartX = 0;
-
-const cartazesMouseDown = (e) => {
-e.preventDefault();
-isDragging = true;
-dragStartX = e.screenX;
-img.addEventListener('mousemove', cartazesMouseMove);
-img.addEventListener('mouseup', cartazesMouseUp, { once: true });
-img.addEventListener('mouseleave', cartazesMouseUp, { once: true });
-};
-
-const cartazesMouseMove = (e) => {
-if (!isDragging) return;
-// Previne seleção de texto durante o drag
-};
-
-const cartazesMouseUp = (e) => {
-if (!isDragging) return;
-isDragging = false;
-img.removeEventListener('mousemove', cartazesMouseMove);
-
-if (isCartazSwiping) return;
-
-const dragEndX = e.screenX;
-const swipeDistance = dragEndX - dragStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-console.log('[DRAG CARTAZ] Movimento muito pequeno, ignorando');
-return;
-}
-
-// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
-if (swipeDistance > 0) {
-proximoCartaz();
-}
-// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-else {
-anteriorCartaz();
-}
-};
-
-img.addEventListener("mousedown", cartazesMouseDown, false);
-
-function proximoCartaz() {
-index = (index + 1) % cartazes.length;
-const proximoAno = cartazes[index];
-carregarCartazComFallback(proximoAno);
-}
-
-function anteriorCartaz() {
-index = (index - 1 + cartazes.length) % cartazes.length;
-const anoAnterior = cartazes[index];
-carregarCartazComFallback(anoAnterior);
-}
-}
-
+// ======== CARTAZES CORRIGIDOS ========
 function mostrarCartazAno() {
 stopVideo();
 const input = getElementSafe("cartazInput");
@@ -1326,12 +1285,26 @@ if (!input || !img) return;
 
 const year = parseInt(input.value);
 
+// 🔥 VALIDAÇÃO: ano inválido (menor que 1984)
 if (isNaN(year) || year < 1984) {
 showModal("cartaz");
-input.value = "";  // Limpa se inválido
+input.value = "";
 return;
 }
 
+// 🔥 ANO FUTURO (depois do ano atual)
+if (year > currentYear) {
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Cartaz ${year} - Ano futuro`;
+img.style.opacity = 1;
+input.value = "";
+}, 200);
+return;
+}
+
+// Se chegou aqui, ano é válido (entre 1984 e currentYear)
 img.style.opacity = 0;
 setTimeout(() => {
 img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
@@ -1345,6 +1318,9 @@ img.alt = `Cartaz ${year} - Upload pendente`;
 
 img.style.opacity = 1;
 input.value = "";
+
+// 🔥 Configura swipe para navegar entre cartazes adjacentes
+configurarSwipesCartazEspecifico(img, year);
 
 }, 400);
 }
