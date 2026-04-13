@@ -512,6 +512,7 @@ if (!videoContainer || !video || !imageContainer) return;
 // Remove swipe listeners do vídeo
 video.removeEventListener('touchstart', videoTouchStart);
 video.removeEventListener('touchend', videoTouchEnd);
+isVideoSwiping = false;
 
 // 🔒 Garante que swipe não fique travado
 isVideoSwiping = false;
