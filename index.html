@@ -482,6 +482,10 @@ padding-right: 12px !important;
 }
 }
 
+#image-container, #video-container {
+touch-action: pan-y;
+}
+  
 </style>
 </head>
 <body>
@@ -513,7 +517,7 @@ id="titulo-img"
 </div>
 
 <div id="video-container">
-<video id="claraVideo" width="400" controls>
+<video id="claraVideo" width="400" controls playsinline webkit-playsinline>
 <source src="https://joaubaron.github.io/oktoberfest-media/videos/clara1.mp4" type="video/mp4">
 Seu navegador não suporta o elemento de vídeo.
 </video>
@@ -605,7 +609,7 @@ console.log('📱 Iniciando em modo offline');
 }
 </script>
 
-<script src="app.js"></script>
+<script src="app.js" defer></script>
 
 <script>
 // ====================== PULL-TO-REFRESH SIMPLES ======================
