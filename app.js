@@ -488,11 +488,11 @@ if (Math.abs(swipeDistance) < minSwipeDistance) return;
 
 isVideoSwiping = true;
 
-if (swipeDistance < 0) {
-// Swipe para ESQUERDA = próximo vídeo
+// 👉 direita = próximo (igual fotos e cartazes)
+// 👈 esquerda = anterior
+if (swipeDistance > 0) {
 currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
 } else {
-// Swipe para DIREITA = vídeo anterior
 currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
 }
 
