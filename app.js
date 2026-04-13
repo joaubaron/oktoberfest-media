@@ -32,6 +32,11 @@ let currentVideoIndex = 0;
 let videoTouchStartX = 0;
 let isVideoSwiping = false;
 
+// FLAGS DE TOAST (uma vez por modo)
+let toastClaraExibido = false;
+let toastVideoExibido = false;
+let toastCartazesExibido = false;
+
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
 const currentYear = new Date().getFullYear();
@@ -421,6 +426,11 @@ updateVideoPositionAndSize();
 
 // Configura swipe de vídeo
 configurarSwipeVideo(video);
+
+if (!toastVideoExibido) {
+toastVideoExibido = true;
+showToast('👈 Arraste para navegar entre os vídeos 👉', 2500);
+}
 
 video.onended = function() {
 // Avança automaticamente para o próximo vídeo ao terminar
@@ -851,13 +861,20 @@ setTimeout(() => {
 img.src = photos[year];
 img.alt = `Oktoberfest ${year}`;
 
+img.onload = () => {
+img.style.opacity = 1;
+if (!toastClaraExibido) {
+toastClaraExibido = true;
+showToast('👈 Arraste para navegar entre os anos 👉', 2500);
+}
+};
 img.onerror = () => {
 console.warn(`Imagem de ${year} não encontrada — substituindo por vilagermanica.jpg`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.style.opacity = 1;
 };
 
-img.style.opacity = 1;
-}, 200);
+}, 400);
 }
 
 function nextYear() {
@@ -1166,16 +1183,16 @@ img.onerror = () => {
 console.warn(`Cartaz ${ano} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${ano} - Upload pendente`;
+img.style.opacity = 1;
 };
 
-img.style.opacity = 1;
+img.onload = () => { img.style.opacity = 1; };
 cartazAtual = ano;
 index = cartazes.indexOf(ano);
 
-// 🔥 EXIBIR TOAST APÓS O PRIMEIRO CARREGAMENTO DO CARTAZ
-if (!toastExibido) {
-toastExibido = true;
-showToast('Arraste esquerda/direita para ver outros cartazes', 3000);
+if (!toastCartazesExibido) {
+toastCartazesExibido = true;
+showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
 }
 
 setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
