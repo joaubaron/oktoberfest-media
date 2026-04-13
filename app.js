@@ -521,15 +521,25 @@ console.error("Erro ao retomar música:", error);
 
 function updateVideoPositionAndSize() {
 const videoContainer = getElementSafe("video-container");
-const imageContainer = getElementSafe("image-container");
+const photo = document.getElementById("photo");
 
-if (!videoContainer || !imageContainer || videoContainer.style.display === "none") return;
+if (!videoContainer || !photo || videoContainer.style.display === "none") return;
 
-const imageRect = imageContainer.getBoundingClientRect();
-videoContainer.style.top = (imageRect.top + window.scrollY) + 'px';
-videoContainer.style.left = (imageRect.left + window.scrollX) + 'px';
-videoContainer.style.width = imageRect.width + 'px';
-videoContainer.style.height = imageRect.height + 'px';
+const rect = photo.getBoundingClientRect();
+videoContainer.style.position = "fixed";
+videoContainer.style.top = rect.top + "px";
+videoContainer.style.left = rect.left + "px";
+videoContainer.style.width = rect.width + "px";
+videoContainer.style.height = rect.height + "px";
+videoContainer.style.alignItems = "flex-start";
+videoContainer.style.justifyContent = "flex-start";
+
+const video = document.getElementById("claraVideo");
+if (video) {
+video.style.width = "100%";
+video.style.height = "100%";
+video.style.margin = "0";
+}
 }
 
 // ======== SETUP CANVAS FOGOS ========
