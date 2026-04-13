@@ -589,10 +589,7 @@ loopFoto2007 = null;
 const oldImg = getElementSafe("photo");
 if (!oldImg) return null;
 
-// Remove listeners de swipe antigos antes de clonar
 removerSwipes();
-// IMPORTANTE: A função mostrarCartazes() e mostrarFoto2007() são responsáveis por adicionar seus próprios listeners
-// Não adicionamos adicionarSwipes() aqui, pois é adicionado no initializeApp e no fim do sorteio
 
 const newImg = oldImg.cloneNode(true);
 newImg.style.transition = oldImg.style.transition;
@@ -1242,8 +1239,22 @@ anteriorCartaz();
 }
 };
 
-img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+// ========== LISTENERS CORRIGIDOS (sem acúmulo) ==========
+// REMOVER listeners antigos se existirem
+if (cartazesListenersAtivos) {
+    img.removeEventListener("touchstart", cartazesTouchStartRef);
+    img.removeEventListener("touchend", cartazesTouchEndRef);
+    img.removeEventListener("mousedown", cartazesMouseDownRef);
+}
+
+// Armazenar referências das funções
+cartazesTouchStartRef = cartazesTouchStart;
+cartazesTouchEndRef = cartazesTouchEnd;
+cartazesMouseDownRef = cartazesMouseDown;
+
+// Adicionar novos listeners
+img.addEventListener("touchstart", cartazesTouchStartRef, { passive: true });
+img.addEventListener("touchend", cartazesTouchEndRef, { passive: true });
 
 // Adicionar suporte a mouse drag (opcional)
 let isDragging = false;
@@ -1289,7 +1300,9 @@ anteriorCartaz();
 }
 };
 
-img.addEventListener("mousedown", cartazesMouseDown, false);
+img.addEventListener("mousedown", cartazesMouseDownRef, false);
+
+cartazesListenersAtivos = true;
 
 function proximoCartaz() {
 index = (index + 1) % cartazes.length;
@@ -1303,101 +1316,6 @@ const anoAnterior = cartazes[index];
 carregarCartazComFallback(anoAnterior);
 }
 }
-
-function mostrarCartazAno() {
-stopVideo();
-const input = getElementSafe("cartazInput");
-const img = limparListenersEClone();
-if (!input || !img) return;
-
-const year = parseInt(input.value);
-
-if (isNaN(year) || year < 1984) {
-showModal("cartaz");
-input.value = "";  // Limpa se inválido
-return;
-}
-
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-img.alt = `Cartaz ${year}`;
-
-img.onerror = () => {
-console.warn(`Cartaz ${year} não encontrado`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${year} - Upload pendente`;
-};
-
-img.style.opacity = 1;
-input.value = "";
-
-}, 400);
-}
-
-// 🔥 NOVA FUNÇÃO: Configura swipes específicos para o cartaz mostrado
-function configurarSwipesCartazEspecifico(img, yearInicial) {
-// Remove qualquer listener anterior
-removerSwipes();
-
-const fadeDuration = 500;
-let cartazAtual = yearInicial;
-let isCartazSwiping = false;
-
-function carregarCartazComFallback(ano) {
-if (isCartazSwiping) return;
-isCartazSwiping = true;
-
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
-
-img.onerror = () => {
-console.warn(`Cartaz ${ano} não encontrado`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
-};
-
-img.style.opacity = 1;
-cartazAtual = ano;
-setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-}, fadeDuration);
-}
-
-let cartazStartX = 0;
-
-const cartazesTouchStart = (e) => {
-cartazStartX = e.changedTouches[0].screenX;
-};
-
-const cartazesTouchEnd = (e) => {
-if (isCartazSwiping) return;
-
-const cartazEndX = e.changedTouches[0].screenX;
-const swipeDistance = cartazEndX - cartazStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-console.log('[SWIPE CARTAZ ESPECÍFICO] Movimento muito pequeno, ignorando');
-return;
-}
-
-// Swipe para DIREITA = próximo cartaz (crescente)
-if (swipeDistance > 0) {
-const proximoAno = Math.min(cartazAtual + 1, currentYear);
-if (proximoAno !== cartazAtual) {
-carregarCartazComFallback(proximoAno);
-}
-}
-// Swipe para ESQUERDA = cartaz anterior (decrescente)  
-else {
-const anoAnterior = Math.max(cartazAtual - 1, 1984);
-if (anoAnterior !== cartazAtual) {
-carregarCartazComFallback(anoAnterior);
-}
-}
-};
 
 // Mouse events
 let isDragging = false;
