@@ -5,18 +5,12 @@ const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
 let loopFoto2007 = null;
 let backgroundMusic = null;
 let touchStartX = 0;
-let touchStartY = 0;
 let touchEndX = 0;
 let currentYearIndex = 0;
 let allYears = [];
 let interval = null;
 let isDrawing = false;
-let isSwiping = false; // Previne swipes simultâneos
-
-// ======== SISTEMA DE SWIPE UNIFICADO ========
-let swipeMode = 'fotos'; // 'fotos' | 'kaka' | 'cartazes' | 'video'
-let onSwipeLeft = null;
-let onSwipeRight = null;
+let isSwiping = false; // NOVA VARIÁVEL: Previne swipes simultâneos
 
 // VARIAVEIS DO CANVAS
 let canvas = null;
@@ -35,12 +29,13 @@ let userInteracted = false;     // true quando usuário já tocou/clicou
 // VARIÁVEIS DE VÍDEO
 let videoList = [];
 let currentVideoIndex = 0;
+let videoTouchStartX = 0;
+let isVideoSwiping = false;
 
 // FLAGS DE TOAST (uma vez por modo)
 let toastClaraExibido = false;
 let toastVideoExibido = false;
 let toastCartazesExibido = false;
-let toastKakaExibido = false;
 
 // ======== CONFIGURAÇÃO DE ANOS E FOTOS ========
 const startYear = 2017;
@@ -178,13 +173,11 @@ window.location.reload();
 });
 }
 
-// 4. Listeners IMEDIATOS — botões prontos antes de qualquer await
-setupEventListeners();
-
-// 5. Inicialização dos anos (pode demorar, mas não bloqueia os botões)
+// 4. Inicialização dos anos (pode demorar, mas não bloqueia mais o texto)
 await initializeYearsWithDetection();
 
-// 6. Resto da inicialização
+// 5. Resto da inicialização
+setupEventListeners();
 await setupMusic();
 loadVideoList(); // Detecta vídeos em background (não-blocking)
 setupCanvasAndFireworks();
@@ -289,7 +282,6 @@ const modalButton = document.querySelector("#alertModal button");
 if (modalButton) modalButton.addEventListener("click", closeModal);
 
 adicionarSwipes();
-ativarModoSwipe('fotos', () => prevYear(), () => nextYear());
 window.addEventListener('resize', updateVideoPositionAndSize);
 }
 
@@ -432,22 +424,8 @@ imageContainer.style.visibility = "hidden";
 videoContainer.style.display = "flex";
 updateVideoPositionAndSize();
 
-// Configura swipe de vídeo via sistema unificado
-ativarModoSwipe(
-'video',
-() => { // esquerda → próximo
-if (videoList.length <= 1) return;
-currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
-carregarVideo(currentVideoIndex);
-},
-() => { // direita → anterior
-if (videoList.length <= 1) return;
-currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
-carregarVideo(currentVideoIndex);
-}
-);
-video.addEventListener('touchstart', handleTouchStart, { passive: true });
-video.addEventListener('touchend', handleTouchEnd, { passive: true });
+// Configura swipe de vídeo
+configurarSwipeVideo(video);
 
 if (!toastVideoExibido && videoList.length > 1) {
 toastVideoExibido = true;
@@ -486,6 +464,43 @@ console.error("Erro ao reproduzir vídeo:", error);
 console.log(`🎬 Vídeo ${index + 1}/${videoList.length}: ${videoUrl}`);
 }
 
+function configurarSwipeVideo(video) {
+// Remove listeners anteriores para não duplicar
+video.removeEventListener('touchstart', videoTouchStart);
+video.removeEventListener('touchend', videoTouchEnd);
+
+video.addEventListener('touchstart', videoTouchStart, { passive: true });
+video.addEventListener('touchend', videoTouchEnd, { passive: true });
+}
+
+function videoTouchStart(e) {
+videoTouchStartX = e.changedTouches[0].screenX;
+}
+
+function videoTouchEnd(e) {
+if (isVideoSwiping || videoList.length <= 1) return;
+
+const videoTouchEndX = e.changedTouches[0].screenX;
+const swipeDistance = videoTouchEndX - videoTouchStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) return;
+
+isVideoSwiping = true;
+
+// 👉 direita = próximo (igual fotos e cartazes)
+// 👈 esquerda = anterior
+if (swipeDistance > 0) {
+currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
+} else {
+currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
+}
+
+carregarVideo(currentVideoIndex);
+
+setTimeout(() => { isVideoSwiping = false; }, 600);
+}
+
 function stopVideo() {
 const videoContainer = getElementSafe("video-container");
 const video = getElementSafe("claraVideo");
@@ -494,11 +509,9 @@ const audio = document.getElementById("backgroundMusic");
 
 if (!videoContainer || !video || !imageContainer) return;
 
-video.removeEventListener('touchstart', handleTouchStart);
-video.removeEventListener('touchend', handleTouchEnd);
-
-// Restaura modo swipe de fotos ao fechar vídeo
-ativarModoSwipe('fotos', () => prevYear(), () => nextYear());
+// Remove swipe listeners do vídeo
+video.removeEventListener('touchstart', videoTouchStart);
+video.removeEventListener('touchend', videoTouchEnd);
 
 video.pause();
 video.currentTime = 0;
@@ -582,126 +595,81 @@ oldImg.parentNode.replaceChild(newImg, oldImg);
 return newImg;
 }
 
-// ======== SISTEMA DE SWIPE UNIFICADO ========
 function adicionarSwipes() {
 const photo = getElementSafe("photo");
 if (!photo) return;
-photo.addEventListener("touchstart", handleTouchStart, { passive: true });
-photo.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+photo.addEventListener("touchstart", handleTouchStart, { passive: false });
+photo.addEventListener("touchend", handleTouchEnd, { passive: false });
 photo.addEventListener("mousedown", handleMouseDown, false);
 }
 
 function removerSwipes() {
 const photo = getElementSafe("photo");
 if (!photo) return;
-photo.removeEventListener("touchstart", handleTouchStart);
-photo.removeEventListener("touchend", handleTouchEnd);
-photo.removeEventListener("mousedown", handleMouseDown);
+
+photo.removeEventListener("touchstart", handleTouchStart, { passive: false });
+photo.removeEventListener("touchend", handleTouchEnd, { passive: false });
+photo.removeEventListener("mousedown", handleMouseDown, false);
 }
 
-function ativarModoSwipe(modo, fnLeft, fnRight) {
-swipeMode = modo;
-onSwipeLeft = fnLeft;
-onSwipeRight = fnRight;
-}
-
-function handleTouchStart(e) {
-touchStartX = e.changedTouches[0].screenX;
-touchStartY = e.changedTouches[0].clientY;
-}
-
-function handleTouchEnd(e) {
-touchEndX = e.changedTouches[0].screenX;
-handleSwipe();
-}
-
-function handleMouseDown(e) {
-e.preventDefault();
-touchStartX = e.screenX;
-document.addEventListener('mouseup', handleMouseUp, { once: true });
-}
-
-function handleMouseUp(e) {
-touchEndX = e.screenX;
-handleSwipe();
-document.removeEventListener('mouseup', handleMouseUp);
-}
-
-function handleSwipe() {
-if (isSwiping) return;
-
-if (swipeMode === 'video') {
-const video = document.getElementById('claraVideo');
-if (video) {
-const rect = video.getBoundingClientRect();
-if (touchStartY > rect.bottom - (rect.height * 0.15)) return;
-}
-}
-
-const minSwipeDistance = 50;
-const swipeDistance = touchEndX - touchStartX;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) return;
-
-isSwiping = true;
-
-if (swipeDistance > 0) {
-if (onSwipeRight) onSwipeRight();
-} else {
-if (onSwipeLeft) onSwipeLeft();
-}
-
-setTimeout(() => { isSwiping = false; }, 500);
-}
-
-// ======== FOTOS KAKA (swipe manual — sem loop automático) ========
+// ======== FOTOS 2007 ========
 function mostrarFoto2007() {
 stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
+// Remove listeners padrão de swipe de ano
+removerSwipes();
+
+const transitionDuration = 600; 
+const intervalo = 3000;
+
 let imagens = [];
 let indice = 0;
+let paused = false;
 
+img.style.transition = `transform ${transitionDuration}ms ease-in-out`;
 img.style.opacity = 1;
 
+// Função para detectar dinamicamente TODAS as imagens da pasta kaka
 function detectarTodasImagensKaka(callback) {
 const imagensExistentes = [];
 let index = 1;
-const maxTentativas = 50;
+const maxTentativas = 50; // Número máximo de imagens para verificar
 
 function verificarProximaImagem() {
-if (index > maxTentativas) { callback(imagensExistentes); return; }
+if (index > maxTentativas) {
+// Todas as imagens foram verificadas, chamar callback
+callback(imagensExistentes);
+return;
+}
 
 const nomeArquivo = `oktoberfestkaka${index}.jpg`;
 const urlImagem = `${GITHUB_BASE}/kaka/${nomeArquivo}`;
-const tempImg = new Image();
 
+const tempImg = new Image();
 tempImg.onload = function() {
-imagensExistentes.push({ src: urlImagem, alt: `Oktoberfest Kaka ${index}` });
+// Imagem existe, adicionar à lista
+imagensExistentes.push({
+src: urlImagem,
+alt: `Oktoberfest Kaka ${index}`
+});
 console.log(`✅ Imagem detectada: ${nomeArquivo}`);
 index++;
 verificarProximaImagem();
 };
+
 tempImg.onerror = function() {
+// Imagem não existe, parar a verificação
 console.log(`❌ Imagem não encontrada: ${nomeArquivo}. Parando busca.`);
 callback(imagensExistentes);
 };
+
 tempImg.src = urlImagem;
 }
-verificarProximaImagem();
-}
 
-function trocarKaka(novoIndice) {
-const alvo = imagens[novoIndice];
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = alvo.src;
-img.alt = alvo.alt;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
-img.style.opacity = 1;
-indice = novoIndice;
-}, 300);
+verificarProximaImagem();
 }
 
 function iniciarComImagens(imagensCarregadas) {
@@ -713,32 +681,160 @@ return;
 }
 
 imagens = imagensCarregadas;
-console.log(`🎯 ${imagens.length} imagens Kaka detectadas`);
+console.log(`🎯 ${imagens.length} imagens detectadas automaticamente`);
 
-img.src = imagens[0].src;
-img.alt = imagens[0].alt;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
-indice = 0;
+function iniciarImagemInicial() {
+const primeiraImagem = imagens[0];
 
-adicionarSwipes();
-ativarModoSwipe(
-'kaka',
-() => { // esquerda → próxima
-const proximo = (indice + 1) % imagens.length;
-trocarKaka(proximo);
-},
-() => { // direita → anterior
-const anterior = (indice - 1 + imagens.length) % imagens.length;
-trocarKaka(anterior);
-}
-);
+img.src = primeiraImagem.src;
+img.alt = primeiraImagem.alt;
 
-if (!toastKakaExibido) {
-toastKakaExibido = true;
-showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
+img.onerror = () => {
+console.warn(`Erro ao carregar imagem: ${primeiraImagem.alt}`);
+img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+};
+
+img.classList.remove("push-left", "push-right");
+indice = 1;
+iniciarLoop();
 }
 
+function iniciarLoop() {
+if (paused) return;
+
+function trocarImagem() {
+if (paused) return;
+
+const proxima = imagens[indice];
+
+img.classList.add("push-left");
+
+setTimeout(() => {
+img.classList.remove("push-left");
+img.classList.add("push-right");
+void img.offsetWidth;
+
+img.src = proxima.src;
+img.alt = proxima.alt;
+
+img.onerror = () => {
+console.warn(`Erro ao carregar: ${proxima.alt}`);
+img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+};
+
+img.classList.remove("push-right");
+indice = (indice + 1) % imagens.length;
+
+if (!paused) {
+loopFoto2007 = setTimeout(trocarImagem, intervalo);
+}
+}, transitionDuration);
+}
+
+if (!paused) {
+loopFoto2007 = setTimeout(trocarImagem, intervalo);
+}
+}
+
+// Funções de Pausa e Resume
+const pauseLoop = () => {
+paused = true;
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+};
+
+const resumeLoop = () => {
+if (paused) {
+paused = false;
+iniciarLoop();
+}
+};
+
+// Event Listeners
+img.addEventListener("mousedown", (e) => {
+e.preventDefault();
+pauseLoop();
+});
+img.addEventListener("mouseup", (e) => {
+e.preventDefault();
+resumeLoop();
+});
+img.addEventListener("mouseleave", resumeLoop);
+img.addEventListener("touchstart", (e) => {
+e.preventDefault();
+pauseLoop();
+}, { passive: false });
+img.addEventListener("touchend", (e) => {
+e.preventDefault();
+resumeLoop();
+}, { passive: false });
+img.addEventListener("touchcancel", (e) => {
+e.preventDefault();
+resumeLoop();
+}, { passive: false });
+
+iniciarImagemInicial();
+}
+
+// Iniciar a detecção dinâmica das imagens
 detectarTodasImagensKaka(iniciarComImagens);
+}
+
+// ======== SWIPE E NAVEGAÇÃO CORRIGIDOS (Fotos/Ano) ========
+function handleTouchStart(e) {
+//e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
+touchStartX = e.changedTouches[0].screenX;
+}
+
+function handleTouchEnd(e) {
+//e.preventDefault(); // Comentar: pode interferir na rolagem se a foto for pequena
+touchEndX = e.changedTouches[0].screenX;
+handleSwipe();
+}
+
+function handleMouseDown(e) {
+e.preventDefault();
+touchStartX = e.screenX;
+document.addEventListener('mouseup', handleMouseUp, { once: true });
+}
+
+function handleMouseUp(e) {
+// e.preventDefault(); // Não é necessário aqui, já que o mousedown tinha preventDefault
+touchEndX = e.screenX;
+handleSwipe();
+document.removeEventListener('mouseup', handleMouseUp);
+}
+
+// Prevenir múltiplos swipes simultâneos (CORRIGIDO)
+function handleSwipe() {
+if (isSwiping) return; // Já está processando um swipe
+
+const minSwipeDistance = 50;
+const swipeDistance = touchEndX - touchStartX;
+
+// Swipe muito pequeno - ignorar
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE] Movimento muito pequeno, ignorando');
+return;
+}
+
+isSwiping = true;
+
+// Swipe para DIREITA (swipeDistance > 0) = próximo ano (crescente)
+if (swipeDistance > 0) {
+nextYear(); // 2024 → 2025
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = ano anterior (decrescente)  
+else {
+prevYear(); // 2025 → 2024
+}
+
+// Reset após um tempo para permitir novo swipe
+setTimeout(() => {
+isSwiping = false;
+}, 500);
 }
 
 
@@ -752,9 +848,8 @@ loopFoto2007 = null;
 const img = getElementSafe("photo");
 if (!img) return;
 
-// Re-adicionar swipes e ativar modo fotos
+// Importante: Re-adicionar swipes caso a navegação tenha sido disparada por outra função (ex: sorteio)
 adicionarSwipes();
-ativarModoSwipe('fotos', () => prevYear(), () => nextYear());
 
 const yearIndex = allYears.indexOf(year.toString());
 if (yearIndex !== -1) {
@@ -843,7 +938,6 @@ clearTimeout(loopFoto2007);
 loopFoto2007 = null;
 }
 adicionarSwipes();
-ativarModoSwipe('fotos', () => prevYear(), () => nextYear());
 
 if (isDrawing) return;
 
@@ -910,7 +1004,6 @@ currentYearIndex = yearIndex;
 }
 
 adicionarSwipes();
-ativarModoSwipe('fotos', () => prevYear(), () => nextYear());
 
 if (!toastClaraExibido) {
 toastClaraExibido = true;
@@ -1072,45 +1165,137 @@ stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-const fadeDuration = 500;
-let cartazAtual = currentYear;
-const cartazes = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
-let index = cartazes.indexOf(cartazAtual);
+removerSwipes();
 
-function carregarCartaz(ano) {
+const fadeDuration = 500;
+let cartazAtual = currentYear; // Começar pelo ano atual
+const ultimoCartaz = currentYear;
+const totalCartazes = ultimoCartaz - 1984 + 1;
+const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
+let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
+let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
+let toastExibido = false; // 🔥 NOVA FLAG: Garante que o toast seja exibido apenas uma vez
+
+function carregarCartazComFallback(ano) {
+if (isCartazSwiping) return;
+isCartazSwiping = true;
+
 img.style.opacity = 0;
 setTimeout(() => {
 img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
 img.alt = `Cartaz ${ano}`;
+
 img.onerror = () => {
+console.warn(`Cartaz ${ano} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${ano} - Upload pendente`;
 img.style.opacity = 1;
 };
+
 img.onload = () => { img.style.opacity = 1; };
 cartazAtual = ano;
 index = cartazes.indexOf(ano);
-}, fadeDuration);
-}
-
-carregarCartaz(cartazAtual);
-
-adicionarSwipes();
-ativarModoSwipe(
-'cartazes',
-() => { // esquerda → anterior (decrescente)
-index = (index - 1 + cartazes.length) % cartazes.length;
-carregarCartaz(cartazes[index]);
-},
-() => { // direita → próximo (crescente)
-index = (index + 1) % cartazes.length;
-carregarCartaz(cartazes[index]);
-}
-);
 
 if (!toastCartazesExibido) {
 toastCartazesExibido = true;
 showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+}
+
+setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
+}, fadeDuration);
+}
+
+carregarCartazComFallback(cartazAtual);
+
+let cartazStartX = 0;
+
+const cartazesTouchStart = (e) => {
+// e.preventDefault(); // Comentar: pode interferir na rolagem
+cartazStartX = e.changedTouches[0].screenX;
+};
+
+const cartazesTouchEnd = (e) => {
+// e.preventDefault(); // Comentar: pode interferir na rolagem
+if (isCartazSwiping) return;
+
+const cartazEndX = e.changedTouches[0].screenX;
+const swipeDistance = cartazEndX - cartazStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE CARTAZ] Movimento muito pequeno, ignorando');
+return;
+}
+
+// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+proximoCartaz();
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
+else {
+anteriorCartaz();
+}
+};
+
+img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+
+// Adicionar suporte a mouse drag (opcional)
+let isDragging = false;
+let dragStartX = 0;
+
+const cartazesMouseDown = (e) => {
+e.preventDefault();
+isDragging = true;
+dragStartX = e.screenX;
+img.addEventListener('mousemove', cartazesMouseMove);
+img.addEventListener('mouseup', cartazesMouseUp, { once: true });
+img.addEventListener('mouseleave', cartazesMouseUp, { once: true });
+};
+
+const cartazesMouseMove = (e) => {
+if (!isDragging) return;
+// Previne seleção de texto durante o drag
+};
+
+const cartazesMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
+img.removeEventListener('mousemove', cartazesMouseMove);
+
+if (isCartazSwiping) return;
+
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - dragStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[DRAG CARTAZ] Movimento muito pequeno, ignorando');
+return;
+}
+
+// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+proximoCartaz();
+}
+// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
+else {
+anteriorCartaz();
+}
+};
+
+img.addEventListener("mousedown", cartazesMouseDown, false);
+
+function proximoCartaz() {
+index = (index + 1) % cartazes.length;
+const proximoAno = cartazes[index];
+carregarCartazComFallback(proximoAno);
+}
+
+function anteriorCartaz() {
+index = (index - 1 + cartazes.length) % cartazes.length;
+const anoAnterior = cartazes[index];
+carregarCartazComFallback(anoAnterior);
 }
 }
 
@@ -1142,39 +1327,119 @@ img.alt = `Cartaz ${year} - Upload pendente`;
 img.style.opacity = 1;
 input.value = "";
 
-// Ativa swipe para navegar a partir do ano digitado
-const cartazesArr = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
-let cartazAtualEsp = year;
+}, 400);
+}
 
-function carregarCartazEsp(ano) {
+// 🔥 NOVA FUNÇÃO: Configura swipes específicos para o cartaz mostrado
+function configurarSwipesCartazEspecifico(img, yearInicial) {
+// Remove qualquer listener anterior
+removerSwipes();
+
+const fadeDuration = 500;
+let cartazAtual = yearInicial;
+let isCartazSwiping = false;
+
+function carregarCartazComFallback(ano) {
+if (isCartazSwiping) return;
+isCartazSwiping = true;
+
 img.style.opacity = 0;
 setTimeout(() => {
 img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
 img.alt = `Cartaz ${ano}`;
+
 img.onerror = () => {
+console.warn(`Cartaz ${ano} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${ano} - Upload pendente`;
-img.style.opacity = 1;
 };
-img.onload = () => { img.style.opacity = 1; };
-cartazAtualEsp = ano;
-}, 400);
+
+img.style.opacity = 1;
+cartazAtual = ano;
+setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
+}, fadeDuration);
 }
 
-adicionarSwipes();
-ativarModoSwipe(
-'cartazes',
-() => { // esquerda → anterior
-const anterior = Math.max(cartazAtualEsp - 1, 1984);
-if (anterior !== cartazAtualEsp) carregarCartazEsp(anterior);
-},
-() => { // direita → próximo
-const proximo = Math.min(cartazAtualEsp + 1, currentYear);
-if (proximo !== cartazAtualEsp) carregarCartazEsp(proximo);
-}
-);
+let cartazStartX = 0;
 
-}, 400);
+const cartazesTouchStart = (e) => {
+cartazStartX = e.changedTouches[0].screenX;
+};
+
+const cartazesTouchEnd = (e) => {
+if (isCartazSwiping) return;
+
+const cartazEndX = e.changedTouches[0].screenX;
+const swipeDistance = cartazEndX - cartazStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE CARTAZ ESPECÍFICO] Movimento muito pequeno, ignorando');
+return;
+}
+
+// Swipe para DIREITA = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+const proximoAno = Math.min(cartazAtual + 1, currentYear);
+if (proximoAno !== cartazAtual) {
+carregarCartazComFallback(proximoAno);
+}
+}
+// Swipe para ESQUERDA = cartaz anterior (decrescente)  
+else {
+const anoAnterior = Math.max(cartazAtual - 1, 1984);
+if (anoAnterior !== cartazAtual) {
+carregarCartazComFallback(anoAnterior);
+}
+}
+};
+
+// Mouse events
+let isDragging = false;
+let dragStartX = 0;
+
+const cartazesMouseDown = (e) => {
+e.preventDefault();
+isDragging = true;
+dragStartX = e.screenX;
+};
+
+const cartazesMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
+
+if (isCartazSwiping) return;
+
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - dragStartX;
+const minSwipeDistance = 50;
+
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+return;
+}
+
+// Swipe para DIREITA = próximo cartaz (crescente)
+if (swipeDistance > 0) {
+const proximoAno = Math.min(cartazAtual + 1, currentYear);
+if (proximoAno !== cartazAtual) {
+carregarCartazComFallback(proximoAno);
+}
+}
+// Swipe para ESQUERDA = cartaz anterior (decrescente)  
+else {
+const anoAnterior = Math.max(cartazAtual - 1, 1984);
+if (anoAnterior !== cartazAtual) {
+carregarCartazComFallback(anoAnterior);
+}
+}
+};
+
+// Adicionar listeners específicos para cartaz
+img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+img.addEventListener("mousedown", cartazesMouseDown, false);
+img.addEventListener("mouseup", cartazesMouseUp, false);
+img.addEventListener("mouseleave", cartazesMouseUp, false);
 }
 
 // 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
