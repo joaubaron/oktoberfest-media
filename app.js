@@ -10,7 +10,13 @@ let currentYearIndex = 0;
 let allYears = [];
 let interval = null;
 let isDrawing = false;
-let isSwiping = false; // NOVA VARIÁVEL: Previne swipes simultâneos
+let isPhotoSwiping = false;
+
+// VARIÁVEIS PARA CARTAZES (evita listeners acumulados)
+let cartazesListenersAtivos = false;
+let cartazesTouchStartRef = null;
+let cartazesTouchEndRef = null;
+let cartazesMouseDownRef = null;
 
 // VARIAVEIS DO CANVAS
 let canvas = null;
@@ -809,18 +815,17 @@ document.removeEventListener('mouseup', handleMouseUp);
 
 // Prevenir múltiplos swipes simultâneos (CORRIGIDO)
 function handleSwipe() {
-if (isSwiping) return; // Já está processando um swipe
+if (isPhotoSwiping) return; // Já está processando um swipe
 
 const minSwipeDistance = 50;
 const swipeDistance = touchEndX - touchStartX;
 
-// Swipe muito pequeno - ignorar
 if (Math.abs(swipeDistance) < minSwipeDistance) {
 console.log('[SWIPE] Movimento muito pequeno, ignorando');
 return;
 }
 
-isSwiping = true;
+isPhotoSwiping = true;
 
 // Swipe para DIREITA (swipeDistance > 0) = próximo ano (crescente)
 if (swipeDistance > 0) {
@@ -833,7 +838,7 @@ prevYear(); // 2025 → 2024
 
 // Reset após um tempo para permitir novo swipe
 setTimeout(() => {
-isSwiping = false;
+isPhotoSwiping = false;
 }, 500);
 }
 
