@@ -202,25 +202,12 @@ padding: 8px 15px;
 }
 }
 
-/* ====================== BOTÕES SUPERIORES (Clara e Vídeo) ====================== */
-#drawButton, #videoButton {
+#videoButton {
 height: 35px;
 padding: 10px 20px;
 font-size: 12px !important;
-}
-
-#drawButton {
-background: #03687e;
-color: white;
-}
-
-#drawButton:hover {
-background: #025a6e;
-}
-
-#drawButton:disabled {
-background: #ccc;
-cursor: not-allowed;
+background: #D8B115;
+color: #333;
 }
 
 #videoButton {
@@ -485,7 +472,7 @@ padding-right: 12px !important;
 #image-container, #video-container {
 touch-action: pan-y;
 }
-  
+
 </style>
 <script src="app.js" defer></script>
 </head>
@@ -512,8 +499,10 @@ id="titulo-img"
 
 <!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
-<input type="number" id="yearInput" min="2017" placeholder="Ano da Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
-<button id="drawButton" style="display: none;">Clara 💞</button>  <!-- ⬅️ ADICIONE ESTA LINHA -->
+<input type="number" id="yearInput" min="2017"
+placeholder="Ano da Clara na Oktoberfest 💞"
+style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;"
+onkeydown="handleEnter(event, this)">
 <button id="videoButton">Vídeos</button>
 </div>
 
@@ -558,7 +547,7 @@ style="color: inherit; text-decoration: none;">
 Acesse o site oficial da Oktoberfest Blumenau
 </a>
 </p>
-  
+
 <audio id="backgroundMusic" preload="none"></audio>
 <canvas id="fireworks"></canvas>
 
@@ -573,29 +562,31 @@ Acesse o site oficial da Oktoberfest Blumenau
 </div>
 
 <script>
-  
+
 // Fecha teclado ao pressionar Enter nos campos de input
 function handleEnter(event, inputElement) {
-if (event.key === 'Enter') {
+if (event.key !== 'Enter') return;
+
 event.preventDefault();
 inputElement.blur();
 
 if (inputElement.id === 'yearInput') {
-
 if (typeof mostrarClara === 'function') {
 mostrarClara();
+} else {
+console.warn('mostrarClara não existe');
+}
 }
 
-} else if (inputElement.id === 'cartazInput') {
-
+if (inputElement.id === 'cartazInput') {
 if (typeof mostrarCartaz === 'function') {
 mostrarCartaz();
+} else {
+console.warn('mostrarCartaz não existe');
+}
+}
 }
 
-}
-}
-}
-  
 </script>
 
 <script>
@@ -649,7 +640,7 @@ window.location.reload();
 
 pullStartY = 0;
 });
-  
+
 </script>
 
 </body>
