@@ -513,19 +513,32 @@ if (!videoContainer || !video || !imageContainer) return;
 video.removeEventListener('touchstart', videoTouchStart);
 video.removeEventListener('touchend', videoTouchEnd);
 
+// 🔒 Garante que swipe não fique travado
+isVideoSwiping = false;
+
+// Para e reseta o vídeo
 video.pause();
 video.currentTime = 0;
+
+// Esconde vídeo e volta imagem
 videoContainer.style.display = "none";
 imageContainer.style.visibility = "visible";
+
+// Reseta posição
 videoContainer.style.top = '0';
 videoContainer.style.left = '0';
 
-// Desmutar e retomar a música de fundo
+// 🔊 Desmutar e tentar retomar música
 if (audio) {
 audio.muted = false;
-audio.play().catch(error => {
-console.error("Erro ao retomar música:", error);
+
+// Tenta tocar, mas sem quebrar UX se falhar
+const playPromise = audio.play();
+if (playPromise !== undefined) {
+playPromise.catch(() => {
+console.warn("Autoplay bloqueado — aguardando interação do usuário");
 });
+}
 }
 }
 
