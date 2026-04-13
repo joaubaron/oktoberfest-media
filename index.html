@@ -514,7 +514,6 @@ id="titulo-img"
 <!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
 <input type="number" id="yearInput" min="2017" placeholder="Ano da Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
-<button id="drawButton" style="display: none;">Clara 💞</button>  <!-- ⬅️ ADICIONE ESTA LINHA -->
 <button id="videoButton">Vídeos</button>
 </div>
 
@@ -572,24 +571,6 @@ Acesse o site oficial da Oktoberfest Blumenau
 <button>OK</button>
 </div>
 </div>
-
-<script>
-// Fecha teclado ao pressionar Enter nos campos de input
-function handleEnter(event, inputElement) {
-if (event.key === 'Enter') {
-event.preventDefault();
-inputElement.blur();
-
-if (inputElement.id === 'yearInput') {
-const drawButton = document.getElementById('drawButton');
-if (drawButton) drawButton.click();
-} else if (inputElement.id === 'cartazInput') {
-const cartazButton = document.getElementById('cartazButton');
-if (cartazButton) cartazButton.click();
-}
-}
-}
-</script>
 
 <script>
 // O Service Worker é registrado pelo app.js
