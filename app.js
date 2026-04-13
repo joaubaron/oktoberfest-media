@@ -427,7 +427,7 @@ updateVideoPositionAndSize();
 // Configura swipe de vídeo
 configurarSwipeVideo(video);
 
-if (!toastVideoExibido) {
+if (!toastVideoExibido && videoList.length > 1) {
 toastVideoExibido = true;
 showToast('👈 Arraste para navegar entre os vídeos 👉', 2500);
 }
@@ -861,13 +861,19 @@ setTimeout(() => {
 img.src = photos[year];
 img.alt = `Oktoberfest ${year}`;
 
-img.onload = () => {
+const exibirToastClara = () => {
 img.style.opacity = 1;
 if (!toastClaraExibido) {
 toastClaraExibido = true;
 showToast('👈 Arraste para navegar entre os anos 👉', 2500);
 }
 };
+
+img.onload = exibirToastClara;
+
+// Dispara mesmo se a imagem vier do cache (complete = já carregada)
+if (img.complete && img.naturalWidth > 0) exibirToastClara();
+
 img.onerror = () => {
 console.warn(`Imagem de ${year} não encontrada — substituindo por vilagermanica.jpg`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
