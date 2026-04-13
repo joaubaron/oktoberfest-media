@@ -1174,13 +1174,12 @@ if (!img) return;
 removerSwipes();
 
 const fadeDuration = 500;
-let cartazAtual = currentYear; // Começar pelo ano atual
+let cartazAtual = currentYear;
 const ultimoCartaz = currentYear;
 const totalCartazes = ultimoCartaz - 1984 + 1;
 const cartazes = Array.from({ length: totalCartazes }, (_, i) => 1984 + i);
-let index = cartazes.indexOf(cartazAtual); // Inicializa o índice no ano atual
-let isCartazSwiping = false; // VARIÁVEL LOCAL: Previne swipes simultâneos de cartaz
-let toastExibido = false; // 🔥 NOVA FLAG: Garante que o toast seja exibido apenas uma vez
+let index = cartazes.indexOf(cartazAtual);
+let isCartazSwiping = false;
 
 function carregarCartazComFallback(ano) {
 if (isCartazSwiping) return;
@@ -1216,12 +1215,10 @@ carregarCartazComFallback(cartazAtual);
 let cartazStartX = 0;
 
 const cartazesTouchStart = (e) => {
-// e.preventDefault(); // Comentar: pode interferir na rolagem
 cartazStartX = e.changedTouches[0].screenX;
 };
 
 const cartazesTouchEnd = (e) => {
-// e.preventDefault(); // Comentar: pode interferir na rolagem
 if (isCartazSwiping) return;
 
 const cartazEndX = e.changedTouches[0].screenX;
@@ -1233,20 +1230,27 @@ console.log('[SWIPE CARTAZ] Movimento muito pequeno, ignorando');
 return;
 }
 
-// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
 if (swipeDistance > 0) {
 proximoCartaz();
-}
-// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-else {
+} else {
 anteriorCartaz();
 }
 };
 
-img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+// ========== CORREÇÃO: Remove listeners antigos antes de adicionar ==========
+if (cartazesListenersAtivos) {
+    img.removeEventListener("touchstart", cartazesTouchStartRef);
+    img.removeEventListener("touchend", cartazesTouchEndRef);
+    img.removeEventListener("mousedown", cartazesMouseDownRef);
+}
 
-// Adicionar suporte a mouse drag (opcional)
+cartazesTouchStartRef = cartazesTouchStart;
+cartazesTouchEndRef = cartazesTouchEnd;
+cartazesMouseDownRef = cartazesMouseDown;
+
+img.addEventListener("touchstart", cartazesTouchStartRef, { passive: true });
+img.addEventListener("touchend", cartazesTouchEndRef, { passive: true });
+
 let isDragging = false;
 let dragStartX = 0;
 
@@ -1261,7 +1265,6 @@ img.addEventListener('mouseleave', cartazesMouseUp, { once: true });
 
 const cartazesMouseMove = (e) => {
 if (!isDragging) return;
-// Previne seleção de texto durante o drag
 };
 
 const cartazesMouseUp = (e) => {
@@ -1280,17 +1283,15 @@ console.log('[DRAG CARTAZ] Movimento muito pequeno, ignorando');
 return;
 }
 
-// Swipe para DIREITA (swipeDistance > 0) = próximo cartaz (crescente)
 if (swipeDistance > 0) {
 proximoCartaz();
-}
-// Swipe para ESQUERDA (swipeDistance < 0) = cartaz anterior (decrescente)  
-else {
+} else {
 anteriorCartaz();
 }
 };
 
-img.addEventListener("mousedown", cartazesMouseDown, false);
+img.addEventListener("mousedown", cartazesMouseDownRef, false);
+cartazesListenersAtivos = true;
 
 function proximoCartaz() {
 index = (index + 1) % cartazes.length;
@@ -1304,149 +1305,3 @@ const anoAnterior = cartazes[index];
 carregarCartazComFallback(anoAnterior);
 }
 }
-
-function mostrarCartazAno() {
-stopVideo();
-const input = getElementSafe("cartazInput");
-const img = limparListenersEClone();
-if (!input || !img) return;
-
-const year = parseInt(input.value);
-
-if (isNaN(year) || year < 1984) {
-showModal("cartaz");
-input.value = "";  // Limpa se inválido
-return;
-}
-
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-img.alt = `Cartaz ${year}`;
-
-img.onerror = () => {
-console.warn(`Cartaz ${year} não encontrado`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${year} - Upload pendente`;
-};
-
-img.style.opacity = 1;
-input.value = "";
-
-}, 400);
-}
-
-// 🔥 NOVA FUNÇÃO: Configura swipes específicos para o cartaz mostrado
-function configurarSwipesCartazEspecifico(img, yearInicial) {
-// Remove qualquer listener anterior
-removerSwipes();
-
-const fadeDuration = 500;
-let cartazAtual = yearInicial;
-let isCartazSwiping = false;
-
-function carregarCartazComFallback(ano) {
-if (isCartazSwiping) return;
-isCartazSwiping = true;
-
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
-
-img.onerror = () => {
-console.warn(`Cartaz ${ano} não encontrado`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
-};
-
-img.style.opacity = 1;
-cartazAtual = ano;
-setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-}, fadeDuration);
-}
-
-let cartazStartX = 0;
-
-const cartazesTouchStart = (e) => {
-cartazStartX = e.changedTouches[0].screenX;
-};
-
-const cartazesTouchEnd = (e) => {
-if (isCartazSwiping) return;
-
-const cartazEndX = e.changedTouches[0].screenX;
-const swipeDistance = cartazEndX - cartazStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-console.log('[SWIPE CARTAZ ESPECÍFICO] Movimento muito pequeno, ignorando');
-return;
-}
-
-// Swipe para DIREITA = próximo cartaz (crescente)
-if (swipeDistance > 0) {
-const proximoAno = Math.min(cartazAtual + 1, currentYear);
-if (proximoAno !== cartazAtual) {
-carregarCartazComFallback(proximoAno);
-}
-}
-// Swipe para ESQUERDA = cartaz anterior (decrescente)  
-else {
-const anoAnterior = Math.max(cartazAtual - 1, 1984);
-if (anoAnterior !== cartazAtual) {
-carregarCartazComFallback(anoAnterior);
-}
-}
-};
-
-// Mouse events
-let isDragging = false;
-let dragStartX = 0;
-
-const cartazesMouseDown = (e) => {
-e.preventDefault();
-isDragging = true;
-dragStartX = e.screenX;
-};
-
-const cartazesMouseUp = (e) => {
-if (!isDragging) return;
-isDragging = false;
-
-if (isCartazSwiping) return;
-
-const dragEndX = e.screenX;
-const swipeDistance = dragEndX - dragStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
-
-// Swipe para DIREITA = próximo cartaz (crescente)
-if (swipeDistance > 0) {
-const proximoAno = Math.min(cartazAtual + 1, currentYear);
-if (proximoAno !== cartazAtual) {
-carregarCartazComFallback(proximoAno);
-}
-}
-// Swipe para ESQUERDA = cartaz anterior (decrescente)  
-else {
-const anoAnterior = Math.max(cartazAtual - 1, 1984);
-if (anoAnterior !== cartazAtual) {
-carregarCartazComFallback(anoAnterior);
-}
-}
-};
-
-// Adicionar listeners específicos para cartaz
-img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-img.addEventListener("mousedown", cartazesMouseDown, false);
-img.addEventListener("mouseup", cartazesMouseUp, false);
-img.addEventListener("mouseleave", cartazesMouseUp, false);
-}
-
-// 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
-document.addEventListener('DOMContentLoaded', initializeApp);
