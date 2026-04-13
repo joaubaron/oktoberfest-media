@@ -863,15 +863,10 @@ img.alt = `Oktoberfest ${year}`;
 
 const exibirToastClara = () => {
 img.style.opacity = 1;
-if (!toastClaraExibido) {
-toastClaraExibido = true;
-showToast('👈 Arraste para navegar entre os anos 👉', 2500);
-}
 };
 
 img.onload = exibirToastClara;
 
-// Dispara mesmo se a imagem vier do cache (complete = já carregada)
 if (img.complete && img.naturalWidth > 0) exibirToastClara();
 
 img.onerror = () => {
@@ -1009,6 +1004,11 @@ currentYearIndex = yearIndex;
 }
 
 adicionarSwipes();
+
+if (!toastClaraExibido) {
+toastClaraExibido = true;
+showToast('👈 Arraste para navegar entre os anos 👉', 2500);
+}
 }, 200);
 }, 200);
 }
