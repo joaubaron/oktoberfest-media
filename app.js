@@ -1102,19 +1102,9 @@ loopFoto2007 = null;
 clearInterval(interval);
 interval = null;
 isDrawing = false;
-isPhotoSwiping = false;  // ← CORRETO: usar a nova variável
+isPhotoSwiping = false;
 
-// Limpa fogos
-particles = [];
-if (animationId) {
-cancelAnimationFrame(animationId);
-animationId = null;
-if (ctx) {
-ctx.clearRect(0, 0, w, h);
-}
-}
-
-// Limpa fogos
+// Limpa fogos (APENAS UMA VEZ)
 particles = [];
 if (animationId) {
 cancelAnimationFrame(animationId);
