@@ -565,31 +565,31 @@ Acesse o site oficial da Oktoberfest Blumenau
 </div>
 
 <script>
-
 // Fecha teclado ao pressionar Enter nos campos de input
 function handleEnter(event, inputElement) {
-if (event.key !== 'Enter') return;
-
-event.preventDefault();
-inputElement.blur();
-
-if (inputElement.id === 'yearInput') {
-if (typeof mostrarClara === 'function') {
-mostrarClara();
-} else {
-console.warn('mostrarClara não existe');
+    if (event.key !== 'Enter') return;
+    
+    event.preventDefault();
+    inputElement.blur();
+    
+    if (inputElement.id === 'yearInput') {
+        // Chama a função correta do app.js
+        if (typeof startDraw === 'function') {
+            startDraw();
+        } else {
+            console.warn('startDraw não está disponível ainda');
+        }
+    }
+    
+    if (inputElement.id === 'cartazInput') {
+        // Chama a função correta do app.js
+        if (typeof mostrarCartazAno === 'function') {
+            mostrarCartazAno();
+        } else {
+            console.warn('mostrarCartazAno não está disponível ainda');
+        }
+    }
 }
-}
-
-if (inputElement.id === 'cartazInput') {
-if (typeof mostrarCartaz === 'function') {
-mostrarCartaz();
-} else {
-console.warn('mostrarCartaz não existe');
-}
-}
-}
-
 </script>
 
 <script>
