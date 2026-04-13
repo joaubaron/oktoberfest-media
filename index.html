@@ -573,6 +573,7 @@ Acesse o site oficial da Oktoberfest Blumenau
 </div>
 
 <script>
+  
 // Fecha teclado ao pressionar Enter nos campos de input
 function handleEnter(event, inputElement) {
 if (event.key === 'Enter') {
@@ -582,12 +583,13 @@ inputElement.blur();
 if (inputElement.id === 'yearInput') {
 const drawButton = document.getElementById('drawButton');
 if (drawButton) drawButton.click();
+
 } else if (inputElement.id === 'cartazInput') {
-const cartazButton = document.getElementById('cartazButton');
-if (cartazButton) cartazButton.click();
+mostrarCartaz(); // 🚀 direto, sem botão
 }
 }
 }
+  
 </script>
 
 <script>
