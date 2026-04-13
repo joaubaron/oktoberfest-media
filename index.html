@@ -552,7 +552,7 @@ alt="Foto da Oktoberfest"
 </div>
 
 <p style="margin-top: 13px; font-size: 13px; color: #03687e;">
-<a href="https://oktoberfestblumenau.com.br/" target="_blank"
+<a href="https://oktoberfestblumenau.com.br/" target="_blank" rel="noopener noreferrer"
 style="color: inherit; text-decoration: none;">
 Acesse o site oficial da Oktoberfest Blumenau
 </a>
@@ -616,22 +616,33 @@ console.log('📱 Iniciando em modo offline');
 let pullStartY = 0;
 
 document.addEventListener('touchstart', (e) => {
+const videoContainer = document.getElementById('video-container');
+
+if (videoContainer && videoContainer.style.display === 'flex') return;
+
 if (window.scrollY === 0) {
 pullStartY = e.touches[0].clientY;
 }
 });
 
 document.addEventListener('touchend', (e) => {
+const videoContainer = document.getElementById('video-container');
+
+// 🚫 evita conflito com swipe do vídeo
+if (videoContainer && videoContainer.style.display === 'flex') return;
+
 if (pullStartY > 0 && window.scrollY === 0) {
 const pullEndY = e.changedTouches[0].clientY;
 const pullDistance = pullEndY - pullStartY;
 
 if (pullDistance > 80) {
-window.location.reload(true);
+window.location.reload(); // ✅ removido o "true"
 }
 }
+
 pullStartY = 0;
 });
+  
 </script>
 
 </body>
