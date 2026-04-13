@@ -5,6 +5,7 @@ const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
 let loopFoto2007 = null;
 let backgroundMusic = null;
 let touchStartX = 0;
+let touchStartY = 0;
 let touchEndX = 0;
 let currentYearIndex = 0;
 let allYears = [];
@@ -604,6 +605,7 @@ onSwipeRight = fnRight;
 
 function handleTouchStart(e) {
 touchStartX = e.changedTouches[0].screenX;
+touchStartY = e.changedTouches[0].clientY;
 }
 
 function handleTouchEnd(e) {
@@ -625,6 +627,14 @@ document.removeEventListener('mouseup', handleMouseUp);
 
 function handleSwipe() {
 if (isSwiping) return;
+
+if (swipeMode === 'video') {
+const video = document.getElementById('claraVideo');
+if (video) {
+const rect = video.getBoundingClientRect();
+if (touchStartY > rect.bottom - (rect.height * 0.15)) return;
+}
+}
 
 const minSwipeDistance = 50;
 const swipeDistance = touchEndX - touchStartX;
