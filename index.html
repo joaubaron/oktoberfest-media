@@ -362,7 +362,7 @@ font-size: 14px;
 /* ====================== PUSH (Animações de Troca) ====================== */
 img {
 transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
-transform: translateX(0);
+will-change: transform, opacity;
 }
 
 img.push-left {
@@ -487,6 +487,7 @@ touch-action: pan-y;
 }
   
 </style>
+<script src="app.js" defer></script>
 </head>
 <body>
 
@@ -558,7 +559,7 @@ Acesse o site oficial da Oktoberfest Blumenau
 </a>
 </p>
   
-<audio id="backgroundMusic"></audio>
+<audio id="backgroundMusic" preload="none"></audio>
 <canvas id="fireworks"></canvas>
 
 <div id="alertModal">
@@ -609,8 +610,6 @@ console.log('📱 Iniciando em modo offline');
 }
 </script>
 
-<script src="app.js" defer></script>
-
 <script>
 // ====================== PULL-TO-REFRESH SIMPLES ======================
 let pullStartY = 0;
@@ -636,7 +635,7 @@ const pullEndY = e.changedTouches[0].clientY;
 const pullDistance = pullEndY - pullStartY;
 
 if (pullDistance > 80) {
-window.location.reload(); // ✅ removido o "true"
+window.location.reload();
 }
 }
 
