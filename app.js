@@ -430,17 +430,17 @@ updateVideoPositionAndSize();
 
 // Configura swipe de vídeo via sistema unificado
 ativarModoSwipe(
-'video',
-() => { // esquerda → próximo
-if (videoList.length <= 1) return;
-currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
-carregarVideo(currentVideoIndex);
-},
-() => { // direita → anterior
-if (videoList.length <= 1) return;
-currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
-carregarVideo(currentVideoIndex);
-}
+  'video',
+  () => { // esquerda → próximo
+    if (videoList.length <= 1) return;
+    currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
+    carregarVideo(currentVideoIndex);
+  },
+  () => { // direita → anterior
+    if (videoList.length <= 1) return;
+    currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
+    carregarVideo(currentVideoIndex);
+  }
 );
 video.addEventListener('touchstart', handleTouchStart, { passive: true });
 video.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -580,153 +580,153 @@ return newImg;
 
 // ======== SISTEMA DE SWIPE UNIFICADO ========
 function adicionarSwipes() {
-const photo = getElementSafe("photo");
-if (!photo) return;
-photo.addEventListener("touchstart", handleTouchStart, { passive: true });
-photo.addEventListener("touchend", handleTouchEnd, { passive: true });
-photo.addEventListener("mousedown", handleMouseDown, false);
+  const photo = getElementSafe("photo");
+  if (!photo) return;
+  photo.addEventListener("touchstart", handleTouchStart, { passive: true });
+  photo.addEventListener("touchend", handleTouchEnd, { passive: true });
+  photo.addEventListener("mousedown", handleMouseDown, false);
 }
 
 function removerSwipes() {
-const photo = getElementSafe("photo");
-if (!photo) return;
-photo.removeEventListener("touchstart", handleTouchStart);
-photo.removeEventListener("touchend", handleTouchEnd);
-photo.removeEventListener("mousedown", handleMouseDown);
+  const photo = getElementSafe("photo");
+  if (!photo) return;
+  photo.removeEventListener("touchstart", handleTouchStart);
+  photo.removeEventListener("touchend", handleTouchEnd);
+  photo.removeEventListener("mousedown", handleMouseDown);
 }
 
 function ativarModoSwipe(modo, fnLeft, fnRight) {
-swipeMode = modo;
-onSwipeLeft = fnLeft;
-onSwipeRight = fnRight;
+  swipeMode = modo;
+  onSwipeLeft = fnLeft;
+  onSwipeRight = fnRight;
 }
 
 function handleTouchStart(e) {
-touchStartX = e.changedTouches[0].screenX;
+  touchStartX = e.changedTouches[0].screenX;
 }
 
 function handleTouchEnd(e) {
-touchEndX = e.changedTouches[0].screenX;
-handleSwipe();
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
 }
 
 function handleMouseDown(e) {
-e.preventDefault();
-touchStartX = e.screenX;
-document.addEventListener('mouseup', handleMouseUp, { once: true });
+  e.preventDefault();
+  touchStartX = e.screenX;
+  document.addEventListener('mouseup', handleMouseUp, { once: true });
 }
 
 function handleMouseUp(e) {
-touchEndX = e.screenX;
-handleSwipe();
-document.removeEventListener('mouseup', handleMouseUp);
+  touchEndX = e.screenX;
+  handleSwipe();
+  document.removeEventListener('mouseup', handleMouseUp);
 }
 
 function handleSwipe() {
-if (isSwiping) return;
+  if (isSwiping) return;
 
-const minSwipeDistance = 50;
-const swipeDistance = touchEndX - touchStartX;
+  const minSwipeDistance = 50;
+  const swipeDistance = touchEndX - touchStartX;
 
-if (Math.abs(swipeDistance) < minSwipeDistance) return;
+  if (Math.abs(swipeDistance) < minSwipeDistance) return;
 
-isSwiping = true;
+  isSwiping = true;
 
-if (swipeDistance > 0) {
-if (onSwipeRight) onSwipeRight();
-} else {
-if (onSwipeLeft) onSwipeLeft();
-}
+  if (swipeDistance > 0) {
+    if (onSwipeRight) onSwipeRight();
+  } else {
+    if (onSwipeLeft) onSwipeLeft();
+  }
 
-setTimeout(() => { isSwiping = false; }, 500);
+  setTimeout(() => { isSwiping = false; }, 500);
 }
 
 // ======== FOTOS KAKA (swipe manual — sem loop automático) ========
 function mostrarFoto2007() {
-stopVideo();
-const img = limparListenersEClone();
-if (!img) return;
+  stopVideo();
+  const img = limparListenersEClone();
+  if (!img) return;
 
-let imagens = [];
-let indice = 0;
+  let imagens = [];
+  let indice = 0;
 
-img.style.opacity = 1;
+  img.style.opacity = 1;
 
-function detectarTodasImagensKaka(callback) {
-const imagensExistentes = [];
-let index = 1;
-const maxTentativas = 50;
+  function detectarTodasImagensKaka(callback) {
+    const imagensExistentes = [];
+    let index = 1;
+    const maxTentativas = 50;
 
-function verificarProximaImagem() {
-if (index > maxTentativas) { callback(imagensExistentes); return; }
+    function verificarProximaImagem() {
+      if (index > maxTentativas) { callback(imagensExistentes); return; }
 
-const nomeArquivo = `oktoberfestkaka${index}.jpg`;
-const urlImagem = `${GITHUB_BASE}/kaka/${nomeArquivo}`;
-const tempImg = new Image();
+      const nomeArquivo = `oktoberfestkaka${index}.jpg`;
+      const urlImagem = `${GITHUB_BASE}/kaka/${nomeArquivo}`;
+      const tempImg = new Image();
 
-tempImg.onload = function() {
-imagensExistentes.push({ src: urlImagem, alt: `Oktoberfest Kaka ${index}` });
-console.log(`✅ Imagem detectada: ${nomeArquivo}`);
-index++;
-verificarProximaImagem();
-};
-tempImg.onerror = function() {
-console.log(`❌ Imagem não encontrada: ${nomeArquivo}. Parando busca.`);
-callback(imagensExistentes);
-};
-tempImg.src = urlImagem;
-}
-verificarProximaImagem();
-}
+      tempImg.onload = function() {
+        imagensExistentes.push({ src: urlImagem, alt: `Oktoberfest Kaka ${index}` });
+        console.log(`✅ Imagem detectada: ${nomeArquivo}`);
+        index++;
+        verificarProximaImagem();
+      };
+      tempImg.onerror = function() {
+        console.log(`❌ Imagem não encontrada: ${nomeArquivo}. Parando busca.`);
+        callback(imagensExistentes);
+      };
+      tempImg.src = urlImagem;
+    }
+    verificarProximaImagem();
+  }
 
-function trocarKaka(novoIndice) {
-const alvo = imagens[novoIndice];
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = alvo.src;
-img.alt = alvo.alt;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
-img.style.opacity = 1;
-indice = novoIndice;
-}, 300);
-}
+  function trocarKaka(novoIndice) {
+    const alvo = imagens[novoIndice];
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = alvo.src;
+      img.alt = alvo.alt;
+      img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
+      img.style.opacity = 1;
+      indice = novoIndice;
+    }, 300);
+  }
 
-function iniciarComImagens(imagensCarregadas) {
-if (imagensCarregadas.length === 0) {
-console.warn("Nenhuma imagem encontrada na pasta kaka");
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
-img.alt = "Imagem padrão";
-return;
-}
+  function iniciarComImagens(imagensCarregadas) {
+    if (imagensCarregadas.length === 0) {
+      console.warn("Nenhuma imagem encontrada na pasta kaka");
+      img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+      img.alt = "Imagem padrão";
+      return;
+    }
 
-imagens = imagensCarregadas;
-console.log(`🎯 ${imagens.length} imagens Kaka detectadas`);
+    imagens = imagensCarregadas;
+    console.log(`🎯 ${imagens.length} imagens Kaka detectadas`);
 
-img.src = imagens[0].src;
-img.alt = imagens[0].alt;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
-indice = 0;
+    img.src = imagens[0].src;
+    img.alt = imagens[0].alt;
+    img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
+    indice = 0;
 
-adicionarSwipes();
-ativarModoSwipe(
-'kaka',
-() => { // esquerda → próxima
-const proximo = (indice + 1) % imagens.length;
-trocarKaka(proximo);
-},
-() => { // direita → anterior
-const anterior = (indice - 1 + imagens.length) % imagens.length;
-trocarKaka(anterior);
-}
-);
+    adicionarSwipes();
+    ativarModoSwipe(
+      'kaka',
+      () => { // esquerda → próxima
+        const proximo = (indice + 1) % imagens.length;
+        trocarKaka(proximo);
+      },
+      () => { // direita → anterior
+        const anterior = (indice - 1 + imagens.length) % imagens.length;
+        trocarKaka(anterior);
+      }
+    );
 
-if (!toastClaraExibido) {
-toastClaraExibido = true;
-showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
-}
-}
+    if (!toastClaraExibido) {
+      toastClaraExibido = true;
+      showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
+    }
+  }
 
-detectarTodasImagensKaka(iniciarComImagens);
+  detectarTodasImagensKaka(iniciarComImagens);
 }
 
 
@@ -1060,46 +1060,46 @@ stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-const fadeDuration = 500;
-let cartazAtual = currentYear;
-const cartazes = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
-let index = cartazes.indexOf(cartazAtual);
+  const fadeDuration = 500;
+  let cartazAtual = currentYear;
+  const cartazes = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
+  let index = cartazes.indexOf(cartazAtual);
 
-function carregarCartaz(ano) {
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
-img.onerror = () => {
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
-img.style.opacity = 1;
-};
-img.onload = () => { img.style.opacity = 1; };
-cartazAtual = ano;
-index = cartazes.indexOf(ano);
-}, fadeDuration);
-}
+  function carregarCartaz(ano) {
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+      img.alt = `Cartaz ${ano}`;
+      img.onerror = () => {
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.alt = `Cartaz ${ano} - Upload pendente`;
+        img.style.opacity = 1;
+      };
+      img.onload = () => { img.style.opacity = 1; };
+      cartazAtual = ano;
+      index = cartazes.indexOf(ano);
+    }, fadeDuration);
+  }
 
-carregarCartaz(cartazAtual);
+  carregarCartaz(cartazAtual);
 
-adicionarSwipes();
-ativarModoSwipe(
-'cartazes',
-() => { // esquerda → anterior (decrescente)
-index = (index - 1 + cartazes.length) % cartazes.length;
-carregarCartaz(cartazes[index]);
-},
-() => { // direita → próximo (crescente)
-index = (index + 1) % cartazes.length;
-carregarCartaz(cartazes[index]);
-}
-);
+  adicionarSwipes();
+  ativarModoSwipe(
+    'cartazes',
+    () => { // esquerda → anterior (decrescente)
+      index = (index - 1 + cartazes.length) % cartazes.length;
+      carregarCartaz(cartazes[index]);
+    },
+    () => { // direita → próximo (crescente)
+      index = (index + 1) % cartazes.length;
+      carregarCartaz(cartazes[index]);
+    }
+  );
 
-if (!toastCartazesExibido) {
-toastCartazesExibido = true;
-showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-}
+  if (!toastCartazesExibido) {
+    toastCartazesExibido = true;
+    showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+  }
 }
 
 function mostrarCartazAno() {
@@ -1127,40 +1127,40 @@ img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${year} - Upload pendente`;
 };
 
-img.style.opacity = 1;
-input.value = "";
+  img.style.opacity = 1;
+  input.value = "";
 
-// Ativa swipe para navegar a partir do ano digitado
-const cartazesArr = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
-let cartazAtualEsp = year;
+  // Ativa swipe para navegar a partir do ano digitado
+  const cartazesArr = Array.from({ length: currentYear - 1984 + 1 }, (_, i) => 1984 + i);
+  let cartazAtualEsp = year;
 
-function carregarCartazEsp(ano) {
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
-img.onerror = () => {
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
-img.style.opacity = 1;
-};
-img.onload = () => { img.style.opacity = 1; };
-cartazAtualEsp = ano;
-}, 400);
-}
+  function carregarCartazEsp(ano) {
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+      img.alt = `Cartaz ${ano}`;
+      img.onerror = () => {
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.alt = `Cartaz ${ano} - Upload pendente`;
+        img.style.opacity = 1;
+      };
+      img.onload = () => { img.style.opacity = 1; };
+      cartazAtualEsp = ano;
+    }, 400);
+  }
 
-adicionarSwipes();
-ativarModoSwipe(
-'cartazes',
-() => { // esquerda → anterior
-const anterior = Math.max(cartazAtualEsp - 1, 1984);
-if (anterior !== cartazAtualEsp) carregarCartazEsp(anterior);
-},
-() => { // direita → próximo
-const proximo = Math.min(cartazAtualEsp + 1, currentYear);
-if (proximo !== cartazAtualEsp) carregarCartazEsp(proximo);
-}
-);
+  adicionarSwipes();
+  ativarModoSwipe(
+    'cartazes',
+    () => { // esquerda → anterior
+      const anterior = Math.max(cartazAtualEsp - 1, 1984);
+      if (anterior !== cartazAtualEsp) carregarCartazEsp(anterior);
+    },
+    () => { // direita → próximo
+      const proximo = Math.min(cartazAtualEsp + 1, currentYear);
+      if (proximo !== cartazAtualEsp) carregarCartazEsp(proximo);
+    }
+  );
 
 }, 400);
 }
