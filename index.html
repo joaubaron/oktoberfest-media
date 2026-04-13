@@ -103,7 +103,7 @@ z-index: 1;
 }
 
 #photo {
-width: 81%;
+width: 83%;
 max-height: none;
 border: none;
 border-radius: 0;
@@ -202,12 +202,25 @@ padding: 8px 15px;
 }
 }
 
-#videoButton {
+/* ====================== BOTÕES SUPERIORES (Clara e Vídeo) ====================== */
+#drawButton, #videoButton {
 height: 35px;
 padding: 10px 20px;
 font-size: 12px !important;
-background: #D8B115;
-color: #333;
+}
+
+#drawButton {
+background: #03687e;
+color: white;
+}
+
+#drawButton:hover {
+background: #025a6e;
+}
+
+#drawButton:disabled {
+background: #ccc;
+cursor: not-allowed;
 }
 
 #videoButton {
@@ -349,7 +362,7 @@ font-size: 14px;
 /* ====================== PUSH (Animações de Troca) ====================== */
 img {
 transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
-will-change: transform, opacity;
+transform: translateX(0);
 }
 
 img.push-left {
@@ -449,6 +462,12 @@ width: auto;
 flex-shrink: 0;
 }
 
+/* Manter o rodape.png exatamente como estava */
+.oktoberfest-title {
+max-width: 90%;
+margin: 5px auto;
+}
+
 /* 🔥 ESPAÇO NAS LATERAIS - BOTÕES NÃO FICAM COLADOS */
 .div-clara-video,
 .div-botoes-inferiores,
@@ -469,12 +488,7 @@ padding-right: 12px !important;
 }
 }
 
-#image-container, #video-container {
-touch-action: pan-y;
-}
-
 </style>
-<script src="app.js" defer></script>
 </head>
 <body>
 
@@ -499,12 +513,13 @@ id="titulo-img"
 
 <!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
-<input type="number" id="yearInput" min="2017" placeholder="Ano da Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeydown="if(event.key === 'Enter') startDraw();">
+<input type="number" id="yearInput" min="2017" placeholder="Ano da Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
+<button id="drawButton" style="display: none;">Clara 💞</button>  <!-- ⬅️ ADICIONE ESTA LINHA -->
 <button id="videoButton">Vídeos</button>
 </div>
 
 <div id="video-container">
-<video id="claraVideo" width="400" controls playsinline webkit-playsinline>
+<video id="claraVideo" width="400" controls>
 <source src="https://joaubaron.github.io/oktoberfest-media/videos/clara1.mp4" type="video/mp4">
 Seu navegador não suporta o elemento de vídeo.
 </video>
@@ -534,18 +549,18 @@ alt="Foto da Oktoberfest"
 
 <!-- Linha 3: Campo Cartazes + Botão Música -->
 <div class="div-cartaz-musica">
-<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 e 2026 🥨" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeydown="if(event.key === 'Enter') mostrarCartazAno();">
+<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 e 2026 🥨" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;" onkeypress="handleEnter(event, this)">
 <button id="musicButton">🎵🎶</button>
 </div>
 
 <p style="margin-top: 13px; font-size: 13px; color: #03687e;">
-<a href="https://oktoberfestblumenau.com.br/" target="_blank" rel="noopener noreferrer"
+<a href="https://oktoberfestblumenau.com.br/" target="_blank"
 style="color: inherit; text-decoration: none;">
 Acesse o site oficial da Oktoberfest Blumenau
 </a>
 </p>
-
-<audio id="backgroundMusic" preload="none"></audio>
+  
+<audio id="backgroundMusic"></audio>
 <canvas id="fireworks"></canvas>
 
 <div id="alertModal">
@@ -561,28 +576,18 @@ Acesse o site oficial da Oktoberfest Blumenau
 <script>
 // Fecha teclado ao pressionar Enter nos campos de input
 function handleEnter(event, inputElement) {
-    if (event.key !== 'Enter') return;
-    
-    event.preventDefault();
-    inputElement.blur();
-    
-    if (inputElement.id === 'yearInput') {
-        // Chama a função correta do app.js
-        if (typeof startDraw === 'function') {
-            startDraw();
-        } else {
-            console.warn('startDraw não está disponível ainda');
-        }
-    }
-    
-    if (inputElement.id === 'cartazInput') {
-        // Chama a função correta do app.js
-        if (typeof mostrarCartazAno === 'function') {
-            mostrarCartazAno();
-        } else {
-            console.warn('mostrarCartazAno não está disponível ainda');
-        }
-    }
+if (event.key === 'Enter') {
+event.preventDefault();
+inputElement.blur();
+
+if (inputElement.id === 'yearInput') {
+const drawButton = document.getElementById('drawButton');
+if (drawButton) drawButton.click();
+} else if (inputElement.id === 'cartazInput') {
+const cartazButton = document.getElementById('cartazButton');
+if (cartazButton) cartazButton.click();
+}
+}
 }
 </script>
 
@@ -606,38 +611,29 @@ console.log('📱 Iniciando em modo offline');
 }
 </script>
 
+<script src="app.js"></script>
+
 <script>
 // ====================== PULL-TO-REFRESH SIMPLES ======================
 let pullStartY = 0;
 
 document.addEventListener('touchstart', (e) => {
-const videoContainer = document.getElementById('video-container');
-
-if (videoContainer && videoContainer.style.display === 'flex') return;
-
 if (window.scrollY === 0) {
 pullStartY = e.touches[0].clientY;
 }
 });
 
 document.addEventListener('touchend', (e) => {
-const videoContainer = document.getElementById('video-container');
-
-// 🚫 evita conflito com swipe do vídeo
-if (videoContainer && videoContainer.style.display === 'flex') return;
-
 if (pullStartY > 0 && window.scrollY === 0) {
 const pullEndY = e.changedTouches[0].clientY;
 const pullDistance = pullEndY - pullStartY;
 
 if (pullDistance > 80) {
-window.location.reload();
+window.location.reload(true);
 }
 }
-
 pullStartY = 0;
 });
-
 </script>
 
 </body>
