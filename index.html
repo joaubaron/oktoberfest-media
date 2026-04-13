@@ -581,11 +581,17 @@ event.preventDefault();
 inputElement.blur();
 
 if (inputElement.id === 'yearInput') {
-const drawButton = document.getElementById('drawButton');
-if (drawButton) drawButton.click();
+
+if (typeof mostrarClara === 'function') {
+mostrarClara();
+}
 
 } else if (inputElement.id === 'cartazInput') {
-mostrarCartaz(); // 🚀 direto, sem botão
+
+if (typeof mostrarCartaz === 'function') {
+mostrarCartaz();
+}
+
 }
 }
 }
