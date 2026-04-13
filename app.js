@@ -178,11 +178,13 @@ window.location.reload();
 });
 }
 
-// 4. Inicialização dos anos (pode demorar, mas não bloqueia mais o texto)
+// 4. Listeners IMEDIATOS — botões prontos antes de qualquer await
+setupEventListeners();
+
+// 5. Inicialização dos anos (pode demorar, mas não bloqueia os botões)
 await initializeYearsWithDetection();
 
-// 5. Resto da inicialização
-setupEventListeners();
+// 6. Resto da inicialização
 await setupMusic();
 loadVideoList(); // Detecta vídeos em background (não-blocking)
 setupCanvasAndFireworks();
