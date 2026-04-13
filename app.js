@@ -962,13 +962,20 @@ const button = getElementSafe("drawButton");
 
 if (!img || !button) return;
 
-// ✅ Permite anos acima do atual (ex: 2026) - apenas mostra fallback
-if (isNaN(year) || year < startYear) {
+// 🔥 VALIDAÇÃO - IGUAL AO CARTAZ
+if (isNaN(year)) {
 showModal("oktoberfest");
 yearInput.value = "";
 return;
 }
 
+if (year < startYear) {
+showModal("oktoberfest");
+yearInput.value = "";
+return;
+}
+
+// Se chegou aqui, ano é válido (>= 2017)
 clearInterval(interval);
 isDrawing = true;
 button.disabled = true;
@@ -998,18 +1005,16 @@ setTimeout(() => {
 img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
 img.alt = `Oktoberfest ${year} - Sorteado!`;
 
-// ✅ Fallback automático se a imagem não existir
 img.onerror = () => {
 console.warn(`Foto Clara ${year} não encontrada`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Oktoberfest ${year} - Upload pendente`;
-// Nenhum modal — deixa a imagem visível
 };
 
 img.style.opacity = 1;
 button.disabled = false;
 isDrawing = false;
-document.getElementById("yearInput").value = "";
+yearInput.value = "";
 startFireworks();
 
 const yearIndex = yearsArray.indexOf(year.toString());
