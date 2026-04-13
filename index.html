@@ -499,7 +499,9 @@ id="titulo-img"
 
 <!-- Linha 1: Campo Clara + Botão Vídeo -->
 <div class="div-clara-video">
-<input type="number" id="yearInput" min="2017" placeholder="Ano da Clara na Oktoberfest 💞" style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<input type="number" id="yearInput" min="2017"
+placeholder="Ano da Clara na Oktoberfest 💞"
+style="width: 240px; font-size: 14px; padding: 14px 18px; text-align: center;"
 onkeydown="handleEnter(event, this)">
 <button id="videoButton">Vídeos</button>
 </div>
@@ -535,7 +537,9 @@ alt="Foto da Oktoberfest"
 
 <!-- Linha 3: Campo Cartazes + Botão Música -->
 <div class="div-cartaz-musica">
-<input type="number" id="cartazInput" min="1984" placeholder="Cartazes entre 1984 e 2026 🥨" style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;">
+<input type="number" id="cartazInput" min="1984"
+placeholder="Cartazes entre 1984 e 2026 🥨"
+style="width: 235px; font-size: 14px; padding: 14px 18px; text-align: center;"
 onkeydown="handleEnter(event, this)">
 <button id="musicButton">🎵🎶</button>
 </div>
@@ -559,6 +563,34 @@ Acesse o site oficial da Oktoberfest Blumenau
 <button>OK</button>
 </div>
 </div>
+
+<script>
+// Fecha teclado ao pressionar Enter nos campos de input
+function handleEnter(event, inputElement) {
+    if (event.key !== 'Enter') return;
+    
+    event.preventDefault();
+    inputElement.blur();
+    
+    if (inputElement.id === 'yearInput') {
+        // Chama a função correta do app.js
+        if (typeof startDraw === 'function') {
+            startDraw();
+        } else {
+            console.warn('startDraw não está disponível ainda');
+        }
+    }
+    
+    if (inputElement.id === 'cartazInput') {
+        // Chama a função correta do app.js
+        if (typeof mostrarCartazAno === 'function') {
+            mostrarCartazAno();
+        } else {
+            console.warn('mostrarCartazAno não está disponível ainda');
+        }
+    }
+}
+</script>
 
 <script>
 // O Service Worker é registrado pelo app.js
