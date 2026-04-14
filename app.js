@@ -258,12 +258,6 @@ if (resetButton) resetButton.addEventListener("click", resetApp);
 const foto2007Button = getElementSafe("foto2007Button");
 if (foto2007Button) foto2007Button.addEventListener("click", mostrarFoto2007);
 
-const cartazesButton = getElementSafe("cartazes");
-if (cartazesButton) cartazesButton.addEventListener("click", mostrarCartazes);
-
-const cartazButton = getElementSafe("cartazButton");
-if (cartazButton) cartazButton.addEventListener("click", mostrarCartazAno);
-
 const yearInput = getElementSafe("yearInput");
 if (yearInput) {
 yearInput.addEventListener("keypress", (event) => {
@@ -1302,10 +1296,19 @@ img.onerror = () => {
 console.warn(`Cartaz ${year} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${year} - Upload pendente`;
+img.style.opacity = 1;
 };
 
+img.onload = () => { img.style.opacity = 1; };
 img.style.opacity = 1;
 input.value = "";
+
+configurarSwipesCartazEspecifico(img, year);
+
+if (!toastCartazesExibido) {
+toastCartazesExibido = true;
+showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+}
 
 }, 400);
 }
