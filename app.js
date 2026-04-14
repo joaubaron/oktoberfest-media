@@ -1282,6 +1282,12 @@ img.onload = () => { img.style.opacity = 1; };
 img.style.opacity = 1;
 input.value = "";
 
+// ✅ TOAST DO CARTAZ (igual aos outros modos)
+if (!toastCartazesExibido) {
+    toastCartazesExibido = true;
+    showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+}
+
 // Configura swipe com loop infinito
 configurarSwipesCartazEspecifico(img, anoSelecionado);
 
