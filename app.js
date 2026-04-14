@@ -1235,9 +1235,6 @@ indexAtual--;
 carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
 }
 
-// Carrega o cartaz inicial
-carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-
 let cartazStartX = 0;
 
 const cartazesTouchStart = (e) => {
