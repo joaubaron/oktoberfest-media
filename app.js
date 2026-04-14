@@ -613,172 +613,105 @@ photo.removeEventListener("touchend", handleTouchEnd, { passive: false });
 photo.removeEventListener("mousedown", handleMouseDown, false);
 }
 
-// ======== FOTOS 2007 ========
+// ======== FOTOS KAKA (swipe manual, igual cartazes) ========
 function mostrarFoto2007() {
 stopVideo();
 const img = limparListenersEClone();
 if (!img) return;
 
-// Remove listeners padrão de swipe de ano
 removerSwipes();
 
-const transitionDuration = 600; 
-const intervalo = 3000;
-
+const fadeDuration = 500;
 let imagens = [];
 let indice = 0;
-let paused = false;
+let isKakaSwiping = false;
 
-img.style.transition = `transform ${transitionDuration}ms ease-in-out`;
-img.style.opacity = 1;
-
-// Função para detectar dinamicamente TODAS as imagens da pasta kaka
+// Detecta dinamicamente TODAS as imagens da pasta kaka
 function detectarTodasImagensKaka(callback) {
 const imagensExistentes = [];
 let index = 1;
-const maxTentativas = 50; // Número máximo de imagens para verificar
+const maxTentativas = 50;
 
 function verificarProximaImagem() {
-if (index > maxTentativas) {
-// Todas as imagens foram verificadas, chamar callback
-callback(imagensExistentes);
-return;
-}
+if (index > maxTentativas) { callback(imagensExistentes); return; }
 
-const nomeArquivo = `oktoberfestkaka${index}.jpg`;
-const urlImagem = `${GITHUB_BASE}/kaka/${nomeArquivo}`;
-
+const urlImagem = `${GITHUB_BASE}/kaka/oktoberfestkaka${index}.jpg`;
 const tempImg = new Image();
 tempImg.onload = function() {
-// Imagem existe, adicionar à lista
-imagensExistentes.push({
-src: urlImagem,
-alt: `Oktoberfest Kaka ${index}`
-});
-console.log(`✅ Imagem detectada: ${nomeArquivo}`);
+imagensExistentes.push({ src: urlImagem, alt: `Oktoberfest Kaka ${index}` });
 index++;
 verificarProximaImagem();
 };
-
-tempImg.onerror = function() {
-// Imagem não existe, parar a verificação
-console.log(`❌ Imagem não encontrada: ${nomeArquivo}. Parando busca.`);
-callback(imagensExistentes);
-};
-
+tempImg.onerror = function() { callback(imagensExistentes); };
 tempImg.src = urlImagem;
 }
-
 verificarProximaImagem();
+}
+
+function carregarKaka(novoIndice) {
+if (isKakaSwiping || imagens.length === 0) return;
+isKakaSwiping = true;
+
+img.style.opacity = 0;
+setTimeout(() => {
+indice = (novoIndice + imagens.length) % imagens.length;
+img.src = imagens[indice].src;
+img.alt = imagens[indice].alt;
+img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
+img.onload = () => { img.style.opacity = 1; };
+if (img.complete && img.naturalWidth > 0) img.style.opacity = 1;
+setTimeout(() => { isKakaSwiping = false; }, fadeDuration);
+}, fadeDuration);
 }
 
 function iniciarComImagens(imagensCarregadas) {
 if (imagensCarregadas.length === 0) {
 console.warn("Nenhuma imagem encontrada na pasta kaka");
 img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
-img.alt = "Imagem padrão";
 return;
 }
 
 imagens = imagensCarregadas;
-console.log(`🎯 ${imagens.length} imagens detectadas automaticamente`);
+console.log(`🎯 ${imagens.length} imagens kaka detectadas`);
 
-function iniciarImagemInicial() {
-const primeiraImagem = imagens[0];
+// Carrega a primeira imagem
+img.src = imagens[0].src;
+img.alt = imagens[0].alt;
+img.style.opacity = 1;
+img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
 
-img.src = primeiraImagem.src;
-img.alt = primeiraImagem.alt;
+showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
 
-img.onerror = () => {
-console.warn(`Erro ao carregar imagem: ${primeiraImagem.alt}`);
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+// --- Touch ---
+let kakaStartX = 0;
+const kakaTouchStart = (e) => { kakaStartX = e.changedTouches[0].screenX; };
+const kakaTouchEnd = (e) => {
+if (isKakaSwiping) return;
+const dist = e.changedTouches[0].screenX - kakaStartX;
+if (Math.abs(dist) < 50) return;
+carregarKaka(dist > 0 ? indice + 1 : indice - 1);
 };
 
-img.classList.remove("push-left", "push-right");
-indice = 1;
-iniciarLoop();
-}
-
-function iniciarLoop() {
-if (paused) return;
-
-function trocarImagem() {
-if (paused) return;
-
-const proxima = imagens[indice];
-
-img.classList.add("push-left");
-
-setTimeout(() => {
-img.classList.remove("push-left");
-img.classList.add("push-right");
-void img.offsetWidth;
-
-img.src = proxima.src;
-img.alt = proxima.alt;
-
-img.onerror = () => {
-console.warn(`Erro ao carregar: ${proxima.alt}`);
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+// --- Mouse drag ---
+let isDragging = false;
+let dragStartX = 0;
+const kakaMouseDown = (e) => { e.preventDefault(); isDragging = true; dragStartX = e.screenX; };
+const kakaMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
+if (isKakaSwiping) return;
+const dist = e.screenX - dragStartX;
+if (Math.abs(dist) < 50) return;
+carregarKaka(dist > 0 ? indice + 1 : indice - 1);
 };
 
-img.classList.remove("push-right");
-indice = (indice + 1) % imagens.length;
-
-if (!paused) {
-loopFoto2007 = setTimeout(trocarImagem, intervalo);
-}
-}, transitionDuration);
+img.addEventListener("touchstart", kakaTouchStart, { passive: true });
+img.addEventListener("touchend", kakaTouchEnd, { passive: true });
+img.addEventListener("mousedown", kakaMouseDown, false);
+img.addEventListener("mouseup", kakaMouseUp, false);
+img.addEventListener("mouseleave", kakaMouseUp, false);
 }
 
-if (!paused) {
-loopFoto2007 = setTimeout(trocarImagem, intervalo);
-}
-}
-
-// Funções de Pausa e Resume
-const pauseLoop = () => {
-paused = true;
-if (loopFoto2007) {
-clearTimeout(loopFoto2007);
-loopFoto2007 = null;
-}
-};
-
-const resumeLoop = () => {
-if (paused) {
-paused = false;
-iniciarLoop();
-}
-};
-
-// Event Listeners
-img.addEventListener("mousedown", (e) => {
-e.preventDefault();
-pauseLoop();
-});
-img.addEventListener("mouseup", (e) => {
-e.preventDefault();
-resumeLoop();
-});
-img.addEventListener("mouseleave", resumeLoop);
-img.addEventListener("touchstart", (e) => {
-e.preventDefault();
-pauseLoop();
-}, { passive: false });
-img.addEventListener("touchend", (e) => {
-e.preventDefault();
-resumeLoop();
-}, { passive: false });
-img.addEventListener("touchcancel", (e) => {
-e.preventDefault();
-resumeLoop();
-}, { passive: false });
-
-iniciarImagemInicial();
-}
-
-// Iniciar a detecção dinâmica das imagens
 detectarTodasImagensKaka(iniciarComImagens);
 }
 
