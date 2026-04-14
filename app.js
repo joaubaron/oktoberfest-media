@@ -279,10 +279,6 @@ adicionarSwipes();
 window.addEventListener('resize', updateVideoPositionAndSize);
 }
 
-const cartazButton = getElementSafe("cartazButton");
-if (cartazButton) cartazButton.addEventListener("click", mostrarCartazAno);
-}
-
 // ======== FUNÇÕES AUXILIARES E DE MÍDIA ========
 function preloadMedia() {
 // Pré-carrega fotos do GitHub
