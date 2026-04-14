@@ -1142,7 +1142,7 @@ if (!img) return;
 removerSwipes();
 
 const fadeDuration = 500;
-// Gera lista completa de cartazes (1984 até currentYear)
+// Lista completa de cartazes (1984 até currentYear)
 const cartazes = [];
 for (let ano = 1984; ano <= currentYear; ano++) {
 cartazes.push(ano);
@@ -1181,13 +1181,13 @@ setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
 carregarCartazComFallback(currentYear);
 
 function proximoCartaz() {
-// LOOP INFINITO
+// LOOP INFINITO: vai para o próximo, se passar do último volta para 1984
 index = (index + 1) % cartazes.length;
 carregarCartazComFallback(cartazes[index]);
 }
 
 function anteriorCartaz() {
-// LOOP INFINITO
+// LOOP INFINITO: se voltar antes de 1984, vai para o último ano
 index = (index - 1 + cartazes.length) % cartazes.length;
 carregarCartazComFallback(cartazes[index]);
 }
@@ -1205,9 +1205,7 @@ const cartazEndX = e.changedTouches[0].screenX;
 const swipeDistance = cartazEndX - cartazStartX;
 const minSwipeDistance = 50;
 
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
+if (Math.abs(swipeDistance) < minSwipeDistance) return;
 
 if (swipeDistance > 0) {
 proximoCartaz();
@@ -1235,9 +1233,7 @@ const dragEndX = e.screenX;
 const swipeDistance = dragEndX - dragStartX;
 const minSwipeDistance = 50;
 
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
+if (Math.abs(swipeDistance) < minSwipeDistance) return;
 
 if (swipeDistance > 0) {
 proximoCartaz();
@@ -1297,13 +1293,12 @@ showToast('👈 Arraste para navegar entre os cartazes (com loop) 👉', 2500);
 }, 400);
 }
 
-// 🔥 NOVA FUNÇÃO: Configura swipes específicos para o cartaz mostrado
+// 🔥 FUNÇÃO CORRIGIDA: Configura swipes com LOOP INFINITO para cartazes
 function configurarSwipesCartazEspecifico(img, yearInicial) {
 // Remove qualquer listener anterior
 removerSwipes();
 
 const fadeDuration = 500;
-let cartazAtual = yearInicial;
 let isCartazSwiping = false;
 
 // Lista completa de todos os cartazes (1984 até currentYear)
@@ -1311,6 +1306,10 @@ const cartazesDisponiveis = [];
 for (let ano = 1984; ano <= currentYear; ano++) {
 cartazesDisponiveis.push(ano);
 }
+
+// Encontra o índice atual baseado no ano inicial
+let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
+if (indexAtual === -1) indexAtual = 0;
 
 function carregarCartazComFallback(ano) {
 if (isCartazSwiping) return;
@@ -1328,18 +1327,15 @@ img.alt = `Cartaz ${ano} - Upload pendente`;
 };
 
 img.style.opacity = 1;
-cartazAtual = ano;
 setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
 }, fadeDuration);
 }
 
-// Encontra o índice atual
-let indexAtual = cartazesDisponiveis.indexOf(cartazAtual);
-
+// ✅ CORREÇÃO AQUI: Loop infinito igual aos outros modos
 function proximoCartaz() {
-// LOOP INFINITO
+// Avança para o próximo ano, se chegar no final volta para 1984
 if (indexAtual + 1 >= cartazesDisponiveis.length) {
-indexAtual = 0;
+indexAtual = 0;  // Volta para 1984
 } else {
 indexAtual++;
 }
@@ -1347,14 +1343,17 @@ carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
 }
 
 function anteriorCartaz() {
-// LOOP INFINITO
+// Volta para o ano anterior, se chegar em 1984 e voltar, vai para o último (2026)
 if (indexAtual - 1 < 0) {
-indexAtual = cartazesDisponiveis.length - 1;
+indexAtual = cartazesDisponiveis.length - 1;  // Vai para o último ano
 } else {
 indexAtual--;
 }
 carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
 }
+
+// Carrega o cartaz inicial
+carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
 
 let cartazStartX = 0;
 
@@ -1374,13 +1373,13 @@ return;
 }
 
 if (swipeDistance > 0) {
-proximoCartaz();
+proximoCartaz();  // 👉 direita = próximo ano
 } else {
-anteriorCartaz();
+anteriorCartaz();  // 👈 esquerda = ano anterior
 }
 };
 
-// Mouse events
+// Mouse events para desktop
 let isDragging = false;
 let dragStartX = 0;
 
