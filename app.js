@@ -1198,9 +1198,6 @@ if (indexAtual === -1) {
   indexAtual = cartazesDisponiveis.length - 1;
 }
 
-// ❌ REMOVE ESSA LINHA:
-// carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-
 function carregarCartazComFallback(ano) {
 if (isCartazSwiping) return;
 isCartazSwiping = true;
