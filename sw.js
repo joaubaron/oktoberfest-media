@@ -15,6 +15,7 @@ let essentialAssets = [
 './sw.js',
 './titulo.png',
 './azulbavaro.webp',
+'./splash.webp',
 './fotos/oktoberfest.png',
 './rodape.png',
 
