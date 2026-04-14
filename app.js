@@ -1180,21 +1180,26 @@ configurarSwipesCartazEspecifico(img, anoSelecionado);
 
 // 🔥 FUNÇÃO CORRIGIDA: Configura swipes com LOOP INFINITO para cartazes
 function configurarSwipesCartazEspecifico(img, yearInicial) {
-// Remove qualquer listener anterior
 removerSwipes();
 
 const fadeDuration = 500;
 let isCartazSwiping = false;
 
-// Lista completa de todos os cartazes (1984 até currentYear)
 const cartazesDisponiveis = [];
 for (let ano = 1984; ano <= currentYear; ano++) {
 cartazesDisponiveis.push(ano);
 }
 
-// Encontra o índice atual baseado no ano inicial
 let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
-if (indexAtual === -1) indexAtual = 0;
+
+// Se não existir (ex: 2030), mantém coerência:
+// começa do último ano disponível (currentYear)
+if (indexAtual === -1) {
+  indexAtual = cartazesDisponiveis.length - 1;
+}
+
+// ❌ REMOVE ESSA LINHA:
+// carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
 
 function carregarCartazComFallback(ano) {
 if (isCartazSwiping) return;
@@ -1206,9 +1211,7 @@ img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
 img.alt = `Cartaz ${ano}`;
 
 img.onerror = () => {
-console.warn(`Cartaz ${ano} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${ano} - Upload pendente`;
 };
 
 img.style.opacity = 1;
