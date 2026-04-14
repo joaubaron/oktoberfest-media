@@ -1224,8 +1224,6 @@ indexAtual = 0;  // Volta para 1984
 } else {
 indexAtual++;
 }
-carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-}
 
 function anteriorCartaz() {
 // Volta para o ano anterior, se chegar em 1984 e voltar, vai para o último (2026)
