@@ -1147,7 +1147,8 @@ input.value = "";
 return;
 }
 
-const anoSelecionado = year;
+// Limita o ano máximo ao currentYear
+const anoSelecionado = Math.min(year, currentYear);
 
 img.style.opacity = 0;
 setTimeout(() => {
@@ -1159,23 +1160,20 @@ console.warn(`Cartaz ${anoSelecionado} não encontrado`);
 img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
 img.alt = `Cartaz ${anoSelecionado} - Upload pendente`;
 img.style.opacity = 1;
-// ❌ Sem swipe — ano inválido, igual ao Clara
 };
 
-img.onload = () => {
-img.style.opacity = 1;
-
-if (!toastCartazesExibido) {
-toastCartazesExibido = true;
-showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-}
-
-// ✅ Swipe só se a imagem carregou de verdade
-configurarSwipesCartazEspecifico(img, anoSelecionado);
-};
-
+img.onload = () => { img.style.opacity = 1; };
 img.style.opacity = 1;
 input.value = "";
+
+// ✅ TOAST DO CARTAZ (igual aos outros modos)
+if (!toastCartazesExibido) {
+    toastCartazesExibido = true;
+    showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+}
+
+// Configura swipe com loop infinito
+configurarSwipesCartazEspecifico(img, anoSelecionado);
 
 }, 400);
 }
