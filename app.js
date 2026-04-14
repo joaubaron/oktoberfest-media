@@ -613,7 +613,7 @@ photo.removeEventListener("touchend", handleTouchEnd, { passive: false });
 photo.removeEventListener("mousedown", handleMouseDown, false);
 }
 
-// ======== FOTOS KAKA (swipe manual, igual cartazes) ========
+// ======== FOTOS KAKA (mesma lógica dos cartazes) ========
 function mostrarFoto2007() {
 stopVideo();
 const img = limparListenersEClone();
@@ -622,24 +622,22 @@ if (!img) return;
 removerSwipes();
 
 const fadeDuration = 500;
-let imagens = [];
-let indice = 0;
+let kakasDetectadas = [];
+let index = 0;
 let isKakaSwiping = false;
 
-// Detecta dinamicamente TODAS as imagens da pasta kaka
 function detectarTodasImagensKaka(callback) {
 const imagensExistentes = [];
-let index = 1;
+let i = 1;
 const maxTentativas = 50;
 
 function verificarProximaImagem() {
-if (index > maxTentativas) { callback(imagensExistentes); return; }
-
-const urlImagem = `${GITHUB_BASE}/kaka/oktoberfestkaka${index}.jpg`;
+if (i > maxTentativas) { callback(imagensExistentes); return; }
+const urlImagem = `${GITHUB_BASE}/kaka/oktoberfestkaka${i}.jpg`;
 const tempImg = new Image();
 tempImg.onload = function() {
-imagensExistentes.push({ src: urlImagem, alt: `Oktoberfest Kaka ${index}` });
-index++;
+imagensExistentes.push(urlImagem);
+i++;
 verificarProximaImagem();
 };
 tempImg.onerror = function() { callback(imagensExistentes); };
@@ -648,18 +646,30 @@ tempImg.src = urlImagem;
 verificarProximaImagem();
 }
 
-function carregarKaka(novoIndice) {
-if (isKakaSwiping || imagens.length === 0) return;
+function carregarKakaComFallback(novoIndex) {
+if (isKakaSwiping) return;
 isKakaSwiping = true;
 
 img.style.opacity = 0;
 setTimeout(() => {
-indice = (novoIndice + imagens.length) % imagens.length;
-img.src = imagens[indice].src;
-img.alt = imagens[indice].alt;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
+img.src = kakasDetectadas[novoIndex];
+img.alt = `Cláudia & Augusto ${novoIndex + 1}`;
+
+img.onerror = () => {
+console.warn(`Kaka ${novoIndex + 1} não encontrada`);
+img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.alt = `Kaka ${novoIndex + 1} - Upload pendente`;
+img.style.opacity = 1;
+};
+
 img.onload = () => { img.style.opacity = 1; };
-if (img.complete && img.naturalWidth > 0) img.style.opacity = 1;
+index = novoIndex;
+
+if (!toastClaraExibido) {
+toastClaraExibido = true;
+showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
+}
+
 setTimeout(() => { isKakaSwiping = false; }, fadeDuration);
 }, fadeDuration);
 }
@@ -671,45 +681,82 @@ img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
 return;
 }
 
-imagens = imagensCarregadas;
-console.log(`🎯 ${imagens.length} imagens kaka detectadas`);
+kakasDetectadas = imagensCarregadas;
+console.log(`🎯 ${kakasDetectadas.length} imagens kaka detectadas`);
 
-// Carrega a primeira imagem
-img.src = imagens[0].src;
-img.alt = imagens[0].alt;
-img.style.opacity = 1;
-img.onerror = () => { img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`; };
+carregarKakaComFallback(0);
 
-showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
-
-// --- Touch ---
 let kakaStartX = 0;
-const kakaTouchStart = (e) => { kakaStartX = e.changedTouches[0].screenX; };
-const kakaTouchEnd = (e) => {
-if (isKakaSwiping) return;
-const dist = e.changedTouches[0].screenX - kakaStartX;
-if (Math.abs(dist) < 50) return;
-carregarKaka(dist > 0 ? indice + 1 : indice - 1);
+
+const kakaTouchStart = (e) => {
+kakaStartX = e.changedTouches[0].screenX;
 };
 
-// --- Mouse drag ---
-let isDragging = false;
-let dragStartX = 0;
-const kakaMouseDown = (e) => { e.preventDefault(); isDragging = true; dragStartX = e.screenX; };
-const kakaMouseUp = (e) => {
-if (!isDragging) return;
-isDragging = false;
+const kakaTouchEnd = (e) => {
 if (isKakaSwiping) return;
-const dist = e.screenX - dragStartX;
-if (Math.abs(dist) < 50) return;
-carregarKaka(dist > 0 ? indice + 1 : indice - 1);
+const kakaEndX = e.changedTouches[0].screenX;
+const swipeDistance = kakaEndX - kakaStartX;
+const minSwipeDistance = 50;
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[SWIPE KAKA] Movimento muito pequeno, ignorando');
+return;
+}
+if (swipeDistance > 0) {
+proximaKaka();
+} else {
+anteriorKaka();
+}
 };
 
 img.addEventListener("touchstart", kakaTouchStart, { passive: true });
 img.addEventListener("touchend", kakaTouchEnd, { passive: true });
+
+let isDragging = false;
+let dragStartX = 0;
+
+const kakaMouseDown = (e) => {
+e.preventDefault();
+isDragging = true;
+dragStartX = e.screenX;
+img.addEventListener('mousemove', kakaMouseMove);
+img.addEventListener('mouseup', kakaMouseUp, { once: true });
+img.addEventListener('mouseleave', kakaMouseUp, { once: true });
+};
+
+const kakaMouseMove = (e) => {
+if (!isDragging) return;
+};
+
+const kakaMouseUp = (e) => {
+if (!isDragging) return;
+isDragging = false;
+img.removeEventListener('mousemove', kakaMouseMove);
+if (isKakaSwiping) return;
+const dragEndX = e.screenX;
+const swipeDistance = dragEndX - dragStartX;
+const minSwipeDistance = 50;
+if (Math.abs(swipeDistance) < minSwipeDistance) {
+console.log('[DRAG KAKA] Movimento muito pequeno, ignorando');
+return;
+}
+if (swipeDistance > 0) {
+proximaKaka();
+} else {
+anteriorKaka();
+}
+};
+
 img.addEventListener("mousedown", kakaMouseDown, false);
-img.addEventListener("mouseup", kakaMouseUp, false);
-img.addEventListener("mouseleave", kakaMouseUp, false);
+
+function proximaKaka() {
+const novoIndex = (index + 1) % kakasDetectadas.length;
+carregarKakaComFallback(novoIndex);
+}
+
+function anteriorKaka() {
+const novoIndex = (index - 1 + kakasDetectadas.length) % kakasDetectadas.length;
+carregarKakaComFallback(novoIndex);
+}
 }
 
 detectarTodasImagensKaka(iniciarComImagens);
