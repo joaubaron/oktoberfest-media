@@ -1134,166 +1134,147 @@ toast.style.opacity = '0';
 }
 
 function mostrarCartazAno() {
-stopVideo();
-const input = getElementSafe("cartazInput");
-const img = limparListenersEClone();
-if (!input || !img) return;
+    stopVideo();
+    const input = getElementSafe("cartazInput");
+    const img = limparListenersEClone();
+    if (!input || !img) return;
 
-const year = parseInt(input.value);
+    const year = parseInt(input.value);
 
-if (isNaN(year) || year < 1984) {
-showModal("cartaz");
-input.value = "";
-return;
-}
+    if (isNaN(year) || year < 1984) {
+        showModal("cartaz");
+        input.value = "";
+        return;
+    }
 
-// Limita o ano máximo ao currentYear
-const anoSelecionado = year;
+    const anoValido = (year >= 1984 && year <= currentYear) ? year : currentYear;
 
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${anoSelecionado}.jpg`;
-img.alt = `Cartaz ${anoSelecionado}`;
+    img.style.opacity = 0;
+    setTimeout(() => {
+        img.src = `${GITHUB_BASE}/cartazes/cartaz${anoValido}.jpg`;
+        img.alt = `Cartaz ${anoValido}`;
 
-img.onerror = () => {
-console.warn(`Cartaz ${anoSelecionado} não encontrado`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Cartaz ${anoSelecionado} - Upload pendente`;
-img.style.opacity = 1;
-};
+        img.onerror = () => {
+            console.warn(`Cartaz ${anoValido} não encontrado`);
+            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+            img.alt = `Cartaz ${year} - Upload pendente`;
+            img.style.opacity = 1;
+        };
 
-img.onload = () => { img.style.opacity = 1; };
-img.style.opacity = 1;
-input.value = "";
+        img.onload = () => { img.style.opacity = 1; };
+        img.style.opacity = 1;
+        input.value = "";
 
-// ✅ TOAST DO CARTAZ (igual aos outros modos)
-if (!toastCartazesExibido) {
-    toastCartazesExibido = true;
-    showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-}
+        if (!toastCartazesExibido) {
+            toastCartazesExibido = true;
+            showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+        }
 
-// Configura swipe com loop infinito
-configurarSwipesCartazEspecifico(img, anoSelecionado);
-
-}, 400);
+        configurarSwipesCartazEspecifico(img, anoValido);
+    }, 400);
 }
 
 // 🔥 FUNÇÃO CORRIGIDA: Configura swipes com LOOP INFINITO para cartazes
 function configurarSwipesCartazEspecifico(img, yearInicial) {
-removerSwipes();
+    removerSwipes();
 
-const fadeDuration = 500;
-let isCartazSwiping = false;
+    const fadeDuration = 500;
+    let isCartazSwiping = false;
 
-const cartazesDisponiveis = [];
-for (let ano = 1984; ano <= currentYear; ano++) {
-cartazesDisponiveis.push(ano);
-}
+    const cartazesDisponiveis = [];
+    for (let ano = 1984; ano <= currentYear; ano++) {
+        cartazesDisponiveis.push(ano);
+    }
 
-let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
+    let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
+    if (indexAtual === -1) {
+        indexAtual = cartazesDisponiveis.length - 1;
+    }
 
-// Se não existir (ex: 2030), mantém coerência:
-// começa do último ano disponível (currentYear)
-if (indexAtual === -1) {
-  indexAtual = cartazesDisponiveis.length - 1;
-}
+    function carregarCartazComFallback(ano) {
+        if (isCartazSwiping) return;
+        isCartazSwiping = true;
 
-function carregarCartazComFallback(ano) {
-if (isCartazSwiping) return;
-isCartazSwiping = true;
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+            img.alt = `Cartaz ${ano}`;
 
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-img.alt = `Cartaz ${ano}`;
+            img.onerror = () => {
+                img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+            };
 
-img.onerror = () => {
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-};
+            img.style.opacity = 1;
+            setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
+        }, fadeDuration);
+    }
 
-img.style.opacity = 1;
-setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-}, fadeDuration);
-}
+    function proximoCartaz() {
+        if (indexAtual + 1 >= cartazesDisponiveis.length) {
+            indexAtual = 0;
+        } else {
+            indexAtual++;
+        }
+        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
+    }
 
-// ✅ CORREÇÃO AQUI: Loop infinito igual aos outros modos
-function proximoCartaz() {
-// Avança para o próximo ano, se chegar no final volta para 1984
-if (indexAtual + 1 >= cartazesDisponiveis.length) {
-indexAtual = 0;  // Volta para 1984
-} else {
-indexAtual++;
-}
+    function anteriorCartaz() {
+        if (indexAtual - 1 < 0) {
+            indexAtual = cartazesDisponiveis.length - 1;
+        } else {
+            indexAtual--;
+        }
+        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
+    }
 
-function anteriorCartaz() {
-// Volta para o ano anterior, se chegar em 1984 e voltar, vai para o último (2026)
-if (indexAtual - 1 < 0) {
-indexAtual = cartazesDisponiveis.length - 1;  // Vai para o último ano
-} else {
-indexAtual--;
-}
-carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-}
+    let cartazStartX = 0;
 
-let cartazStartX = 0;
+    const cartazesTouchStart = (e) => {
+        cartazStartX = e.changedTouches[0].screenX;
+    };
 
-const cartazesTouchStart = (e) => {
-cartazStartX = e.changedTouches[0].screenX;
-};
+    const cartazesTouchEnd = (e) => {
+        if (isCartazSwiping) return;
+        const cartazEndX = e.changedTouches[0].screenX;
+        const swipeDistance = cartazEndX - cartazStartX;
+        const minSwipeDistance = 50;
+        if (Math.abs(swipeDistance) < minSwipeDistance) return;
+        if (swipeDistance > 0) {
+            proximoCartaz();
+        } else {
+            anteriorCartaz();
+        }
+    };
 
-const cartazesTouchEnd = (e) => {
-if (isCartazSwiping) return;
+    let isDragging = false;
+    let dragStartX = 0;
 
-const cartazEndX = e.changedTouches[0].screenX;
-const swipeDistance = cartazEndX - cartazStartX;
-const minSwipeDistance = 50;
+    const cartazesMouseDown = (e) => {
+        e.preventDefault();
+        isDragging = true;
+        dragStartX = e.screenX;
+    };
 
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
+    const cartazesMouseUp = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        if (isCartazSwiping) return;
+        const dragEndX = e.screenX;
+        const swipeDistance = dragEndX - dragStartX;
+        const minSwipeDistance = 50;
+        if (Math.abs(swipeDistance) < minSwipeDistance) return;
+        if (swipeDistance > 0) {
+            proximoCartaz();
+        } else {
+            anteriorCartaz();
+        }
+    };
 
-if (swipeDistance > 0) {
-proximoCartaz();  // 👉 direita = próximo ano
-} else {
-anteriorCartaz();  // 👈 esquerda = ano anterior
-}
-};
-
-// Mouse events para desktop
-let isDragging = false;
-let dragStartX = 0;
-
-const cartazesMouseDown = (e) => {
-e.preventDefault();
-isDragging = true;
-dragStartX = e.screenX;
-};
-
-const cartazesMouseUp = (e) => {
-if (!isDragging) return;
-isDragging = false;
-if (isCartazSwiping) return;
-
-const dragEndX = e.screenX;
-const swipeDistance = dragEndX - dragStartX;
-const minSwipeDistance = 50;
-
-if (Math.abs(swipeDistance) < minSwipeDistance) {
-return;
-}
-
-if (swipeDistance > 0) {
-proximoCartaz();
-} else {
-anteriorCartaz();
-}
-};
-
-img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-img.addEventListener("mousedown", cartazesMouseDown, false);
-img.addEventListener("mouseup", cartazesMouseUp, false);
-img.addEventListener("mouseleave", cartazesMouseUp, false);
+    img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+    img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+    img.addEventListener("mousedown", cartazesMouseDown, false);
+    img.addEventListener("mouseup", cartazesMouseUp, false);
+    img.addEventListener("mouseleave", cartazesMouseUp, false);
 }
 
 // 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
