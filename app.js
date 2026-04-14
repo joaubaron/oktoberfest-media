@@ -1176,105 +1176,97 @@ function mostrarCartazAno() {
 
 // 🔥 FUNÇÃO CORRIGIDA: Configura swipes com LOOP INFINITO para cartazes
 function configurarSwipesCartazEspecifico(img, yearInicial) {
-    removerSwipes();
+  removerSwipes();
 
-    const fadeDuration = 500;
-    let isCartazSwiping = false;
+  const fadeDuration = 500;
+  let isCartazSwiping = false;
 
-    const cartazesDisponiveis = [];
-    for (let ano = 1984; ano <= currentYear; ano++) {
-        cartazesDisponiveis.push(ano);
+  const cartazesDisponiveis = [];
+  for (let ano = 1984; ano <= currentYear; ano++) {
+    cartazesDisponiveis.push(ano);
+  }
+
+  let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
+  if (indexAtual === -1) {
+    indexAtual = cartazesDisponiveis.length - 1;
+  }
+
+  function carregarCartazComFallback(ano) {
+    if (isCartazSwiping) return;
+    isCartazSwiping = true;
+
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+      img.alt = `Cartaz ${ano}`;
+
+      img.onerror = () => {
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.style.opacity = 1;
+      };
+
+      img.onload = () => { img.style.opacity = 1; };
+      img.style.opacity = 1;
+
+      setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
+    }, fadeDuration);
+  }
+
+  function proximoCartaz() {
+    indexAtual = (indexAtual + 1) % cartazesDisponiveis.length;
+    carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
+  }
+
+  function anteriorCartaz() {
+    indexAtual = (indexAtual - 1 + cartazesDisponiveis.length) % cartazesDisponiveis.length;
+    carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
+  }
+
+  let cartazStartX = 0;
+
+  const cartazesTouchStart = (e) => {
+    cartazStartX = e.changedTouches[0].screenX;
+  };
+
+  const cartazesTouchEnd = (e) => {
+    if (isCartazSwiping) return;
+    const cartazEndX = e.changedTouches[0].screenX;
+    const swipeDistance = cartazEndX - cartazStartX;
+    if (Math.abs(swipeDistance) < 50) return;
+    if (swipeDistance > 0) {
+      proximoCartaz();
+    } else {
+      anteriorCartaz();
     }
+  };
 
-    let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
-    if (indexAtual === -1) {
-        indexAtual = cartazesDisponiveis.length - 1;
+  let isDragging = false;
+  let dragStartX = 0;
+
+  const cartazesMouseDown = (e) => {
+    e.preventDefault();
+    isDragging = true;
+    dragStartX = e.screenX;
+  };
+
+  const cartazesMouseUp = (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    if (isCartazSwiping) return;
+    const swipeDistance = e.screenX - dragStartX;
+    if (Math.abs(swipeDistance) < 50) return;
+    if (swipeDistance > 0) {
+      proximoCartaz();
+    } else {
+      anteriorCartaz();
     }
+  };
 
-    function carregarCartazComFallback(ano) {
-        if (isCartazSwiping) return;
-        isCartazSwiping = true;
-
-        img.style.opacity = 0;
-        setTimeout(() => {
-            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-            img.alt = `Cartaz ${ano}`;
-
-            img.onerror = () => {
-                img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-            };
-
-            img.style.opacity = 1;
-            setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
-        }, fadeDuration);
-    }
-
-    function proximoCartaz() {
-        if (indexAtual + 1 >= cartazesDisponiveis.length) {
-            indexAtual = 0;
-        } else {
-            indexAtual++;
-        }
-        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-    }
-
-    function anteriorCartaz() {
-        if (indexAtual - 1 < 0) {
-            indexAtual = cartazesDisponiveis.length - 1;
-        } else {
-            indexAtual--;
-        }
-        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-    }
-
-    let cartazStartX = 0;
-
-    const cartazesTouchStart = (e) => {
-        cartazStartX = e.changedTouches[0].screenX;
-    };
-
-    const cartazesTouchEnd = (e) => {
-        if (isCartazSwiping) return;
-        const cartazEndX = e.changedTouches[0].screenX;
-        const swipeDistance = cartazEndX - cartazStartX;
-        const minSwipeDistance = 50;
-        if (Math.abs(swipeDistance) < minSwipeDistance) return;
-        if (swipeDistance > 0) {
-            proximoCartaz();
-        } else {
-            anteriorCartaz();
-        }
-    };
-
-    let isDragging = false;
-    let dragStartX = 0;
-
-    const cartazesMouseDown = (e) => {
-        e.preventDefault();
-        isDragging = true;
-        dragStartX = e.screenX;
-    };
-
-    const cartazesMouseUp = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        if (isCartazSwiping) return;
-        const dragEndX = e.screenX;
-        const swipeDistance = dragEndX - dragStartX;
-        const minSwipeDistance = 50;
-        if (Math.abs(swipeDistance) < minSwipeDistance) return;
-        if (swipeDistance > 0) {
-            proximoCartaz();
-        } else {
-            anteriorCartaz();
-        }
-    };
-
-    img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-    img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-    img.addEventListener("mousedown", cartazesMouseDown, false);
-    img.addEventListener("mouseup", cartazesMouseUp, false);
-    img.addEventListener("mouseleave", cartazesMouseUp, false);
+  img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
+  img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
+  img.addEventListener("mousedown", cartazesMouseDown, false);
+  img.addEventListener("mouseup", cartazesMouseUp, false);
+  img.addEventListener("mouseleave", cartazesMouseUp, false);
 }
 
 // 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
