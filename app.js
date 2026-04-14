@@ -1148,7 +1148,7 @@ return;
 }
 
 // Limita o ano máximo ao currentYear
-const anoSelecionado = Math.min(year, currentYear);
+const anoSelecionado = year;
 
 img.style.opacity = 0;
 setTimeout(() => {
