@@ -14,13 +14,18 @@
 "type": "image/png"
 }
 ],
+"splash_pages": {
+"dark": {
+"image": "splash.webp"
+}
+},
 "lang": "pt-BR",
 "dir": "ltr",
 "scope": "./",
 "start_url": "index.html",
 "display": "standalone",
 "orientation": "portrait",
-"background_color": "#03687e",
-"theme_color": "#03687e",
+"background_color": "#e3e9f0",
+"theme_color": "#e3e9f0",
 "prefer_related_applications": false
 }
