@@ -1285,11 +1285,6 @@ input.value = "";
 // Configura swipe com loop infinito
 configurarSwipesCartazEspecifico(img, anoSelecionado);
 
-if (!toastCartazesExibido) {
-toastCartazesExibido = true;
-showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-}
-
 }, 400);
 }
 
