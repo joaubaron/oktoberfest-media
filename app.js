@@ -981,7 +981,7 @@ adicionarSwipes();
 
 if (!toastClaraExibido) {
 toastClaraExibido = true;
-showToast('👈 Arraste para navegar entre os anos 👉', 2500);
+showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
 }
 }, 200);
 }, 200);
