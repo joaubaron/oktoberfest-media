@@ -1169,11 +1169,6 @@ img.style.opacity = 1;
 
 img.onload = () => { img.style.opacity = 1; };
 
-if (!toastCartazesExibido) {
-toastCartazesExibido = true;
-showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-}
-
 setTimeout(() => { isCartazSwiping = false; }, fadeDuration);
 }, fadeDuration);
 }
