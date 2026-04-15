@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '15.04.2026-2009';
+const CACHE_VERSION = '15.04.2026-2021';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -36,7 +36,7 @@ caches.open(CACHE_NAME)
 .then((cache) => cache.addAll(essentialAssets))
 .then(() => console.log('[SW] Pré-cache concluído.'))
 .catch((error) => console.error('[SW] Pré-cache falhou:', error))
-.then(() => self.skipWaiting())
+.finally(() => self.skipWaiting())
 );
 });
 
