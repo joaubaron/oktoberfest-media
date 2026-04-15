@@ -870,9 +870,8 @@ function resetApp() {
     // Remover qualquer swipe ativo
     removerSwipes();
     
-    // Fogos + Toast antes do reload
+    // Fogos (3 segundos)
     startFireworks();
-    showToast('Prosit! 🍻', 1500);
     
     // Resetar variáveis
     particles = [];
@@ -891,7 +890,8 @@ function resetApp() {
         resetButton.disabled = true;
     }
     
-    setTimeout(() => { window.location.reload(true); }, 400);
+    // RELOAD após 3 segundos
+    setTimeout(() => { window.location.reload(true); }, 3000);
 }
 
 // ======== TOAST ========
