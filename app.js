@@ -1133,148 +1133,168 @@ toast.style.opacity = '0';
 }, duration);
 }
 
-// ========== FUNÇÃO CORRIGIDA: mostrarCartazAno ==========
-// ========== FUNÇÃO CORRIGIDA (IGUAL AO CAMPO CLARA) ==========
-function mostrarCartazAno() {
-    stopVideo();
-    const input = getElementSafe("cartazInput");
-    const img = limparListenersEClone();
-    if (!input || !img) return;
+// ======== DETECÇÃO DINÂMICA DE ANOS COM CARTAZ (igual às fotos) ========
+let cartazYearsCache = null;
 
-    const year = parseInt(input.value);
-
-    // Validação igual ao campo Clara
-    if (isNaN(year) || year < 1984) {
-        showModal("cartaz");
-        input.value = "";
-        return;
+async function detectExistingCartazYears() {
+  if (cartazYearsCache) return cartazYearsCache;
+  
+  const anos = [];
+  let ano = 1984;
+  let maxAno = new Date().getFullYear() + 2; // Permite anos futuros já disponíveis
+  let falhasConsecutivas = 0;
+  
+  while (ano <= maxAno && falhasConsecutivas < 2) {
+    const url = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+    const existe = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+      setTimeout(() => resolve(false), 2000);
+    });
+    
+    if (existe) {
+      anos.push(ano);
+      falhasConsecutivas = 0;
+    } else {
+      falhasConsecutivas++;
     }
+    ano++;
+  }
+  
+  cartazYearsCache = anos;
+  console.log(`📌 ${anos.length} cartazes detectados:`, anos);
+  return anos;
+}
 
-    // Permite anos acima do atual – mostra fallback (igual Clara)
-    const anoValido = year;  // sem clamp! se for > currentYear, fallback cai para vilagermanica
+// ========== FUNÇÃO CORRIGIDA (igual à lógica das fotos) ==========
+// ========== FUNÇÃO CORRIGIDA (igual à lógica das fotos) ==========
+async function mostrarCartazAno() {
+  stopVideo();
+  const input = getElementSafe("cartazInput");
+  const img = limparListenersEClone();
+  if (!input || !img) return;
 
-    input.value = ""; // limpa campo
+  const year = parseInt(input.value);
+  input.value = "";
 
-    img.style.opacity = 0;
+  if (isNaN(year) || year < 1984) {
+    showModal("cartaz");
+    return;
+  }
 
-    // DEFINE O ONERROR ANTES DE ATRIBUIR SRC (IGUAL AO CLARA)
+  // Obtém lista REAL de anos com cartaz (igual às fotos)
+  const anosReais = await detectExistingCartazYears();
+  if (anosReais.length === 0) {
+    img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+    img.alt = "Nenhum cartaz disponível";
+    return;
+  }
+
+  let indexReal = anosReais.indexOf(year);
+  let usarFallback = (indexReal === -1);
+
+  if (usarFallback) {
+    // Ano digitado não existe: mostra fallback, mas navega a partir do último ano real
+    indexReal = anosReais.length - 1;
+  }
+
+  img.style.opacity = 0;
+
+  if (usarFallback) {
+    img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+    img.alt = `Cartaz ${year} (indisponível)`;
+    img.style.opacity = 1;
+  } else {
+    img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
+    img.alt = `Cartaz ${year}`;
+    img.onload = () => { img.style.opacity = 1; };
     img.onerror = () => {
-        console.warn(`Cartaz ${anoValido} não encontrado – usando fallback`);
-        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-        img.alt = `Cartaz ${anoValido} (fallback)`;
-        img.style.opacity = 1;
+      img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+      img.alt = `Cartaz ${year} (fallback)`;
+      img.style.opacity = 1;
     };
+    if (img.complete && img.naturalWidth > 0) img.style.opacity = 1;
+  }
 
-    img.onload = () => {
-        img.style.opacity = 1;
-    };
+  // Configura swipe usando APENAS os anos que realmente existem
+  configurarSwipesCartazReais(img, anosReais, indexReal);
 
-    // Agora sim atribui o src
-    img.src = `${GITHUB_BASE}/cartazes/cartaz${anoValido}.jpg`;
-    img.alt = `Cartaz ${anoValido}`;
-
-    // Se a imagem já estiver em cache e carregar instantaneamente
-    if (img.complete && img.naturalWidth > 0) {
-        img.style.opacity = 1;
-    }
-
-    // Toast (uma vez)
-    if (!toastCartazesExibido) {
-        toastCartazesExibido = true;
-        showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
-    }
-
-    // Configura swipes com o ano digitado (mesmo que não tenha cartaz)
-    configurarSwipesCartazEspecifico(img, anoValido);
+  if (!toastCartazesExibido) {
+    toastCartazesExibido = true;
+    showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
+  }
 }
 
 // ========== CONFIGURAÇÃO DE SWIPE (COM FALLBACK SILENCIOSO) ==========
-function configurarSwipesCartazEspecifico(img, yearInicial) {
-    removerSwipes();
+function configurarSwipesCartazReais(img, anosReais, indiceInicial) {
+  removerSwipes();
 
-    const fadeDuration = 500;
-    let isCartazSwiping = false;
+  let currentIndex = indiceInicial;
+  const fadeDuration = 500;
+  let isSwiping = false;
 
-    // Array com TODOS os anos de 1984 até currentYear
-    const cartazesDisponiveis = [];
-    for (let ano = 1984; ano <= currentYear; ano++) {
-        cartazesDisponiveis.push(ano);
-    }
+  function carregarCartazPorIndice(index) {
+    if (isSwiping) return;
+    isSwiping = true;
+    const ano = anosReais[index];
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.onerror = () => {
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.alt = `Cartaz ${ano} (fallback)`;
+        img.style.opacity = 1;
+      };
+      img.onload = () => { img.style.opacity = 1; };
+      img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
+      img.alt = `Cartaz ${ano}`;
+      setTimeout(() => { isSwiping = false; }, fadeDuration);
+    }, fadeDuration);
+  }
 
-    // Índice inicial = posição exata do ano digitado (mesmo sem cartaz)
-    let indexAtual = cartazesDisponiveis.indexOf(yearInicial);
-    // Garantia (caso ano > currentYear, mas já tratado)
-    if (indexAtual === -1) indexAtual = cartazesDisponiveis.length - 1;
+  function proximo() {
+    currentIndex = (currentIndex + 1) % anosReais.length;
+    carregarCartazPorIndice(currentIndex);
+  }
 
-    function carregarCartazComFallback(ano) {
-        if (isCartazSwiping) return;
-        isCartazSwiping = true;
+  function anterior() {
+    currentIndex = (currentIndex - 1 + anosReais.length) % anosReais.length;
+    carregarCartazPorIndice(currentIndex);
+  }
 
-        img.style.opacity = 0;
-        setTimeout(() => {
-            // Define onerror antes do src (igual ao Clara)
-            img.onerror = () => {
-                img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-                img.alt = `Cartaz ${ano} (fallback)`;
-                img.style.opacity = 1;
-            };
-            img.onload = () => {
-                img.style.opacity = 1;
-            };
-            img.src = `${GITHUB_BASE}/cartazes/cartaz${ano}.jpg`;
-            img.alt = `Cartaz ${ano}`;
+  // Eventos touch
+  let startX = 0;
+  const onTouchStart = (e) => { startX = e.changedTouches[0].screenX; };
+  const onTouchEnd = (e) => {
+    if (isSwiping) return;
+    const delta = e.changedTouches[0].screenX - startX;
+    if (Math.abs(delta) < 50) return;
+    delta > 0 ? proximo() : anterior();
+  };
 
-            setTimeout(() => {
-                isCartazSwiping = false;
-            }, fadeDuration);
-        }, fadeDuration);
-    }
+  // Eventos mouse
+  let isDragging = false;
+  let dragStartX = 0;
+  const onMouseDown = (e) => {
+    e.preventDefault();
+    isDragging = true;
+    dragStartX = e.screenX;
+  };
+  const onMouseUp = (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    if (isSwiping) return;
+    const delta = e.screenX - dragStartX;
+    if (Math.abs(delta) < 50) return;
+    delta > 0 ? proximo() : anterior();
+  };
 
-    function proximoCartaz() {
-        indexAtual = (indexAtual + 1) % cartazesDisponiveis.length;
-        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-    }
-
-    function anteriorCartaz() {
-        indexAtual = (indexAtual - 1 + cartazesDisponiveis.length) % cartazesDisponiveis.length;
-        carregarCartazComFallback(cartazesDisponiveis[indexAtual]);
-    }
-
-    // Eventos de swipe (touch e mouse) – idênticos aos que já funcionam
-    let cartazStartX = 0;
-    const cartazesTouchStart = (e) => {
-        cartazStartX = e.changedTouches[0].screenX;
-    };
-    const cartazesTouchEnd = (e) => {
-        if (isCartazSwiping) return;
-        const delta = e.changedTouches[0].screenX - cartazStartX;
-        if (Math.abs(delta) < 50) return;
-        if (delta > 0) proximoCartaz();
-        else anteriorCartaz();
-    };
-
-    let isDragging = false;
-    let dragStartX = 0;
-    const cartazesMouseDown = (e) => {
-        e.preventDefault();
-        isDragging = true;
-        dragStartX = e.screenX;
-    };
-    const cartazesMouseUp = (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        if (isCartazSwiping) return;
-        const delta = e.screenX - dragStartX;
-        if (Math.abs(delta) < 50) return;
-        if (delta > 0) proximoCartaz();
-        else anteriorCartaz();
-    };
-
-    img.addEventListener("touchstart", cartazesTouchStart, { passive: true });
-    img.addEventListener("touchend", cartazesTouchEnd, { passive: true });
-    img.addEventListener("mousedown", cartazesMouseDown, false);
-    img.addEventListener("mouseup", cartazesMouseUp, false);
-    img.addEventListener("mouseleave", cartazesMouseUp, false);
+  img.addEventListener("touchstart", onTouchStart, { passive: true });
+  img.addEventListener("touchend", onTouchEnd, { passive: true });
+  img.addEventListener("mousedown", onMouseDown, false);
+  img.addEventListener("mouseup", onMouseUp, false);
+  img.addEventListener("mouseleave", onMouseUp, false);
 }
 
 // 🚀 INICIALIZAR A APLICAÇÃO QUANDO O DOM ESTIVER PRONTO
