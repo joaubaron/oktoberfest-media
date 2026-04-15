@@ -647,7 +647,7 @@ function closeModal() {
     setTimeout(() => (modal.style.display = "none"), 300);
 }
 
-// ======== FUNÇÕES CARTAZES (CORRIGIDAS) ========
+// ======== FUNÇÕES CARTAZES (CORRIGIDA) ========
 async function mostrarCartazAno() {
     stopVideo();
     const input = getElementSafe("cartazInput");
@@ -662,7 +662,30 @@ async function mostrarCartazAno() {
     if (cartazYearsList.length === 0) {
         await loadCartazYears();
     }
+    
+    // VERIFICA SE O ANO EXISTE
+    const yearExists = cartazYearsList.includes(year);
+    
     img.style.opacity = 0;
+    
+    if (!yearExists) {
+        // ANO NÃO EXISTE - MOSTRA SOMENTE VILAGERMANICA.jpg E NÃO CONFIGURA SWIPES
+        img.onerror = () => {
+            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+            img.alt = `Cartaz ${year} não encontrado`;
+            img.style.opacity = 1;
+        };
+        img.onload = () => { img.style.opacity = 1; };
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.alt = `Cartaz ${year} não encontrado`;
+        if (img.complete && img.naturalWidth > 0) {
+            img.style.opacity = 1;
+        }
+        // NÃO CONFIGURA SWIPES - APENAS MOSTRA A IMAGEM DE FALLBACK
+        return;
+    }
+    
+    // ANO EXISTE - COMPORTAMENTO NORMAL
     img.onerror = () => {
         console.warn(`Cartaz ${year} não encontrado – usando fallback`);
         img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
@@ -675,14 +698,17 @@ async function mostrarCartazAno() {
     if (img.complete && img.naturalWidth > 0) {
         img.style.opacity = 1;
     }
+    
     let indexInicial = cartazYearsList.indexOf(year);
     if (indexInicial === -1) {
         indexInicial = cartazYearsList.length - 1;
     }
+    
     if (!toastCartazesExibido) {
         toastCartazesExibido = true;
         showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
     }
+    
     configurarSwipesCartazExistente(img, indexInicial);
 }
 
