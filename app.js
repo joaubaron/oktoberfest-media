@@ -846,11 +846,11 @@ function animateFireworks() {
 function startFireworks() {
     if (!ctx) return;
     if (animationId) { cancelAnimationFrame(animationId); particles = []; }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 12; i++) {
         setTimeout(() => {
             createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
             if (i === 0) animateFireworks();
-        }, i * 400);
+        }, i * 250);
     }
 }
 
