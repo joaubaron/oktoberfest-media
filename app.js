@@ -655,48 +655,73 @@ async function mostrarCartazAno() {
     if (!input || !img) return;
     const year = parseInt(input.value);
     input.value = "";
+    
     if (isNaN(year) || year < 1984) {
         showModal("cartaz");
         return;
     }
+    
     if (cartazYearsList.length === 0) {
         await loadCartazYears();
     }
+    
+    // Verifica se o ano digitado existe
+    const yearExists = cartazYearsList.includes(year);
+    
     img.style.opacity = 0;
-    img.onerror = () => {
-        console.warn(`Cartaz ${year} não encontrado – usando fallback`);
+    
+    if (yearExists) {
+        // Ano existe: carrega o cartaz
+        img.onerror = () => {
+            console.warn(`Cartaz ${year} não encontrado – usando fallback`);
+            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+            img.alt = `Cartaz ${year} (fallback)`;
+            img.style.opacity = 1;
+        };
+        img.onload = () => { img.style.opacity = 1; };
+        img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
+        img.alt = `Cartaz ${year}`;
+        if (img.complete && img.naturalWidth > 0) {
+            img.style.opacity = 1;
+        }
+    } else {
+        // Ano NÃO existe: mostra fallback fixo (sem pular)
+        img.onerror = null;
+        img.onload = () => { img.style.opacity = 1; };
         img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-        img.alt = `Cartaz ${year} (fallback)`;
-        img.style.opacity = 1;
-    };
-    img.onload = () => { img.style.opacity = 1; };
-    img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-    img.alt = `Cartaz ${year}`;
-    if (img.complete && img.naturalWidth > 0) {
+        img.alt = `Cartaz ${year} (não disponível)`;
         img.style.opacity = 1;
     }
-    let indexInicial = cartazYearsList.indexOf(year);
-    if (indexInicial === -1) {
-        indexInicial = cartazYearsList.length - 1;
-    }
+    
     if (!toastCartazesExibido) {
         toastCartazesExibido = true;
         showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
     }
-    configurarSwipesCartazExistente(img, indexInicial);
+    
+    // Chama a função original (com nome mantido) passando o ano e se é fallback
+    configurarSwipesCartazExistente(img, year, !cartazYearsList.includes(year));
 }
 
-function configurarSwipesCartazExistente(img, startIndex) {
+function configurarSwipesCartazExistente(img, startYear, isFallbackMode) {
     removerSwipes();
     const fadeDuration = 500;
     let isCartazSwiping = false;
-    let currentIndex = startIndex;
+    
+    // Se for fallback, índice inicial = -1 (modo neutro)
+    let currentIndex = isFallbackMode ? -1 : cartazYearsList.indexOf(startYear);
+    
+    // Garante índice válido se não for fallback mas algo deu errado
+    if (currentIndex === -1 && !isFallbackMode && cartazYearsList.length > 0) {
+        currentIndex = cartazYearsList.length - 1;
+    }
 
     function carregarCartazPorIndice(idx) {
         if (isCartazSwiping) return;
         if (idx < 0 || idx >= cartazYearsList.length) return;
+        
         isCartazSwiping = true;
         const ano = cartazYearsList[idx];
+        
         img.style.opacity = 0;
         setTimeout(() => {
             img.onerror = () => {
@@ -712,14 +737,22 @@ function configurarSwipesCartazExistente(img, startIndex) {
     }
 
     function proximoCartaz() {
-        const novoIndex = (currentIndex + 1) % cartazYearsList.length;
-        currentIndex = novoIndex;
+        if (cartazYearsList.length === 0) return;
+        if (currentIndex === -1) {
+            currentIndex = 0;  // Fallback → primeiro cartaz real
+        } else {
+            currentIndex = (currentIndex + 1) % cartazYearsList.length;
+        }
         carregarCartazPorIndice(currentIndex);
     }
 
     function anteriorCartaz() {
-        const novoIndex = (currentIndex - 1 + cartazYearsList.length) % cartazYearsList.length;
-        currentIndex = novoIndex;
+        if (cartazYearsList.length === 0) return;
+        if (currentIndex === -1) {
+            currentIndex = cartazYearsList.length - 1;  // Fallback → último cartaz real
+        } else {
+            currentIndex = (currentIndex - 1 + cartazYearsList.length) % cartazYearsList.length;
+        }
         carregarCartazPorIndice(currentIndex);
     }
 
@@ -761,8 +794,11 @@ function configurarSwipesCartazExistente(img, startIndex) {
     img.addEventListener("mousedown", mouseDown, false);
     img.addEventListener("mouseup", mouseUp, false);
     img.addEventListener("mouseleave", mouseUp, false);
-
-    carregarCartazPorIndice(currentIndex);
+    
+    // Se não for fallback, carrega o cartaz do ano inicial
+    if (!isFallbackMode && currentIndex !== -1) {
+        carregarCartazPorIndice(currentIndex);
+    }
 }
 
 // ======== FOGOS DE ARTIFÍCIO ========
