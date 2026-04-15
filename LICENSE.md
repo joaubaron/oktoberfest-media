@@ -2,6 +2,7 @@ Copyright (c) 2026 José Augusto Baron
 All Rights Reserved
 
 =========
+
 ENGLISH
 
 This software, including all its source code, design, logic, structure,
@@ -42,6 +43,7 @@ to file DMCA Takedown Notices and pursue all available legal remedies.
 For permission: @joseaugustobaron (Instagram)
 
 =========
+
 PORTUGUÊS
 
 Este software é propriedade intelectual exclusiva de José Augusto Baron e está
