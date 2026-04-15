@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '15.04.2026-1602';
+const CACHE_VERSION = '15.04.2026-1418';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -122,7 +122,29 @@ statusText: 'Service Unavailable (Offline)'
 })
 );
 } else {
-// Estratégia: Cache-Only (para arquivos locais do APK)
+// 🔥 Network-First para arquivos críticos (app.js, index.html)
+const criticalFiles = ['app.js', 'index.html', 'sw.js'];
+const isCritical = criticalFiles.some(f => url.pathname.endsWith(f) || url.pathname === '/');
+
+if (isCritical) {
+event.respondWith(
+fetch(event.request)
+.then(networkResponse => {
+if (networkResponse.ok) {
+caches.open(CACHE_NAME).then(cache => {
+cache.put(event.request, networkResponse.clone());
+});
+}
+return networkResponse;
+})
+.catch(() => caches.match(event.request)
+.then(cached => cached || (event.request.mode === 'navigate'
+? caches.match('./index.html')
+: new Response('Offline', { status: 503 })))
+)
+);
+} else {
+// Cache-First para demais arquivos locais (imagens, fontes, etc)
 event.respondWith(
 caches.match(event.request)
 .then((response) => response || fetch(event.request))
@@ -132,5 +154,6 @@ return caches.match('./index.html');
 }
 })
 );
+}
 }
 });
