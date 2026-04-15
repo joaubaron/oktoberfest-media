@@ -856,7 +856,7 @@ function startFireworks() {
 
 // ======== RESET ========
 function resetApp() {
-    console.log('[APP] Resetando e recarregando para atualizar conteúdo...');
+    console.log('[APP] Resetando com fogos...');
     stopVideo();
     if (loopFoto2007) {
         clearTimeout(loopFoto2007);
@@ -866,6 +866,15 @@ function resetApp() {
     interval = null;
     isDrawing = false;
     isSwiping = false;
+    
+    // Remover qualquer swipe ativo
+    removerSwipes();
+    
+    // Fogos + Toast antes do reload
+    startFireworks();
+    showToast('Prosit! 🍻', 1500);
+    
+    // Resetar variáveis
     particles = [];
     if (animationId) {
         cancelAnimationFrame(animationId);
@@ -874,12 +883,14 @@ function resetApp() {
             ctx.clearRect(0, 0, w, h);
         }
     }
+    
     const resetButton = getElementSafe("resetButton");
     if (resetButton) {
         resetButton.innerHTML = 'Atualizando';
         resetButton.style.background = '#D8B115';
         resetButton.disabled = true;
     }
+    
     setTimeout(() => { window.location.reload(true); }, 400);
 }
 
