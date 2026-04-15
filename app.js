@@ -19,6 +19,7 @@ let w = 0;
 let h = 0;
 let particles = [];
 let animationId = null;
+let fireworksOpacity = 0;
 
 // VARIÁVEIS DE MÚSICA
 let musicList = [];
@@ -822,35 +823,53 @@ function createFirework(x, y) {
 function animateFireworks() {
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, w, h);
+    
+    // FADE IN (aparecendo) até 1
+    if (fireworksOpacity < 1) {
+        fireworksOpacity += 0.03;
+        if (fireworksOpacity > 1) fireworksOpacity = 1;
+    }
+    
+    let hasActiveParticles = false;
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.05;
         p.alpha -= 0.015;
-        if (p.alpha <= 0) { particles.splice(i, 1); continue; }
-        ctx.globalAlpha = p.alpha;
+        if (p.alpha <= 0) { 
+            particles.splice(i, 1); 
+            continue; 
+        }
+        hasActiveParticles = true;
+        ctx.globalAlpha = p.alpha * fireworksOpacity;
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
         ctx.fill();
     }
-    if (particles.length > 0) {
+    
+    // Se não há partículas ativas, inicia FADE OUT
+    if (!hasActiveParticles && fireworksOpacity > 0) {
+        fireworksOpacity -= 0.03;
+        if (fireworksOpacity <= 0) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.globalAlpha = 1;
+            animationId = null;
+            fireworksOpacity = 0;
+            return;
+        }
+        animationId = requestAnimationFrame(animateFireworks);
+        return;
+    }
+    
+    if (hasActiveParticles || fireworksOpacity > 0) {
         animationId = requestAnimationFrame(animateFireworks);
     } else {
         ctx.clearRect(0, 0, w, h);
+        ctx.globalAlpha = 1;
         animationId = null;
-    }
-}
-
-function startFireworks() {
-    if (!ctx) return;
-    if (animationId) { cancelAnimationFrame(animationId); particles = []; }
-    for (let i = 0; i < 12; i++) {
-        setTimeout(() => {
-            createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
-            if (i === 0) animateFireworks();
-        }, i * 250);
+        fireworksOpacity = 0;
     }
 }
 
