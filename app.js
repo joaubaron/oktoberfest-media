@@ -647,7 +647,7 @@ function closeModal() {
     setTimeout(() => (modal.style.display = "none"), 300);
 }
 
-// ======== FUNÇÕES CARTAZES ========
+// ======== FUNÇÕES CARTAZES (CORRIGIDAS) ========
 async function mostrarCartazAno() {
     stopVideo();
     const input = getElementSafe("cartazInput");
@@ -662,54 +662,27 @@ async function mostrarCartazAno() {
     if (cartazYearsList.length === 0) {
         await loadCartazYears();
     }
-    
-    // VERIFICA SE O ANO EXISTE
-    const yearExists = cartazYearsList.includes(year);
-    
     img.style.opacity = 0;
-    
-    // DEFINE O ÍNDICE INICIAL PARA OS SWIPES
-    let indexInicial;
-    
-    if (!yearExists) {
-        // ANO NÃO EXISTE - mostra vilagermanica.jpg MAS configura swipes
-        indexInicial = cartazYearsList.length - 1; // começa do último ano existente
-        
-        img.onerror = () => {
-            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-            img.alt = `Cartaz ${year} não encontrado`;
-            img.style.opacity = 1;
-        };
-        img.onload = () => { img.style.opacity = 1; };
+    img.onerror = () => {
+        console.warn(`Cartaz ${year} não encontrado – usando fallback`);
         img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-        img.alt = `Cartaz ${year} não encontrado`;
-        if (img.complete && img.naturalWidth > 0) {
-            img.style.opacity = 1;
-        }
-    } else {
-        // ANO EXISTE - mostra o cartaz
-        indexInicial = cartazYearsList.indexOf(year);
-        
-        img.onerror = () => {
-            console.warn(`Cartaz ${year} não encontrado – usando fallback`);
-            img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-            img.alt = `Cartaz ${year} (fallback)`;
-            img.style.opacity = 1;
-        };
-        img.onload = () => { img.style.opacity = 1; };
-        img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
-        img.alt = `Cartaz ${year}`;
-        if (img.complete && img.naturalWidth > 0) {
-            img.style.opacity = 1;
-        }
+        img.alt = `Cartaz ${year} (fallback)`;
+        img.style.opacity = 1;
+    };
+    img.onload = () => { img.style.opacity = 1; };
+    img.src = `${GITHUB_BASE}/cartazes/cartaz${year}.jpg`;
+    img.alt = `Cartaz ${year}`;
+    if (img.complete && img.naturalWidth > 0) {
+        img.style.opacity = 1;
     }
-    
+    let indexInicial = cartazYearsList.indexOf(year);
+    if (indexInicial === -1) {
+        indexInicial = cartazYearsList.length - 1;
+    }
     if (!toastCartazesExibido) {
         toastCartazesExibido = true;
         showToast('👈 Arraste para navegar entre os cartazes 👉', 2500);
     }
-    
-    // SEMPRE configura os swipes (mesmo quando ano não existe)
     configurarSwipesCartazExistente(img, indexInicial);
 }
 
