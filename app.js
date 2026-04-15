@@ -916,6 +916,20 @@ resetButton.style.background = '#D8B115';
 resetButton.disabled = true;
 }
 
+// Fade out do áudio antes do reload
+const audioEl = document.getElementById('backgroundMusic');
+if (audioEl && !audioEl.paused) {
+const fadeAudio = setInterval(() => {
+if (audioEl.volume > 0.05) {
+audioEl.volume = Math.max(0, audioEl.volume - 0.05);
+} else {
+audioEl.volume = 0;
+audioEl.pause();
+clearInterval(fadeAudio);
+}
+}, 100);
+}
+
 // RELOAD após 3 segundos
 setTimeout(() => { window.location.reload(true); }, 3000);
 }
