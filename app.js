@@ -838,7 +838,14 @@ ctx.fill();
 if (particles.length > 0) {
 animationId = requestAnimationFrame(animateFireworks);
 } else {
+// Fade out do canvas ao terminar
+if (canvas) {
+canvas.style.transition = 'opacity 0.8s ease';
+canvas.style.opacity = '0';
+setTimeout(() => { ctx.clearRect(0, 0, w, h); }, 800);
+} else {
 ctx.clearRect(0, 0, w, h);
+}
 animationId = null;
 }
 }
@@ -846,6 +853,14 @@ animationId = null;
 function startFireworks() {
 if (!ctx) return;
 if (animationId) { cancelAnimationFrame(animationId); particles = []; }
+
+// Fade in do canvas
+if (canvas) {
+canvas.style.transition = 'opacity 0.6s ease';
+canvas.style.opacity = '0';
+requestAnimationFrame(() => { canvas.style.opacity = '1'; });
+}
+
 for (let i = 0; i < 12; i++) {
 setTimeout(() => {
 createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
