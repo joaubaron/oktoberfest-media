@@ -36,7 +36,7 @@ caches.open(CACHE_NAME)
 .then((cache) => cache.addAll(essentialAssets))
 .then(() => console.log('[SW] Pré-cache concluído.'))
 .catch((error) => console.error('[SW] Pré-cache falhou:', error))
-.then(() => self.skipWaiting())
+.finally(() => self.skipWaiting())
 );
 });
 
