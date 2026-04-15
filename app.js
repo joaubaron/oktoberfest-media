@@ -870,7 +870,18 @@ function resetApp() {
     // Remover qualquer swipe ativo
     removerSwipes();
     
-    // Fogos (3 segundos)
+    // CARREGAR IMAGEM INICIAL ANTES DOS FOGOS
+    const img = getElementSafe("photo");
+    if (img) {
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = "fotos/oktoberfest.png";
+            img.alt = "Foto da Oktoberfest";
+            img.style.opacity = 1;
+        }, 100);
+    }
+    
+    // Fogos (3 segundos) - agora sobre a imagem oktoberfest.png
     startFireworks();
     
     // Resetar variáveis
