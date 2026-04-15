@@ -14,11 +14,6 @@
 "type": "image/png"
 }
 ],
-"splash_pages": {
-"dark": {
-"image": "splash.webp"
-}
-},
 "lang": "pt-BR",
 "dir": "ltr",
 "scope": "./",
