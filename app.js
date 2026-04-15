@@ -1151,18 +1151,18 @@ function mostrarCartazAno() {
 
     img.style.opacity = 0;
     setTimeout(() => {
-        img.src = `${GITHUB_BASE}/cartazes/cartaz${anoValido}.jpg`;
         img.alt = `Cartaz ${anoValido}`;
 
         img.onerror = () => {
             console.warn(`Cartaz ${anoValido} não encontrado`);
+            img.onerror = null;
             img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
             img.alt = `Cartaz ${year} - Upload pendente`;
             img.style.opacity = 1;
         };
 
         img.onload = () => { img.style.opacity = 1; };
-        img.style.opacity = 1;
+        img.src = `${GITHUB_BASE}/cartazes/cartaz${anoValido}.jpg`;
         input.value = "";
 
         if (!toastCartazesExibido) {
