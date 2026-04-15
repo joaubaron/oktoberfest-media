@@ -956,7 +956,6 @@ function setupEventListeners() {
     }
     const modalButton = document.querySelector("#alertModal button");
     if (modalButton) modalButton.addEventListener("click", closeModal);
-    adicionarSwipes();
     window.addEventListener('resize', updateVideoPositionAndSize);
 }
 
