@@ -2,7 +2,7 @@ Copyright (c) 2026 José Augusto Baron
 All Rights Reserved
 
 =========
-
+ 
 ENGLISH
 
 This software, including all its source code, design, logic, structure,
