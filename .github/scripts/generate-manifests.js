@@ -8,12 +8,12 @@
  * - Anos com fotos da Clara (2017 até ano atual)
  * - Anos com cartazes (1984 até ano atual)
  * - Vídeos disponíveis (clara1.mp4, clara2.mp4, ...)
+ * - Fotos da Cláudia & Augusto (kaka1.jpg, kaka2.jpg, ...)
  */
 
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { execSync } = require('child_process');
 
 // Configurações
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
@@ -30,7 +30,7 @@ function checkFileExists(url) {
     const timeout = setTimeout(() => {
       console.log(`⏰ Timeout: ${url}`);
       resolve(false);
-    }, 5000); // 5 segundos é suficiente para build
+    }, 10000);
 
     const req = https.get(url, { method: 'HEAD' }, (res) => {
       clearTimeout(timeout);
@@ -60,11 +60,6 @@ async function detectClaraYears() {
       console.log(`  ✅ ${year} - OK`);
     } else {
       console.log(`  ❌ ${year} - Não encontrado`);
-      // Para no primeiro ano não encontrado (anos são sequenciais)
-      if (year > START_CLARA_YEAR && years.length > 0 && years[years.length - 1] === year - 1) {
-        console.log(`  ⏹️  Parando detecção (${year} não encontrado)`);
-        break;
-      }
     }
   }
   
@@ -98,7 +93,8 @@ async function detectVideos() {
   console.log('🎬 Detectando vídeos disponíveis...');
   const videos = [];
   let index = 1;
-  const MAX_VIDEOS = 50; // Limite de segurança
+  const MAX_VIDEOS = 50;
+  let foundAny = false;
   
   while (index <= MAX_VIDEOS) {
     const url = `${GITHUB_BASE}/videos/clara${index}.mp4`;
@@ -108,18 +104,56 @@ async function detectVideos() {
       videos.push(`clara${index}.mp4`);
       console.log(`  ✅ clara${index}.mp4 - OK`);
       index++;
+      foundAny = true;
     } else {
-      if (index === 1) {
+      if (!foundAny && index === 1) {
         console.log(`  ⚠️  Nenhum vídeo encontrado`);
-      } else {
+      } else if (foundAny) {
         console.log(`  ⏹️  Parando em clara${index}.mp4 (não encontrado)`);
+        break;
+      } else {
+        console.log(`  ❌ clara${index}.mp4 - Não encontrado, tentando próximo...`);
+        index++;
       }
-      break;
     }
   }
   
   console.log(`✅ Total: ${videos.length} vídeo(s) encontrado(s)\n`);
   return videos;
+}
+
+// Função para detectar fotos de Cláudia & Augusto (kaka)
+async function detectKakaPhotos() {
+  console.log('👫 Detectando fotos de Cláudia & Augusto...');
+  const photos = [];
+  let index = 1;
+  const MAX_PHOTOS = 50;
+  let foundAny = false;
+  
+  while (index <= MAX_PHOTOS) {
+    const url = `${GITHUB_BASE}/kaka/oktoberfestkaka${index}.jpg`;
+    const exists = await checkFileExists(url);
+    
+    if (exists) {
+      photos.push(`oktoberfestkaka${index}.jpg`);
+      console.log(`  ✅ kaka${index}.jpg - OK`);
+      index++;
+      foundAny = true;
+    } else {
+      if (!foundAny && index === 1) {
+        console.log(`  ⚠️  Nenhuma foto kaka encontrada`);
+      } else if (foundAny) {
+        console.log(`  ⏹️  Parando em kaka${index}.jpg (não encontrado)`);
+        break;
+      } else {
+        console.log(`  ❌ kaka${index}.jpg - Não encontrado, tentando próximo...`);
+        index++;
+      }
+    }
+  }
+  
+  console.log(`✅ Total: ${photos.length} foto(s) kaka encontrada(s)\n`);
+  return photos;
 }
 
 // Função para criar diretório se não existir
@@ -134,7 +168,8 @@ function ensureDirectoryExists(dir) {
 async function main() {
   console.log('\n🚀 INICIANDO GERAÇÃO DE MANIFESTOS\n');
   console.log(`📅 Ano atual: ${CURRENT_YEAR}`);
-  console.log(`🌐 Base URL: ${GITHUB_BASE}\n`);
+  console.log(`🌐 Base URL: ${GITHUB_BASE}`);
+  console.log(`⏱️  Timeout por request: 10 segundos\n`);
   
   // Criar diretório de manifestos
   ensureDirectoryExists(MANIFESTOS_DIR);
@@ -142,17 +177,19 @@ async function main() {
   // Executar detecções em paralelo para maior velocidade
   console.log('⏳ Detectando assets em paralelo...\n');
   
-  const [claraYears, cartazYears, videos] = await Promise.all([
+  const [claraYears, cartazYears, videos, kakaPhotos] = await Promise.all([
     detectClaraYears(),
     detectCartazYears(),
-    detectVideos()
+    detectVideos(),
+    detectKakaPhotos()
   ]);
   
   // Criar objetos dos manifestos
   const manifests = {
     'clara-years.json': claraYears,
     'cartaz-years.json': cartazYears,
-    'videos.json': videos
+    'videos.json': videos,
+    'kaka-photos.json': kakaPhotos
   };
   
   // Escrever arquivos
@@ -164,6 +201,7 @@ async function main() {
     
     fs.writeFileSync(filepath, content, 'utf8');
     console.log(`  ✅ ${filename} - ${Buffer.byteLength(content, 'utf8')} bytes`);
+    console.log(`     Conteúdo: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
   }
   
   // Criar arquivo de metadados (útil para debug)
@@ -174,7 +212,8 @@ async function main() {
     summary: {
       clara_photos: claraYears.length,
       cartazes: cartazYears.length,
-      videos: videos.length
+      videos: videos.length,
+      kaka_photos: kakaPhotos.length
     }
   };
   
@@ -184,10 +223,19 @@ async function main() {
     'utf8'
   );
   
+  console.log(`  ✅ metadata.json - ${JSON.stringify(metadata)}`);
+  
   console.log('\n📊 RESUMO FINAL:');
   console.log(`  📸 Fotos Clara: ${claraYears.length} anos`);
+  if (claraYears.length > 0) {
+    console.log(`     Intervalo: ${Math.min(...claraYears)} - ${Math.max(...claraYears)}`);
+  }
   console.log(`  📆 Cartazes: ${cartazYears.length} anos`);
+  if (cartazYears.length > 0) {
+    console.log(`     Intervalo: ${Math.min(...cartazYears)} - ${Math.max(...cartazYears)}`);
+  }
   console.log(`  🎬 Vídeos: ${videos.length} arquivos`);
+  console.log(`  👫 Fotos Kaka: ${kakaPhotos.length} arquivos`);
   console.log(`  📁 Pasta: ${MANIFESTOS_DIR}`);
   console.log('\n✅ GERAÇÃO DE MANIFESTOS CONCLUÍDA!\n');
 }
