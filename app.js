@@ -1,5 +1,6 @@
 // ======== CONFIGURAÇÃO DE CAMINHOS ========
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
+let manifestsLoaded = false;
 
 // ======== VARIÁVEIS GLOBAIS ========
 let loopFoto2007 = null;
@@ -327,6 +328,76 @@ video.style.width = "100%";
 video.style.height = "100%";
 video.style.margin = "0";
 }
+}
+
+// ======== NOVA FUNÇÃO: CARREGAR MANIFESTOS (RÁPIDO) ========
+async function loadManifests() {
+  console.log('📦 Carregando manifestos de assets...');
+  
+  try {
+    // Carregar manifestos em paralelo
+    const [claraYearsRes, cartazYearsRes, videosRes] = await Promise.all([
+      fetch('./manifestos/clara-years.json').catch(() => null),
+      fetch('./manifestos/cartaz-years.json').catch(() => null),
+      fetch('./manifestos/videos.json').catch(() => null)
+    ]);
+    
+    // Verificar se todos os manifestos foram carregados
+    if (!claraYearsRes || !cartazYearsRes || !videosRes) {
+      throw new Error('Falha ao carregar manifestos');
+    }
+    
+    // Parse dos JSONs
+    const claraYears = await claraYearsRes.json();
+    const cartazYears = await cartazYearsRes.json();
+    const videos = await videosRes.json();
+    
+    // Atualizar variáveis globais
+    allYears = claraYears.map(String);
+    cartazYearsList = cartazYears;
+    videoList = videos.map(video => `${GITHUB_BASE}/videos/${video}`);
+    
+    manifestsLoaded = true;
+    
+    console.log(`✅ Manifestos carregados com sucesso!`);
+    console.log(`  📸 ${allYears.length} anos com fotos da Clara`);
+    console.log(`  📆 ${cartazYearsList.length} anos com cartazes`);
+    console.log(`  🎬 ${videoList.length} vídeos disponíveis`);
+    
+    // Atualizar placeholders dos inputs
+    if (allYears.length > 0) {
+      const yearInput = document.getElementById('yearInput');
+      if (yearInput) {
+        yearInput.min = Math.min(...allYears);
+        yearInput.max = Math.max(...allYears);
+        yearInput.placeholder = `Ano (${Math.min(...allYears)}-${Math.max(...allYears)})`;
+      }
+    }
+    
+    if (cartazYearsList.length > 0) {
+      const cartazInput = document.getElementById('cartazInput');
+      if (cartazInput) {
+        cartazInput.min = Math.min(...cartazYearsList);
+        cartazInput.max = Math.max(...cartazYearsList);
+        cartazInput.placeholder = `Ano (${Math.min(...cartazYearsList)}-${Math.max(...cartazYearsList)})`;
+      }
+    }
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar manifestos:', error);
+    console.log('⚠️ Usando modo de detecção gradual (fallback)');
+    
+    // FALLBACK: Usar as funções originais lentas
+    await Promise.all([
+      initializeYearsWithDetection(),
+      loadCartazYears(),
+      loadVideoList()
+    ]);
+    
+    return false;
+  }
 }
 
 // ======== SETUP CANVAS FOGOS ========
@@ -1056,24 +1127,26 @@ lazyImageObserver.observe(img);
 
 // ======== INICIALIZAÇÃO PRINCIPAL ========
 async function initializeApp() {
-setupUIElements();
-const isRealLocalhost = (window.location.hostname === 'localhost' || 
-window.location.hostname === '127.0.0.1') && !window.cordova;
-if ('serviceWorker' in navigator && !isRealLocalhost) {
-navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[SW] Falha ao registrar:', err));
-navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); });
-}
-// Listeners e música IMEDIATAMENTE — não espera detecção de anos
-setupEventListeners();
-setupCanvasAndFireworks();
-setupLazyLoading();
-await setupMusic();
-loadVideoList();
-// Detecções em paralelo, em background — não bloqueiam mais nada
-Promise.all([
-initializeYearsWithDetection(),
-loadCartazYears()
-]);
+  console.log('🚀 Inicializando aplicação...');
+  
+  setupUIElements();
+  
+  const isRealLocalhost = (window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1') && !window.cordova;
+  
+  if ('serviceWorker' in navigator && !isRealLocalhost) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[SW] Falha ao registrar:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); });
+  }
+  
+  setupEventListeners();
+  setupCanvasAndFireworks();
+  setupLazyLoading();
+  
+  await loadManifests();  // ← Carrega tudo rapidamente
+  await setupMusic();
+  
+  console.log('✅ Aplicação inicializada com sucesso!');
 }
 
 window.addEventListener("resize", () => {
