@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '16.04.2026-0911';
+const CACHE_VERSION = '16.04.2026-0830';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -55,21 +55,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ============== FUNÇÃO AUXILIAR PARA CLONAR RESPONSE COM SEGURANÇA ==============
-async function safeClone(response) {
-  if (!response || !response.ok) return null;
-  try {
-    return response.clone();
-  } catch (e) {
-    console.warn('[SW] Não foi possível clonar response:', e);
-    return null;
-  }
-}
-
-// ============== FETCH OTIMIZADO (Sem Delay) ==============
+// ============== FETCH SIMPLIFICADO E CORRIGIDO ==============
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  const isGithubAsset = url.origin === 'https://joaubaron.github.io';
 
   // 🔥 MANIFESTOS: Cache First (prioridade máxima)
   if (url.pathname.includes('/manifestos/')) {
@@ -80,8 +68,9 @@ self.addEventListener('fetch', (event) => {
         }
         return fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.ok) {
+            const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
+              cache.put(event.request, responseToCache);
             });
           }
           return networkResponse;
@@ -96,106 +85,59 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (isGithubAsset) {
-    // 🎯 ESTRATÉGIA OTIMIZADA: Network-First para conteúdo dinâmico
-    if (url.pathname.includes('/fotos/') || url.pathname.includes('/cartazes/') || url.pathname.includes('/videos/')) {
-      event.respondWith(
-        fetch(event.request)
-          .then(networkResponse => {
-            if (networkResponse && networkResponse.ok) {
-              // Usa a função segura para clonar
-              caches.open(CACHE_NAME).then(cache => {
-                safeClone(networkResponse).then(cloned => {
-                  if (cloned) cache.put(event.request, cloned);
-                });
-              });
-              return networkResponse;
-            }
-            throw new Error('Network failed');
-          })
-          .catch(() => {
-            return caches.match(event.request)
-              .then(cached => {
-                if (cached) {
-                  console.log('[SW] Usando cache (offline/fallback)');
-                  return cached;
-                }
-                return caches.match(`${GITHUB_BASE}/fotos/oktoberfest.png`)
-                  .then(fallback => fallback || new Response('Imagem offline', { status: 503 }));
-              });
-          })
-      );
-      return;
-    }
-
-    // 🎯 Estratégia para outros recursos (músicas, JSON, etc)
+  // Para assets do GitHub (fotos, cartazes, vídeos, músicas)
+  if (url.origin === GITHUB_BASE) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Atualização em background
-          fetch(event.request).then((networkResponse) => {
-            if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
-              caches.open(CACHE_NAME).then((cache) => {
-                safeClone(networkResponse).then(cloned => {
-                  if (cloned) cache.put(event.request, cloned);
-                });
-              });
-            }
-          }).catch(err => console.log('[SW] Falha na revalidação:', err));
-          return cachedResponse;
-        }
-
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              safeClone(networkResponse).then(cloned => {
-                if (cloned) cache.put(event.request, cloned);
-              });
+              cache.put(event.request, responseToCache);
             });
           }
           return networkResponse;
-        }).catch(() => {
-          return new Response('Recurso não disponível offline', {
-            status: 503,
-            statusText: 'Service Unavailable (Offline)'
-          });
+        }).catch((error) => {
+          console.log('[SW] Fetch falhou, usando cache:', error);
+          return cachedResponse;
         });
+
+        return fetchPromise;
       })
     );
-  } else {
-    // Arquivos locais
-    const criticalFiles = ['app.js', 'index.html', 'sw.js'];
-    const isCritical = criticalFiles.some(f => url.pathname.endsWith(f) || url.pathname === '/');
-
-    if (isCritical) {
-      event.respondWith(
-        fetch(event.request)
-          .then(networkResponse => {
-            if (networkResponse && networkResponse.ok) {
-              caches.open(CACHE_NAME).then(cache => {
-                safeClone(networkResponse).then(cloned => {
-                  if (cloned) cache.put(event.request, cloned);
-                });
-              });
-            }
-            return networkResponse;
-          })
-          .catch(() => caches.match(event.request)
-            .then(cached => cached || (event.request.mode === 'navigate'
-              ? caches.match('./index.html')
-              : new Response('Offline', { status: 503 })))
-          )
-      );
-    } else {
-      event.respondWith(
-        caches.match(event.request)
-          .then((response) => response || fetch(event.request))
-          .catch(() => {
-            if (event.request.mode === 'navigate') {
-              return caches.match('./index.html');
-            }
-          })
-      );
-    }
+    return;
   }
+
+  // Para arquivos locais (index.html, app.js, etc)
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Atualiza o cache em segundo plano
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.ok) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('Offline', { status: 503 });
+      });
+    })
+  );
 });
