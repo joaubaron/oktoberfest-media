@@ -370,7 +370,7 @@ if (allYears.length > 0) {
   if (yearInput) {
     yearInput.min = Math.min(...allYears);
     yearInput.max = Math.max(...allYears);
-    yearInput.placeholder = `💞 Clara na Oktoberfest entre (${Math.min(...allYears)}-${Math.max(...allYears)})`;
+    yearInput.placeholder = `💞 Clara na festa entre (${Math.min(...allYears)}-${Math.max(...allYears)})`;
   }
 }
 
