@@ -364,24 +364,24 @@ async function loadManifests() {
     console.log(`  📆 ${cartazYearsList.length} anos com cartazes`);
     console.log(`  🎬 ${videoList.length} vídeos disponíveis`);
     
-    // Atualizar placeholders dos inputs
-    if (allYears.length > 0) {
-      const yearInput = document.getElementById('yearInput');
-      if (yearInput) {
-        yearInput.min = Math.min(...allYears);
-        yearInput.max = Math.max(...allYears);
-        yearInput.placeholder = `Ano (${Math.min(...allYears)}-${Math.max(...allYears)})`;
-      }
-    }
-    
-    if (cartazYearsList.length > 0) {
-      const cartazInput = document.getElementById('cartazInput');
-      if (cartazInput) {
-        cartazInput.min = Math.min(...cartazYearsList);
-        cartazInput.max = Math.max(...cartazYearsList);
-        cartazInput.placeholder = `Ano (${Math.min(...cartazYearsList)}-${Math.max(...cartazYearsList)})`;
-      }
-    }
+// Atualizar placeholders dos inputs
+if (allYears.length > 0) {
+  const yearInput = document.getElementById('yearInput');
+  if (yearInput) {
+    yearInput.min = Math.min(...allYears);
+    yearInput.max = Math.max(...allYears);
+    yearInput.placeholder = `💞 Clara na festa entre (${Math.min(...allYears)}-${Math.max(...allYears)})`;
+  }
+}
+
+if (cartazYearsList.length > 0) {
+  const cartazInput = document.getElementById('cartazInput');
+  if (cartazInput) {
+    cartazInput.min = Math.min(...cartazYearsList);
+    cartazInput.max = Math.max(...cartazYearsList);
+    cartazInput.placeholder = `🥨 Cartazes entre (${Math.min(...cartazYearsList)}-${Math.max(...cartazYearsList)})`;
+  }
+}
     
     return true;
     
