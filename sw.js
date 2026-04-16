@@ -12,7 +12,6 @@ let essentialAssets = [
 './',
 './index.html', 
 './app.js',
-'./sw.js',
 './titulo.png',
 './azulbavaro.webp',
 './fotos/oktoberfest.png',
