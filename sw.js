@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '15.04.2026-2021';
+const CACHE_VERSION = '16.04.2026-0803';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -12,7 +12,6 @@ let essentialAssets = [
 './',
 './index.html', 
 './app.js',
-'./sw.js',
 './titulo.png',
 './azulbavaro.webp',
 './fotos/oktoberfest.png',
