@@ -370,7 +370,7 @@ if (allYears.length > 0) {
   if (yearInput) {
     yearInput.min = Math.min(...allYears);
     yearInput.max = Math.max(...allYears);
-    yearInput.placeholder = `💞 Clara entre (${Math.min(...allYears)}-${Math.max(...allYears)})`;
+    yearInput.placeholder = `💞 Clara entre ${Math.min(...allYears)}-${Math.max(...allYears)}`;
   }
 }
 
@@ -379,7 +379,7 @@ if (cartazYearsList.length > 0) {
   if (cartazInput) {
     cartazInput.min = Math.min(...cartazYearsList);
     cartazInput.max = Math.max(...cartazYearsList);
-    cartazInput.placeholder = `🥨 Cartazes entre (${Math.min(...cartazYearsList)}-${Math.max(...cartazYearsList)})`;
+    cartazInput.placeholder = `🥨 Cartazes entre ${Math.min(...cartazYearsList)}-${Math.max(...cartazYearsList)}`;
   }
 }
     
