@@ -33,6 +33,9 @@ let currentVideoIndex = 0;
 let videoTouchStartX = 0;
 let isVideoSwiping = false;
 
+// VARIÁVEIS KAKA (Cláudia & Augusto)
+let kakaPhotoList = [];  // ← ADICIONAR ESTA LINHA
+
 // FLAGS DE TOAST
 let toastClaraExibido = false;
 let toastVideoExibido = false;
@@ -331,15 +334,17 @@ video.style.margin = "0";
 }
 
 // ======== NOVA FUNÇÃO: CARREGAR MANIFESTOS (RÁPIDO) ========
+// ======== NOVA FUNÇÃO: CARREGAR MANIFESTOS (RÁPIDO) ========
 async function loadManifests() {
   console.log('📦 Carregando manifestos de assets...');
   
   try {
-    // Carregar manifestos em paralelo
-    const [claraYearsRes, cartazYearsRes, videosRes] = await Promise.all([
+    // Carregar manifestos em paralelo (incluindo kaka)
+    const [claraYearsRes, cartazYearsRes, videosRes, kakaRes] = await Promise.all([
       fetch('./manifestos/clara-years.json').catch(() => null),
       fetch('./manifestos/cartaz-years.json').catch(() => null),
-      fetch('./manifestos/videos.json').catch(() => null)
+      fetch('./manifestos/videos.json').catch(() => null),
+      fetch('./manifestos/kaka-photos.json').catch(() => null)  // ← NOVO
     ]);
     
     // Verificar se todos os manifestos foram carregados
@@ -351,11 +356,13 @@ async function loadManifests() {
     const claraYears = await claraYearsRes.json();
     const cartazYears = await cartazYearsRes.json();
     const videos = await videosRes.json();
+    const kakaPhotos = kakaRes ? await kakaRes.json() : [];  // ← NOVO
     
     // Atualizar variáveis globais
     allYears = claraYears.map(String);
     cartazYearsList = cartazYears;
     videoList = videos.map(video => `${GITHUB_BASE}/videos/${video}`);
+    kakaPhotoList = kakaPhotos.map(photo => `${GITHUB_BASE}/kaka/${photo}`);  // ← NOVO
     
     manifestsLoaded = true;
     
@@ -363,25 +370,26 @@ async function loadManifests() {
     console.log(`  📸 ${allYears.length} anos com fotos da Clara`);
     console.log(`  📆 ${cartazYearsList.length} anos com cartazes`);
     console.log(`  🎬 ${videoList.length} vídeos disponíveis`);
+    console.log(`  👫 ${kakaPhotoList.length} fotos de Cláudia & Augusto`);  // ← NOVO
     
-// Atualizar placeholders dos inputs
-if (allYears.length > 0) {
-  const yearInput = document.getElementById('yearInput');
-  if (yearInput) {
-    yearInput.min = Math.min(...allYears);
-    yearInput.max = Math.max(...allYears);
-    yearInput.placeholder = `💞 Clara entre ${Math.min(...allYears)} e ${Math.max(...allYears)}`;
-  }
-}
-
-if (cartazYearsList.length > 0) {
-  const cartazInput = document.getElementById('cartazInput');
-  if (cartazInput) {
-    cartazInput.min = Math.min(...cartazYearsList);
-    cartazInput.max = Math.max(...cartazYearsList);
-    cartazInput.placeholder = `🥨 Cartazes entre ${Math.min(...cartazYearsList)} e ${Math.max(...cartazYearsList)}`;
-  }
-}
+    // Atualizar placeholders dos inputs
+    if (allYears.length > 0) {
+      const yearInput = document.getElementById('yearInput');
+      if (yearInput) {
+        yearInput.min = Math.min(...allYears);
+        yearInput.max = Math.max(...allYears);
+        yearInput.placeholder = `💞 Clara entre ${Math.min(...allYears)} e ${Math.max(...allYears)}`;
+      }
+    }
+    
+    if (cartazYearsList.length > 0) {
+      const cartazInput = document.getElementById('cartazInput');
+      if (cartazInput) {
+        cartazInput.min = Math.min(...cartazYearsList);
+        cartazInput.max = Math.max(...cartazYearsList);
+        cartazInput.placeholder = `🥨 Cartazes entre ${Math.min(...cartazYearsList)} e ${Math.max(...cartazYearsList)}`;
+      }
+    }
     
     return true;
     
@@ -533,107 +541,147 @@ currentYearIndex = allYears.length - 1;
 navigateToYear(parseInt(allYears[currentYearIndex]));
 }
 
-// ======== FOTOS KAKA ========
+// ======== FOTOS KAKA (Cláudia & Augusto) - VERSÃO RÁPIDA COM MANIFESTO ========
 function mostrarFoto2007() {
-stopVideo();
-const img = limparListenersEClone();
-if (!img) return;
-removerSwipes();
-const fadeDuration = 500;
-let kakasDetectadas = [];
-let index = 0;
-let isKakaSwiping = false;
-
-function detectarTodasImagensKaka(callback) {
-const imagensExistentes = [];
-let i = 1;
-const maxTentativas = 50;
-function verificarProximaImagem() {
-if (i > maxTentativas) { callback(imagensExistentes); return; }
-const urlImagem = `${GITHUB_BASE}/kaka/oktoberfestkaka${i}.jpg`;
-const tempImg = new Image();
-tempImg.onload = function() {
-imagensExistentes.push(urlImagem);
-i++;
-verificarProximaImagem();
-};
-tempImg.onerror = function() { callback(imagensExistentes); };
-tempImg.src = urlImagem;
-}
-verificarProximaImagem();
-}
-
-function carregarKakaComFallback(novoIndex) {
-if (isKakaSwiping) return;
-isKakaSwiping = true;
-img.style.opacity = 0;
-setTimeout(() => {
-img.src = kakasDetectadas[novoIndex];
-img.alt = `Cláudia & Augusto ${novoIndex + 1}`;
-img.onerror = () => {
-console.warn(`Kaka ${novoIndex + 1} não encontrada`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
-img.alt = `Kaka ${novoIndex + 1} - Upload pendente`;
-img.style.opacity = 1;
-};
-img.onload = () => { img.style.opacity = 1; };
-index = novoIndex;
-if (!toastClaraExibido) {
-toastClaraExibido = true;
-showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
-}
-setTimeout(() => { isKakaSwiping = false; }, fadeDuration);
-}, fadeDuration);
-}
-
-function iniciarComImagens(imagensCarregadas) {
-if (imagensCarregadas.length === 0) {
-console.warn("Nenhuma imagem encontrada na pasta kaka");
-img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
-return;
-}
-kakasDetectadas = imagensCarregadas;
-console.log(`🎯 ${kakasDetectadas.length} imagens kaka detectadas`);
-carregarKakaComFallback(0);
-let kakaStartX = 0;
-const kakaTouchStart = (e) => { kakaStartX = e.changedTouches[0].screenX; };
-const kakaTouchEnd = (e) => {
-if (isKakaSwiping) return;
-const kakaEndX = e.changedTouches[0].screenX;
-const swipeDistance = kakaEndX - kakaStartX;
-const minSwipeDistance = 50;
-if (Math.abs(swipeDistance) < minSwipeDistance) return;
-if (swipeDistance > 0) { proximaKaka(); } else { anteriorKaka(); }
-};
-img.addEventListener("touchstart", kakaTouchStart, { passive: true });
-img.addEventListener("touchend", kakaTouchEnd, { passive: true });
-let isDragging = false;
-let dragStartX = 0;
-const kakaMouseDown = (e) => {
-e.preventDefault();
-isDragging = true;
-dragStartX = e.screenX;
-img.addEventListener('mousemove', kakaMouseMove);
-img.addEventListener('mouseup', kakaMouseUp, { once: true });
-img.addEventListener('mouseleave', kakaMouseUp, { once: true });
-};
-const kakaMouseMove = (e) => { if (!isDragging) return; };
-const kakaMouseUp = (e) => {
-if (!isDragging) return;
-isDragging = false;
-img.removeEventListener('mousemove', kakaMouseMove);
-if (isKakaSwiping) return;
-const dragEndX = e.screenX;
-const swipeDistance = dragEndX - dragStartX;
-const minSwipeDistance = 50;
-if (Math.abs(swipeDistance) < minSwipeDistance) return;
-if (swipeDistance > 0) { proximaKaka(); } else { anteriorKaka(); }
-};
-img.addEventListener("mousedown", kakaMouseDown, false);
-function proximaKaka() { const novoIndex = (index + 1) % kakasDetectadas.length; carregarKakaComFallback(novoIndex); }
-function anteriorKaka() { const novoIndex = (index - 1 + kakasDetectadas.length) % kakasDetectadas.length; carregarKakaComFallback(novoIndex); }
-}
-detectarTodasImagensKaka(iniciarComImagens);
+  stopVideo();
+  const img = limparListenersEClone();
+  if (!img) return;
+  removerSwipes();
+  
+  const fadeDuration = 500;
+  let index = 0;
+  let isKakaSwiping = false;
+  
+  // Usar o manifesto se disponível
+  let kakasDetectadas = [];
+  
+  if (kakaPhotoList.length > 0) {
+    // Usa o manifesto (RÁPIDO)
+    kakasDetectadas = kakaPhotoList;
+    console.log(`🎯 ${kakasDetectadas.length} imagens kaka detectadas (via manifesto)`);
+    iniciarComImagens(kakasDetectadas);
+  } else {
+    // Fallback: detecção lenta original
+    console.log('⚠️ Manifesto kaka não disponível, usando detecção lenta...');
+    detectarTodasImagensKaka(iniciarComImagens);
+  }
+  
+  function carregarKakaComFallback(novoIndex) {
+    if (isKakaSwiping) return;
+    if (novoIndex < 0 || novoIndex >= kakasDetectadas.length) return;
+    
+    isKakaSwiping = true;
+    img.style.opacity = 0;
+    
+    setTimeout(() => {
+      img.src = kakasDetectadas[novoIndex];
+      img.alt = `Cláudia & Augusto ${novoIndex + 1}`;
+      
+      img.onerror = () => {
+        console.warn(`Kaka ${novoIndex + 1} não encontrada`);
+        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.alt = `Kaka ${novoIndex + 1} - Upload pendente`;
+        img.style.opacity = 1;
+      };
+      
+      img.onload = () => { img.style.opacity = 1; };
+      index = novoIndex;
+      
+      if (!toastClaraExibido && kakasDetectadas.length > 1) {
+        toastClaraExibido = true;
+        showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
+      }
+      
+      setTimeout(() => { isKakaSwiping = false; }, fadeDuration);
+    }, fadeDuration);
+  }
+  
+  function proximaKaka() {
+    const novoIndex = (index + 1) % kakasDetectadas.length;
+    carregarKakaComFallback(novoIndex);
+  }
+  
+  function anteriorKaka() {
+    const novoIndex = (index - 1 + kakasDetectadas.length) % kakasDetectadas.length;
+    carregarKakaComFallback(novoIndex);
+  }
+  
+  function configurarSwipesKaka() {
+    let kakaStartX = 0;
+    
+    const kakaTouchStart = (e) => { kakaStartX = e.changedTouches[0].screenX; };
+    const kakaTouchEnd = (e) => {
+      if (isKakaSwiping) return;
+      const kakaEndX = e.changedTouches[0].screenX;
+      const swipeDistance = kakaEndX - kakaStartX;
+      if (Math.abs(swipeDistance) < 50) return;
+      if (swipeDistance > 0) { proximaKaka(); } else { anteriorKaka(); }
+    };
+    
+    img.addEventListener("touchstart", kakaTouchStart, { passive: true });
+    img.addEventListener("touchend", kakaTouchEnd, { passive: true });
+    
+    let isDragging = false;
+    let dragStartX = 0;
+    
+    const kakaMouseDown = (e) => {
+      e.preventDefault();
+      isDragging = true;
+      dragStartX = e.screenX;
+      img.addEventListener('mousemove', kakaMouseMove);
+      img.addEventListener('mouseup', kakaMouseUp, { once: true });
+      img.addEventListener('mouseleave', kakaMouseUp, { once: true });
+    };
+    
+    const kakaMouseMove = (e) => { if (!isDragging) return; };
+    
+    const kakaMouseUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      img.removeEventListener('mousemove', kakaMouseMove);
+      if (isKakaSwiping) return;
+      const dragEndX = e.screenX;
+      const swipeDistance = dragEndX - dragStartX;
+      if (Math.abs(swipeDistance) < 50) return;
+      if (swipeDistance > 0) { proximaKaka(); } else { anteriorKaka(); }
+    };
+    
+    img.addEventListener("mousedown", kakaMouseDown, false);
+    img.addEventListener("mouseup", kakaMouseUp, false);
+    img.addEventListener("mouseleave", kakaMouseUp, false);
+  }
+  
+  function iniciarComImagens(imagensCarregadas) {
+    if (imagensCarregadas.length === 0) {
+      console.warn("Nenhuma imagem encontrada na pasta kaka");
+      img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+      return;
+    }
+    kakasDetectadas = imagensCarregadas;
+    carregarKakaComFallback(0);
+    configurarSwipesKaka();
+  }
+  
+  // Função de fallback (detecção lenta)
+  function detectarTodasImagensKaka(callback) {
+    const imagensExistentes = [];
+    let i = 1;
+    const maxTentativas = 50;
+    
+    function verificarProximaImagem() {
+      if (i > maxTentativas) { callback(imagensExistentes); return; }
+      const urlImagem = `${GITHUB_BASE}/kaka/oktoberfestkaka${i}.jpg`;
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        imagensExistentes.push(urlImagem);
+        i++;
+        verificarProximaImagem();
+      };
+      tempImg.onerror = function() { callback(imagensExistentes); };
+      tempImg.src = urlImagem;
+    }
+    verificarProximaImagem();
+  }
 }
 
 // ======== SORTEIO ========

@@ -1,7 +1,7 @@
 // Service Worker (ETERNAL APK EDITION - OTIMIZADO)
 
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '16.04.2026-1046';
+const CACHE_VERSION = '16.04.2026-1101';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -19,6 +19,7 @@ let essentialAssets = [
   './manifestos/clara-years.json',
   './manifestos/cartaz-years.json',
   './manifestos/videos.json',
+  './manifestos/kaka-photos.json',
 
   // Fotos de fallback
   `${GITHUB_BASE}/fotos/oktoberfest.png`,
@@ -67,7 +68,7 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
         return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok) {
+          if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
@@ -85,12 +86,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Para assets do GitHub (fotos, cartazes, vídeos, músicas)
+  // 🎥 VÍDEOS: Network First, SEM CACHE (evita erro 206)
+  if (url.pathname.includes('/videos/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // Para assets do GitHub (fotos, cartazes, músicas)
   if (url.origin === GITHUB_BASE) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok) {
+          if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
@@ -114,7 +125,7 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         // Atualiza o cache em segundo plano
         fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok) {
+          if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
@@ -125,7 +136,7 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.ok) {
+        if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
