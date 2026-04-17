@@ -21,6 +21,7 @@ let essentialAssets = [
   './manifestos/oktoberfest-datas.json',
 
   // Fotos de fallback
+  `${GITHUB_BASE}/imagens/vilagermanica.jpg`,
   `${GITHUB_BASE}/imagens/oktoberfest.png`,
   `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`,
   `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, 
