@@ -670,7 +670,7 @@ function mostrarFoto2007() {
   function iniciarComImagens(imagensCarregadas) {
     if (imagensCarregadas.length === 0) {
       console.warn("Nenhuma imagem encontrada na pasta kaka");
-      img.src = `${GITHUB_BASE}/fotos/oktoberfest.png`;
+      img.src = `${GITHUB_BASE}/imagens/oktoberfest.png`;
       return;
     }
     kakasDetectadas = imagensCarregadas;
@@ -1040,7 +1040,7 @@ const img = getElementSafe("photo");
 if (img) {
 img.style.opacity = 0;
 setTimeout(() => {
-img.src = "fotos/oktoberfest.png";
+img.src = "imagens/oktoberfest.png";
 img.alt = "Foto da Oktoberfest";
 img.style.opacity = 1;
 }, 100);
