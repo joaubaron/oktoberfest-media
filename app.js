@@ -330,6 +330,7 @@ if (video) {
 video.style.width = "100%";
 video.style.height = "100%";
 video.style.margin = "0";
+video.style.objectFit = "cover";
 }
 }
 
