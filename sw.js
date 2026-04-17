@@ -12,7 +12,7 @@ let essentialAssets = [
   './app.js',
   './titulo.png',
   './azulbavaro.webp',
-  './fotos/oktoberfest.png',
+  './imagens/oktoberfest.png',
   './rodape.png',
   './manifestos/clara-years.json',
   './manifestos/cartaz-years.json',
@@ -21,7 +21,7 @@ let essentialAssets = [
   './manifestos/oktoberfest-datas.json',
 
   // Fotos de fallback
-  `${GITHUB_BASE}/fotos/oktoberfest.png`,
+  `${GITHUB_BASE}/imagens/oktoberfest.png`,
   `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`,
   `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, 
   `${GITHUB_BASE}/fotos/oktoberfestkaka2.jpg`,
