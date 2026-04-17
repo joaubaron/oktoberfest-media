@@ -1272,7 +1272,7 @@ function criarContadorFlutuante(datasManifesto) {
 
     if (diffDays > 0) {
       atualizarTexto(diffDays, true);
-      counterDiv.querySelector('.counter-label').innerHTML = `🍺 Faltam para a Oktoberfest ${anoAlvo}`;
+      counterDiv.querySelector('.counter-label').innerHTML = `Faltam`;
     } else if (diffDays === 0) {
       atualizarTexto("É HOJE!", true);
       counterDiv.style.background = "#c19e10";
