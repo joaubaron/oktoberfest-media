@@ -1226,7 +1226,7 @@ updateVideoPositionAndSize();
 
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-// ======== FUNÇÃO: CONTADOR FLUTUANTE ARRASTÁVEL (VERSÃO OTIMIZADA) ========
+// ======== FUNÇÃO: CONTADOR FLUTUANTE ULTRA-RÁPIDO ========
 function criarContadorFlutuante(datasManifesto) {
   // 1. Remove um contador antigo, se existir
   const contadorExistente = document.getElementById('floating-counter');
@@ -1236,38 +1236,29 @@ function criarContadorFlutuante(datasManifesto) {
   const counterDiv = document.createElement('div');
   counterDiv.id = 'floating-counter';
   counterDiv.innerHTML = `
-    <div class="counter-content">
-      <span class="counter-label">Faltam</span>
-      <span class="counter-days">--</span>
-      <span class="counter-label">dias</span>
-    </div>
-    <div class="drag-handle">⋮⋮</div>
+    <span class="counter-days">--</span>
+    <span class="counter-label">dias</span>
+    <span class="drag-handle">⋮⋮</span>
   `;
   document.body.appendChild(counterDiv);
 
-  // 3. Função para atualizar o texto do contador
-  const atualizarTexto = (texto, isDias = false) => {
+  // 3. Função para atualizar o texto
+  const atualizarTexto = (texto) => {
     const daysSpan = counterDiv.querySelector('.counter-days');
-    if (daysSpan) {
-      daysSpan.innerHTML = texto;
-      if (isDias) daysSpan.style.fontSize = '1.4rem';
-      else daysSpan.style.fontSize = '0.8rem';
-    }
+    if (daysSpan) daysSpan.innerHTML = texto;
   };
 
-  // 4. Lógica de cálculo dos dias com detecção automática de ano
+  // 4. Lógica de cálculo dos dias
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   
   let anoAlvo = hoje.getFullYear();
   let dataInicio = null;
   
-  // Se já passou 25 de outubro, usa o ano que vem
   if (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25)) {
     anoAlvo++;
   }
   
-  // Busca a data do manifesto para o ano correto
   if (datasManifesto && datasManifesto[anoAlvo] && datasManifesto[anoAlvo].inicio) {
     dataInicio = new Date(datasManifesto[anoAlvo].inicio + 'T00:00:00');
     if (isNaN(dataInicio)) dataInicio = null;
@@ -1278,64 +1269,94 @@ function criarContadorFlutuante(datasManifesto) {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays > 0) {
-      atualizarTexto(diffDays, true);
+      atualizarTexto(diffDays);
     } else if (diffDays === 0) {
-      atualizarTexto("É HOJE!", true);
+      atualizarTexto("HOJE!");
       counterDiv.style.background = "#c19e10";
     } else {
-      atualizarTexto("JÁ ACABOU", true);
+      atualizarTexto("FIM");
       counterDiv.style.background = "#555";
     }
   } else {
-    // Fallback: calcula com data fixa (7 de outubro)
     dataInicio = new Date(anoAlvo, 9, 7);
     const diffTime = dataInicio - hoje;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays > 0) {
-      atualizarTexto(diffDays, true);
+      atualizarTexto(diffDays);
     } else if (diffDays === 0) {
-      atualizarTexto("É HOJE!", true);
+      atualizarTexto("HOJE!");
       counterDiv.style.background = "#c19e10";
     } else {
-      atualizarTexto("JÁ ACABOU", true);
+      atualizarTexto("FIM");
       counterDiv.style.background = "#555";
     }
-    console.log("📅 Usando fallback: data exata não disponível no manifesto.");
   }
 
-  // ========== ARRASTO OTIMIZADO (MAIS RÁPIDO) ==========
+  // ========== ARRASTO ULTRA-RÁPIDO (USANDO TRANSFORM) ==========
   let isDragging = false;
   let startX = 0, startY = 0;
-  let initialLeft = 0, initialTop = 0;
+  let startLeft = 0, startTop = 0;
+  let rafId = null;
   
   const dragHandle = counterDiv.querySelector('.drag-handle');
+  
+  // Posição inicial salva no estilo
+  let currentLeft = 0, currentTop = 0;
+  
+  // Tenta recuperar posição salva ou usa padrão
+  try {
+    const savedLeft = localStorage.getItem('counterLeft');
+    const savedTop = localStorage.getItem('counterTop');
+    if (savedLeft !== null && savedTop !== null) {
+      currentLeft = parseFloat(savedLeft);
+      currentTop = parseFloat(savedTop);
+      counterDiv.style.left = currentLeft + 'px';
+      counterDiv.style.top = currentTop + 'px';
+      counterDiv.style.right = 'auto';
+      counterDiv.style.bottom = 'auto';
+    } else {
+      // Posição padrão: canto inferior direito
+      currentLeft = window.innerWidth - counterDiv.offsetWidth - 20;
+      currentTop = window.innerHeight - counterDiv.offsetHeight - 20;
+      counterDiv.style.left = currentLeft + 'px';
+      counterDiv.style.top = currentTop + 'px';
+      counterDiv.style.right = 'auto';
+      counterDiv.style.bottom = 'auto';
+    }
+  } catch(e) {}
+  
+  const updatePosition = () => {
+    if (!isDragging) return;
+    counterDiv.style.transform = `translate(${currentLeft}px, ${currentTop}px)`;
+    counterDiv.style.left = '0';
+    counterDiv.style.top = '0';
+    counterDiv.style.right = 'auto';
+    counterDiv.style.bottom = 'auto';
+    rafId = null;
+  };
   
   const startDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
     isDragging = true;
     
-    // Pega a posição inicial do toque/clique
     const clientX = e.clientX ?? e.touches?.[0]?.clientX;
     const clientY = e.clientY ?? e.touches?.[0]?.clientY;
     
     startX = clientX;
     startY = clientY;
     
-    // Pega a posição atual do elemento
+    // Pega a posição atual do transform
     const rect = counterDiv.getBoundingClientRect();
-    initialLeft = rect.left;
-    initialTop = rect.top;
+    startLeft = rect.left;
+    startTop = rect.top;
     
-    // Adiciona os event listeners
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', stopDrag);
     document.addEventListener('touchmove', onDrag, { passive: false });
     document.addEventListener('touchend', stopDrag);
     
-    // Adiciona classe para feedback visual
     counterDiv.style.cursor = 'grabbing';
     counterDiv.style.transition = 'none';
   };
@@ -1344,57 +1365,60 @@ function criarContadorFlutuante(datasManifesto) {
     if (!isDragging) return;
     e.preventDefault();
     
-    // Pega a posição atual
     const clientX = e.clientX ?? e.touches?.[0]?.clientX;
     const clientY = e.clientY ?? e.touches?.[0]?.clientY;
     
-    // Calcula o novo deslocamento
     let deltaX = clientX - startX;
     let deltaY = clientY - startY;
     
-    // Calcula a nova posição
-    let newLeft = initialLeft + deltaX;
-    let newTop = initialTop + deltaY;
+    let newLeft = startLeft + deltaX;
+    let newTop = startTop + deltaY;
     
-    // Limita nas bordas da tela
+    // Limita nas bordas
     const maxX = window.innerWidth - counterDiv.offsetWidth;
     const maxY = window.innerHeight - counterDiv.offsetHeight;
     
     newLeft = Math.max(0, Math.min(newLeft, maxX));
     newTop = Math.max(0, Math.min(newTop, maxY));
     
-    // Aplica a nova posição (sem usar style.left/top absoluto, usa transform para performance)
-    counterDiv.style.left = newLeft + 'px';
-    counterDiv.style.top = newTop + 'px';
-    counterDiv.style.right = 'auto';
-    counterDiv.style.bottom = 'auto';
+    currentLeft = newLeft;
+    currentTop = newTop;
+    
+    // Usa requestAnimationFrame para suavizar
+    if (rafId === null) {
+      rafId = requestAnimationFrame(updatePosition);
+    }
   };
   
   const stopDrag = () => {
     if (!isDragging) return;
     isDragging = false;
     
-    // Remove os event listeners
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    
+    // Salva a posição
+    try {
+      localStorage.setItem('counterLeft', currentLeft);
+      localStorage.setItem('counterTop', currentTop);
+    } catch(e) {}
+    
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
     document.removeEventListener('touchmove', onDrag);
     document.removeEventListener('touchend', stopDrag);
     
-    // Restaura o cursor
     counterDiv.style.cursor = '';
     counterDiv.style.transition = '';
   };
   
-  // Adiciona os event listeners no handle
   dragHandle.addEventListener('mousedown', startDrag);
   dragHandle.addEventListener('touchstart', startDrag, { passive: false });
   
-  // Previne que o contador atrapalhe os swipes das fotos
   counterDiv.addEventListener('touchstart', (e) => {
-    if (e.target === dragHandle || dragHandle.contains(e.target)) {
-      // Se arrastando pelo handle, deixa rolar
-      return;
-    }
+    if (e.target === dragHandle || dragHandle.contains(e.target)) return;
     e.stopPropagation();
   });
 }
