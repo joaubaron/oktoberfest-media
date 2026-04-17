@@ -17,7 +17,7 @@ const https = require('https');
 
 // Configurações
 const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
-const CURRENT_YEAR = 2100;
+const CURRENT_YEAR = new Date().getFullYear();
 const START_CLARA_YEAR = 2017;
 const START_CARTAZ_YEAR = 1984;
 
