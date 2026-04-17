@@ -1226,7 +1226,7 @@ updateVideoPositionAndSize();
 
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-// ======== NOVA FUNÇÃO: CONTADOR FLUTUANTE ARRASTÁVEL ========
+// ======== FUNÇÃO: CONTADOR FLUTUANTE ARRASTÁVEL (VERSÃO OTIMIZADA) ========
 function criarContadorFlutuante(datasManifesto) {
   // 1. Remove um contador antigo, se existir
   const contadorExistente = document.getElementById('floating-counter');
@@ -1237,7 +1237,7 @@ function criarContadorFlutuante(datasManifesto) {
   counterDiv.id = 'floating-counter';
   counterDiv.innerHTML = `
     <div class="counter-content">
-      <span class="counter-label">🍺 Oktoberfest 2026</span>
+      <span class="counter-label">Faltam</span>
       <span class="counter-days">--</span>
       <span class="counter-label">dias</span>
     </div>
@@ -1255,24 +1255,30 @@ function criarContadorFlutuante(datasManifesto) {
     }
   };
 
-  // 4. Lógica de cálculo dos dias (usando o manifesto ou fallback)
-  const anoAlvo = 2026;
+  // 4. Lógica de cálculo dos dias com detecção automática de ano
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  let anoAlvo = hoje.getFullYear();
   let dataInicio = null;
-
+  
+  // Se já passou 25 de outubro, usa o ano que vem
+  if (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25)) {
+    anoAlvo++;
+  }
+  
+  // Busca a data do manifesto para o ano correto
   if (datasManifesto && datasManifesto[anoAlvo] && datasManifesto[anoAlvo].inicio) {
     dataInicio = new Date(datasManifesto[anoAlvo].inicio + 'T00:00:00');
     if (isNaN(dataInicio)) dataInicio = null;
   }
-
+  
   if (dataInicio) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
     const diffTime = dataInicio - hoje;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    
     if (diffDays > 0) {
       atualizarTexto(diffDays, true);
-      counterDiv.querySelector('.counter-label').innerHTML = `Faltam`;
     } else if (diffDays === 0) {
       atualizarTexto("É HOJE!", true);
       counterDiv.style.background = "#c19e10";
@@ -1281,70 +1287,114 @@ function criarContadorFlutuante(datasManifesto) {
       counterDiv.style.background = "#555";
     }
   } else {
-    // Fallback elegante: mostra o mês
-    atualizarTexto("em outubro", false);
-    counterDiv.querySelector('.counter-label').innerHTML = `🍺 Oktoberfest ${anoAlvo}`;
-    counterDiv.style.background = "#03687e";
+    // Fallback: calcula com data fixa (7 de outubro)
+    dataInicio = new Date(anoAlvo, 9, 7);
+    const diffTime = dataInicio - hoje;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      atualizarTexto(diffDays, true);
+    } else if (diffDays === 0) {
+      atualizarTexto("É HOJE!", true);
+      counterDiv.style.background = "#c19e10";
+    } else {
+      atualizarTexto("JÁ ACABOU", true);
+      counterDiv.style.background = "#555";
+    }
     console.log("📅 Usando fallback: data exata não disponível no manifesto.");
   }
 
-  // 5. Tornar o elemento arrastável com toque e mouse
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  // ========== ARRASTO OTIMIZADO (MAIS RÁPIDO) ==========
+  let isDragging = false;
+  let startX = 0, startY = 0;
+  let initialLeft = 0, initialTop = 0;
+  
   const dragHandle = counterDiv.querySelector('.drag-handle');
   
-  const dragMouseDown = (e) => {
+  const startDrag = (e) => {
     e.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
+    e.stopPropagation();
+    
+    isDragging = true;
+    
+    // Pega a posição inicial do toque/clique
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    
+    // Pega a posição atual do elemento
+    const rect = counterDiv.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    
+    // Adiciona os event listeners
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('touchend', stopDrag);
+    
+    // Adiciona classe para feedback visual
+    counterDiv.style.cursor = 'grabbing';
+    counterDiv.style.transition = 'none';
   };
-
-  const dragTouchStart = (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-    document.ontouchend = closeDragElement;
-    document.ontouchmove = elementDragTouch;
-  };
-
-  const elementDrag = (e) => {
-    e.preventDefault();
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    const newTop = (counterDiv.offsetTop - pos2);
-    const newLeft = (counterDiv.offsetLeft - pos1);
-    if (newTop >= 0 && newTop <= window.innerHeight - counterDiv.offsetHeight) counterDiv.style.top = newTop + "px";
-    if (newLeft >= 0 && newLeft <= window.innerWidth - counterDiv.offsetWidth) counterDiv.style.left = newLeft + "px";
-  };
-
-  const elementDragTouch = (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    pos1 = pos3 - touch.clientX;
-    pos2 = pos4 - touch.clientY;
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-    const newTop = (counterDiv.offsetTop - pos2);
-    const newLeft = (counterDiv.offsetLeft - pos1);
-    if (newTop >= 0 && newTop <= window.innerHeight - counterDiv.offsetHeight) counterDiv.style.top = newTop + "px";
-    if (newLeft >= 0 && newLeft <= window.innerWidth - counterDiv.offsetWidth) counterDiv.style.left = newLeft + "px";
-  };
-
-  const closeDragElement = () => {
-    document.onmouseup = null;
-    document.onmousemove = null;
-    document.ontouchend = null;
-    document.ontouchmove = null;
-  };
-
-  dragHandle.onmousedown = dragMouseDown;
-  dragHandle.ontouchstart = dragTouchStart;
   
-  // Evita que o contador atrapalhe os swipes nas fotos
-  counterDiv.addEventListener('touchstart', (e) => e.stopPropagation());
-  counterDiv.addEventListener('touchend', (e) => e.stopPropagation());
+  const onDrag = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    // Pega a posição atual
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    
+    // Calcula o novo deslocamento
+    let deltaX = clientX - startX;
+    let deltaY = clientY - startY;
+    
+    // Calcula a nova posição
+    let newLeft = initialLeft + deltaX;
+    let newTop = initialTop + deltaY;
+    
+    // Limita nas bordas da tela
+    const maxX = window.innerWidth - counterDiv.offsetWidth;
+    const maxY = window.innerHeight - counterDiv.offsetHeight;
+    
+    newLeft = Math.max(0, Math.min(newLeft, maxX));
+    newTop = Math.max(0, Math.min(newTop, maxY));
+    
+    // Aplica a nova posição (sem usar style.left/top absoluto, usa transform para performance)
+    counterDiv.style.left = newLeft + 'px';
+    counterDiv.style.top = newTop + 'px';
+    counterDiv.style.right = 'auto';
+    counterDiv.style.bottom = 'auto';
+  };
+  
+  const stopDrag = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    // Remove os event listeners
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('touchend', stopDrag);
+    
+    // Restaura o cursor
+    counterDiv.style.cursor = '';
+    counterDiv.style.transition = '';
+  };
+  
+  // Adiciona os event listeners no handle
+  dragHandle.addEventListener('mousedown', startDrag);
+  dragHandle.addEventListener('touchstart', startDrag, { passive: false });
+  
+  // Previne que o contador atrapalhe os swipes das fotos
+  counterDiv.addEventListener('touchstart', (e) => {
+    if (e.target === dragHandle || dragHandle.contains(e.target)) {
+      // Se arrastando pelo handle, deixa rolar
+      return;
+    }
+    e.stopPropagation();
+  });
 }
