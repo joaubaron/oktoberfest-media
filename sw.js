@@ -18,6 +18,7 @@ let essentialAssets = [
   './manifestos/cartaz-years.json',
   './manifestos/videos.json',
   './manifestos/kaka-photos.json',
+  './manifestos/oktoberfest-datas.json',
 
   // Fotos de fallback
   `${GITHUB_BASE}/fotos/oktoberfest.png`,
