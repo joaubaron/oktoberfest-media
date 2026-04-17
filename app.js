@@ -1236,7 +1236,7 @@ function criarContadorFlutuante(datasManifesto) {
   const counterDiv = document.createElement('div');
   counterDiv.id = 'floating-counter';
   counterDiv.innerHTML = `
-    <span class="counter-label">🍻 Faltam</span>
+    <span class="counter-label">Faltam</span>
     <span class="counter-days">--</span>
     <span class="counter-label">dias</span>
     <span class="drag-handle">⋮⋮</span>
@@ -1270,7 +1270,7 @@ function criarContadorFlutuante(datasManifesto) {
   if (dataInicio) {
     // Verifica se está DURANTE a festa
     if (hoje >= dataInicio && (!dataFim || hoje <= dataFim)) {
-      atualizarTexto("COMEÇOU!");
+      atualizarTexto("Começou!");
       counterDiv.style.background = "#c19e10";
     } else if (hoje < dataInicio) {
       // Antes da festa
@@ -1289,7 +1289,7 @@ function criarContadorFlutuante(datasManifesto) {
     // Verifica se a festa do ano atual já acabou
     if (anoAlvo === anoAtual && (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25))) {
       // Festa acabou e não tem dados do próximo ano
-      atualizarTexto("Até a próxima! 🍻");
+      atualizarTexto("Até a próxima!");
       counterDiv.style.background = "#555";
       // Remove os labels "Faltam" e "dias"
       const labels = counterDiv.querySelectorAll('.counter-label');
