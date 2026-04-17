@@ -1,5 +1,5 @@
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '17.04.2026-1550';
+const CACHE_VERSION = '17.04.2026-1611';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -59,31 +59,31 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 🔥 MANIFESTOS: Cache First (prioridade máxima)
-  if (url.pathname.includes('/manifestos/')) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
+  // 🔥 MANIFESTOS: Network First (prioridade na rede)
+if (url.pathname.includes('/manifestos/')) {
+  event.respondWith(
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+      }
+      return networkResponse;
+    }).catch(() => {
+      return caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        }).catch(() => {
-          return new Response(JSON.stringify([]), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          });
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
         });
-      })
-    );
-    return;
-  }
+      });
+    })
+  );
+  return;
+}
 
   // 🎥 VÍDEOS: Network First, SEM CACHE (evita erro 206)
   if (url.pathname.includes('/videos/')) {
