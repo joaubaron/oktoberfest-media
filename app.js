@@ -233,7 +233,13 @@ currentVideoIndex = 0;
 carregarVideo(currentVideoIndex);
 imageContainer.style.visibility = "hidden";
 videoContainer.style.display = "flex";
-updateVideoPositionAndSize();
+// Aguarda o browser calcular o layout final antes de posicionar o vídeo
+// (necessário no PWA standalone onde o viewport difere do browser comum)
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    updateVideoPositionAndSize();
+  });
+});
 configurarSwipeVideo(video);
 if (!toastVideoExibido && videoList.length > 1) {
 toastVideoExibido = true;
@@ -984,23 +990,22 @@ animationId = null;
 }
 
 function startFireworks() {
-    if (!ctx) return;
-    if (animationId) { cancelAnimationFrame(animationId); particles = []; }
+if (!ctx) return;
+if (animationId) { cancelAnimationFrame(animationId); particles = []; }
 
-    // Fade in do canvas
-    if (canvas) {
-        canvas.style.transition = 'opacity 0.6s ease';
-        canvas.style.opacity = '0';
-        requestAnimationFrame(() => { canvas.style.opacity = '1'; });
-    }
+// Fade in do canvas
+if (canvas) {
+canvas.style.transition = 'opacity 0.6s ease';
+canvas.style.opacity = '0';
+requestAnimationFrame(() => { canvas.style.opacity = '1'; });
+}
 
-    // 8 explosões a cada 250ms = 2 segundos exatos
-    for (let i = 0; i < 8; i++) {  // ← MUDOU DE 12 PARA 8
-        setTimeout(() => {
-            createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
-            if (i === 0) animateFireworks();
-        }, i * 250);  // ← MANTEVE 250ms
-    }
+for (let i = 0; i < 12; i++) {
+setTimeout(() => {
+createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
+if (i === 0) animateFireworks();
+}, i * 250);
+}
 }
 
 // ======== RESET ========
