@@ -15,75 +15,65 @@
 <meta name="theme-color" content="#03687e">
 <link rel="icon" href="icone-512.png">
 <style>
-/* ====================== CONTADOR FLUTUANTE ====================== */
+
+/* ====================== CONTADOR FLUTUANTE ULTRA-RÁPIDO ====================== */
 #floating-counter {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  left: 0;
+  top: 0;
   background: #D8B115;
   color: #333;
-  border-radius: 50px;
-  padding: 8px 15px 8px 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  border-radius: 30px;
+  padding: 6px 12px 6px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   z-index: 2000;
   font-family: "Roboto", sans-serif;
   font-weight: bold;
-  cursor: default;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   backdrop-filter: blur(4px);
   background-color: rgba(216, 177, 21, 0.95);
-  border: 1px solid rgba(255,255,255,0.3);
-  transition: all 0.2s ease;
+  cursor: default;
+  will-change: transform;
+  transition: transform 0.05s linear;
 }
 
-.counter-content {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.counter-label {
-  font-size: 0.8rem;
-  letter-spacing: 0.5px;
-}
-
-.counter-days {
-  font-size: 1.4rem;
+#floating-counter .counter-days {
+  font-size: 0.9rem;     /* ← menor */
   font-weight: 800;
   background: #03687e;
   color: white;
-  padding: 2px 8px;
-  border-radius: 40px;
-  min-width: 50px;
+  padding: 2px 4px;      /* ← menor */
+  border-radius: 16px;   /* ← menor */
+  min-width: 32px;       /* ← menor */
   text-align: center;
-  line-height: 1;
 }
 
-.drag-handle {
-  margin-left: 8px;
-  font-size: 18px;
+#floating-counter .counter-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+#floating-counter .drag-handle {
+  font-size: 14px;
   cursor: grab;
   user-select: none;
-  padding: 0 4px;
-  border-radius: 20px;
-  transition: background 0.2s;
+  padding: 0 2px;
+  opacity: 0.6;
 }
 
-.drag-handle:active {
+#floating-counter .drag-handle:active {
   cursor: grabbing;
 }
 
-/* Responsivo: em telas muito pequenas, o contador fica no topo */
 @media (max-width: 480px) {
   #floating-counter {
-    bottom: auto;
-    top: 10px;
-    right: 10px;
-    padding: 6px 12px 6px 15px;
+    padding: 4px 10px 4px 14px;
   }
-  .counter-days {
-    font-size: 1.1rem;
+  #floating-counter .counter-days {
+    font-size: 0.9rem;
     min-width: 35px;
   }
 }

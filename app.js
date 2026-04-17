@@ -1226,7 +1226,7 @@ updateVideoPositionAndSize();
 
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-// ======== NOVA FUNÇÃO: CONTADOR FLUTUANTE ARRASTÁVEL ========
+// ======== FUNÇÃO: CONTADOR FLUTUANTE ULTRA-RÁPIDO ========
 function criarContadorFlutuante(datasManifesto) {
   // 1. Remove um contador antigo, se existir
   const contadorExistente = document.getElementById('floating-counter');
@@ -1236,115 +1236,208 @@ function criarContadorFlutuante(datasManifesto) {
   const counterDiv = document.createElement('div');
   counterDiv.id = 'floating-counter';
   counterDiv.innerHTML = `
-    <div class="counter-content">
-      <span class="counter-label">🍺 Oktoberfest 2026</span>
-      <span class="counter-days">--</span>
-      <span class="counter-label">dias</span>
-    </div>
-    <div class="drag-handle">⋮⋮</div>
+    <span class="counter-label">Faltam</span>
+    <span class="counter-days">--</span>
+    <span class="counter-label">dias</span>
+    <span class="drag-handle">⋮⋮</span>
   `;
   document.body.appendChild(counterDiv);
 
-  // 3. Função para atualizar o texto do contador
-  const atualizarTexto = (texto, isDias = false) => {
+  // 3. Função para atualizar o texto
+  const atualizarTexto = (texto) => {
     const daysSpan = counterDiv.querySelector('.counter-days');
-    if (daysSpan) {
-      daysSpan.innerHTML = texto;
-      if (isDias) daysSpan.style.fontSize = '1.4rem';
-      else daysSpan.style.fontSize = '0.8rem';
-    }
+    if (daysSpan) daysSpan.innerHTML = texto;
   };
 
-  // 4. Lógica de cálculo dos dias (usando o manifesto ou fallback)
-  const anoAlvo = 2026;
+  // 4. Lógica de cálculo dos dias
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  let anoAlvo = hoje.getFullYear();
   let dataInicio = null;
-
+  let dataFim = null;
+  
+  if (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25)) {
+    anoAlvo++;
+  }
+  
   if (datasManifesto && datasManifesto[anoAlvo] && datasManifesto[anoAlvo].inicio) {
     dataInicio = new Date(datasManifesto[anoAlvo].inicio + 'T00:00:00');
+    dataFim = datasManifesto[anoAlvo].fim ? new Date(datasManifesto[anoAlvo].fim + 'T00:00:00') : null;
     if (isNaN(dataInicio)) dataInicio = null;
   }
-
+  
   if (dataInicio) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diffTime = dataInicio - hoje;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 0) {
-      atualizarTexto(diffDays, true);
-      counterDiv.querySelector('.counter-label').innerHTML = `Faltam`;
-    } else if (diffDays === 0) {
-      atualizarTexto("É HOJE!", true);
+    // Verifica se está DURANTE a festa
+    if (hoje >= dataInicio && (!dataFim || hoje <= dataFim)) {
+      atualizarTexto("Começou!");
       counterDiv.style.background = "#c19e10";
+    } else if (hoje < dataInicio) {
+      // Antes da festa
+      const diffTime = dataInicio - hoje;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      atualizarTexto(diffDays);
     } else {
-      atualizarTexto("JÁ ACABOU", true);
+      // Depois da festa
+      atualizarTexto("FIM");
       counterDiv.style.background = "#555";
     }
   } else {
-    // Fallback elegante: mostra o mês
-    atualizarTexto("em outubro", false);
-    counterDiv.querySelector('.counter-label').innerHTML = `🍺 Oktoberfest ${anoAlvo}`;
-    counterDiv.style.background = "#03687e";
-    console.log("📅 Usando fallback: data exata não disponível no manifesto.");
+    // Fallback: não tem data para o ano alvo no manifesto
+    const anoAtual = new Date().getFullYear();
+    
+    // Verifica se a festa do ano atual já acabou
+    if (anoAlvo === anoAtual && (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25))) {
+      // Festa acabou e não tem dados do próximo ano
+      atualizarTexto("Até a próxima!");
+      counterDiv.style.background = "#555";
+      // Remove os labels "Faltam" e "dias"
+      const labels = counterDiv.querySelectorAll('.counter-label');
+      labels.forEach(label => label.remove());
+    } else {
+      // Usa fallback com data fixa 7 de outubro
+      dataInicio = new Date(anoAlvo, 9, 7);
+      const diffTime = dataInicio - hoje;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 0) {
+        atualizarTexto(diffDays);
+      } else if (diffDays === 0) {
+        atualizarTexto("Começou!");
+        counterDiv.style.background = "#c19e10";
+      } else {
+        atualizarTexto("FIM");
+        counterDiv.style.background = "#555";
+      }
+    }
   }
 
-  // 5. Tornar o elemento arrastável com toque e mouse
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  // ========== ARRASTO ULTRA-RÁPIDO (USANDO TRANSFORM) ==========
+  let isDragging = false;
+  let startX = 0, startY = 0;
+  let startLeft = 0, startTop = 0;
+  let rafId = null;
+  
   const dragHandle = counterDiv.querySelector('.drag-handle');
   
-  const dragMouseDown = (e) => {
-    e.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
-  };
-
-  const dragTouchStart = (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-    document.ontouchend = closeDragElement;
-    document.ontouchmove = elementDragTouch;
-  };
-
-  const elementDrag = (e) => {
-    e.preventDefault();
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    const newTop = (counterDiv.offsetTop - pos2);
-    const newLeft = (counterDiv.offsetLeft - pos1);
-    if (newTop >= 0 && newTop <= window.innerHeight - counterDiv.offsetHeight) counterDiv.style.top = newTop + "px";
-    if (newLeft >= 0 && newLeft <= window.innerWidth - counterDiv.offsetWidth) counterDiv.style.left = newLeft + "px";
-  };
-
-  const elementDragTouch = (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    pos1 = pos3 - touch.clientX;
-    pos2 = pos4 - touch.clientY;
-    pos3 = touch.clientX;
-    pos4 = touch.clientY;
-    const newTop = (counterDiv.offsetTop - pos2);
-    const newLeft = (counterDiv.offsetLeft - pos1);
-    if (newTop >= 0 && newTop <= window.innerHeight - counterDiv.offsetHeight) counterDiv.style.top = newTop + "px";
-    if (newLeft >= 0 && newLeft <= window.innerWidth - counterDiv.offsetWidth) counterDiv.style.left = newLeft + "px";
-  };
-
-  const closeDragElement = () => {
-    document.onmouseup = null;
-    document.onmousemove = null;
-    document.ontouchend = null;
-    document.ontouchmove = null;
-  };
-
-  dragHandle.onmousedown = dragMouseDown;
-  dragHandle.ontouchstart = dragTouchStart;
+  // Posição inicial salva no estilo
+  let currentLeft = 0, currentTop = 0;
   
-  // Evita que o contador atrapalhe os swipes nas fotos
-  counterDiv.addEventListener('touchstart', (e) => e.stopPropagation());
-  counterDiv.addEventListener('touchend', (e) => e.stopPropagation());
+  // Tenta recuperar posição salva ou usa padrão
+  try {
+    const savedLeft = localStorage.getItem('counterLeft');
+    const savedTop = localStorage.getItem('counterTop');
+    if (savedLeft !== null && savedTop !== null) {
+      currentLeft = parseFloat(savedLeft);
+      currentTop = parseFloat(savedTop);
+      counterDiv.style.left = currentLeft + 'px';
+      counterDiv.style.top = currentTop + 'px';
+      counterDiv.style.right = 'auto';
+      counterDiv.style.bottom = 'auto';
+    } else {
+      // Posição padrão: canto inferior direito
+      currentLeft = window.innerWidth - counterDiv.offsetWidth - 20;
+      currentTop = window.innerHeight - counterDiv.offsetHeight - 20;
+      counterDiv.style.left = currentLeft + 'px';
+      counterDiv.style.top = currentTop + 'px';
+      counterDiv.style.right = 'auto';
+      counterDiv.style.bottom = 'auto';
+    }
+  } catch(e) {}
+  
+  const updatePosition = () => {
+    if (!isDragging) return;
+    counterDiv.style.transform = `translate(${currentLeft}px, ${currentTop}px)`;
+    counterDiv.style.left = '0';
+    counterDiv.style.top = '0';
+    counterDiv.style.right = 'auto';
+    counterDiv.style.bottom = 'auto';
+    rafId = null;
+  };
+  
+  const startDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging = true;
+    
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    
+    // Pega a posição atual do transform
+    const rect = counterDiv.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
+    
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('touchend', stopDrag);
+    
+    counterDiv.style.cursor = 'grabbing';
+    counterDiv.style.transition = 'none';
+  };
+  
+  const onDrag = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    
+    let deltaX = clientX - startX;
+    let deltaY = clientY - startY;
+    
+    let newLeft = startLeft + deltaX;
+    let newTop = startTop + deltaY;
+    
+    // Limita nas bordas
+    const maxX = window.innerWidth - counterDiv.offsetWidth;
+    const maxY = window.innerHeight - counterDiv.offsetHeight;
+    
+    newLeft = Math.max(0, Math.min(newLeft, maxX));
+    newTop = Math.max(0, Math.min(newTop, maxY));
+    
+    currentLeft = newLeft;
+    currentTop = newTop;
+    
+    // Usa requestAnimationFrame para suavizar
+    if (rafId === null) {
+      rafId = requestAnimationFrame(updatePosition);
+    }
+  };
+  
+  const stopDrag = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    
+    // Salva a posição
+    try {
+      localStorage.setItem('counterLeft', currentLeft);
+      localStorage.setItem('counterTop', currentTop);
+    } catch(e) {}
+    
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('touchend', stopDrag);
+    
+    counterDiv.style.cursor = '';
+    counterDiv.style.transition = '';
+  };
+  
+  dragHandle.addEventListener('mousedown', startDrag);
+  dragHandle.addEventListener('touchstart', startDrag, { passive: false });
+  
+  counterDiv.addEventListener('touchstart', (e) => {
+    if (e.target === dragHandle || dragHandle.contains(e.target)) return;
+    e.stopPropagation();
+  });
 }
