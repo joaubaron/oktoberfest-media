@@ -1236,6 +1236,7 @@ function criarContadorFlutuante(datasManifesto) {
   const counterDiv = document.createElement('div');
   counterDiv.id = 'floating-counter';
   counterDiv.innerHTML = `
+    <span class="counter-label">🍻 Faltam</span>
     <span class="counter-days">--</span>
     <span class="counter-label">dias</span>
     <span class="drag-handle">⋮⋮</span>
