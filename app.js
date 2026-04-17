@@ -533,7 +533,7 @@ img.onload = exibirToastClara;
 if (img.complete && img.naturalWidth > 0) exibirToastClara();
 img.onerror = () => {
 console.warn(`Imagem de ${year} não encontrada — substituindo por vilagermanica.jpg`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.style.opacity = 1;
 };
 }, 400);
@@ -595,7 +595,7 @@ function mostrarFoto2007() {
       
       img.onerror = () => {
         console.warn(`Kaka ${novoIndex + 1} não encontrada`);
-        img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+        img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
         img.alt = `Kaka ${novoIndex + 1} - Upload pendente`;
         img.style.opacity = 1;
       };
@@ -745,7 +745,7 @@ img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
 img.alt = `Oktoberfest ${year} - Sorteado!`;
 img.onerror = () => {
 console.warn(`Foto Clara ${year} não encontrada`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Oktoberfest ${year} - Upload pendente`;
 };
 img.style.opacity = 1;
@@ -823,7 +823,7 @@ if (yearExists) {
 // Ano existe: carrega o cartaz
 img.onerror = () => {
 console.warn(`Cartaz ${year} não encontrado – usando fallback`);
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Cartaz ${year} (fallback)`;
 img.style.opacity = 1;
 };
@@ -837,7 +837,7 @@ img.style.opacity = 1;
 // Ano NÃO existe: mostra fallback fixo (sem pular)
 img.onerror = null;
 img.onload = () => { img.style.opacity = 1; };
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Cartaz ${year} (não disponível)`;
 img.style.opacity = 1;
 }
@@ -874,7 +874,7 @@ const ano = cartazYearsList[idx];
 img.style.opacity = 0;
 setTimeout(() => {
 img.onerror = () => {
-img.src = `${GITHUB_BASE}/fotos/vilagermanica.jpg`;
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Cartaz ${ano} (fallback)`;
 img.style.opacity = 1;
 };
