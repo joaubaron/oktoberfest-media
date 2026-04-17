@@ -1255,6 +1255,7 @@ function criarContadorFlutuante(datasManifesto) {
   
   let anoAlvo = hoje.getFullYear();
   let dataInicio = null;
+  let dataFim = null;
   
   if (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25)) {
     anoAlvo++;
@@ -1262,35 +1263,52 @@ function criarContadorFlutuante(datasManifesto) {
   
   if (datasManifesto && datasManifesto[anoAlvo] && datasManifesto[anoAlvo].inicio) {
     dataInicio = new Date(datasManifesto[anoAlvo].inicio + 'T00:00:00');
+    dataFim = datasManifesto[anoAlvo].fim ? new Date(datasManifesto[anoAlvo].fim + 'T00:00:00') : null;
     if (isNaN(dataInicio)) dataInicio = null;
   }
   
   if (dataInicio) {
-    const diffTime = dataInicio - hoje;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays > 0) {
-      atualizarTexto(diffDays);
-    } else if (diffDays === 0) {
-      atualizarTexto("HOJE!");
+    // Verifica se está DURANTE a festa
+    if (hoje >= dataInicio && (!dataFim || hoje <= dataFim)) {
+      atualizarTexto("COMEÇOU!");
       counterDiv.style.background = "#c19e10";
+    } else if (hoje < dataInicio) {
+      // Antes da festa
+      const diffTime = dataInicio - hoje;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      atualizarTexto(diffDays);
     } else {
+      // Depois da festa
       atualizarTexto("FIM");
       counterDiv.style.background = "#555";
     }
   } else {
-    dataInicio = new Date(anoAlvo, 9, 7);
-    const diffTime = dataInicio - hoje;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Fallback: não tem data para o ano alvo no manifesto
+    const anoAtual = new Date().getFullYear();
     
-    if (diffDays > 0) {
-      atualizarTexto(diffDays);
-    } else if (diffDays === 0) {
-      atualizarTexto("HOJE!");
-      counterDiv.style.background = "#c19e10";
-    } else {
-      atualizarTexto("FIM");
+    // Verifica se a festa do ano atual já acabou
+    if (anoAlvo === anoAtual && (hoje.getMonth() > 9 || (hoje.getMonth() === 9 && hoje.getDate() > 25))) {
+      // Festa acabou e não tem dados do próximo ano
+      atualizarTexto("Até a próxima! 🍻");
       counterDiv.style.background = "#555";
+      // Remove os labels "Faltam" e "dias"
+      const labels = counterDiv.querySelectorAll('.counter-label');
+      labels.forEach(label => label.remove());
+    } else {
+      // Usa fallback com data fixa 7 de outubro
+      dataInicio = new Date(anoAlvo, 9, 7);
+      const diffTime = dataInicio - hoje;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 0) {
+        atualizarTexto(diffDays);
+      } else if (diffDays === 0) {
+        atualizarTexto("COMEÇOU!");
+        counterDiv.style.background = "#c19e10";
+      } else {
+        atualizarTexto("FIM");
+        counterDiv.style.background = "#555";
+      }
     }
   }
 
