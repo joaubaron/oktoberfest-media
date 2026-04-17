@@ -1303,7 +1303,7 @@ function criarContadorFlutuante(datasManifesto) {
       if (diffDays > 0) {
         atualizarTexto(diffDays);
       } else if (diffDays === 0) {
-        atualizarTexto("COMEÇOU!");
+        atualizarTexto("Começou!");
         counterDiv.style.background = "#c19e10";
       } else {
         atualizarTexto("FIM");
