@@ -747,6 +747,8 @@ img.onerror = () => {
 console.warn(`Foto Clara ${year} não encontrada`);
 img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Oktoberfest ${year} - Upload pendente`;
+// Atualiza currentYearIndex para o último ano válido
+currentYearIndex = allYears.length - 1;
 };
 img.style.opacity = 1;
 button.disabled = false;
