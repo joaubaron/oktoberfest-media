@@ -1,5 +1,5 @@
 // ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '17.04.2026-1611';
+const CACHE_VERSION = '18.04.2026-1028';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -12,7 +12,7 @@ let essentialAssets = [
   './app.js',
   './titulo.png',
   './azulbavaro.webp',
-  './fotos/oktoberfest.png',
+  './imagens/oktoberfest.png',
   './rodape.png',
   './manifestos/clara-years.json',
   './manifestos/cartaz-years.json',
@@ -21,7 +21,8 @@ let essentialAssets = [
   './manifestos/oktoberfest-datas.json',
 
   // Fotos de fallback
-  `${GITHUB_BASE}/fotos/oktoberfest.png`,
+  `${GITHUB_BASE}/imagens/vilagermanica.jpg`,
+  `${GITHUB_BASE}/imagens/oktoberfest.png`,
   `${GITHUB_BASE}/fotos/oktoberfest2007.jpg`,
   `${GITHUB_BASE}/fotos/oktoberfestkaka1.jpg`, 
   `${GITHUB_BASE}/fotos/oktoberfestkaka2.jpg`,
