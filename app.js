@@ -34,7 +34,7 @@ let videoTouchStartX = 0;
 let isVideoSwiping = false;
 
 // VARIÁVEIS KAKA (Cláudia & Augusto)
-let kakaPhotoList = [];
+let kakaPhotoList = [];  // ← ADICIONAR ESTA LINHA
 
 // FLAGS DE TOAST
 let toastClaraExibido = false;
@@ -345,7 +345,7 @@ async function loadManifests() {
       fetch('./manifestos/cartaz-years.json').catch(() => null),
       fetch('./manifestos/videos.json').catch(() => null),
       fetch('./manifestos/kaka-photos.json').catch(() => null),
-      fetch('./manifestos/oktoberfest-datas.json').catch(() => null)
+      fetch('./manifestos/oktoberfest-datas.json').catch(() => null)  // ← NOVO: datas oficiais
     ]);
     
     // Verificar se os manifestos essenciais foram carregados
@@ -401,7 +401,7 @@ async function loadManifests() {
       }
     }
     
-    // Criar o contador flutuante com as datas oficiais
+    // ← NOVO: Criar o contador flutuante com as datas oficiais
     criarContadorFlutuante(oktoberfestDatas);
     
     return true;
@@ -512,50 +512,31 @@ setTimeout(() => { isSwiping = false; }, 500);
 }
 
 function navigateToYear(year) {
-  stopVideo();
-  if (loopFoto2007) {
-    clearTimeout(loopFoto2007);
-    loopFoto2007 = null;
-  }
-  
-  const img = getElementSafe("photo");
-  if (!img) return;
-  
-  adicionarSwipes();
-  
-  const yearStr = year.toString();
-  const yearIndex = allYears.indexOf(yearStr);
-  
-  // Se o ano NÃO existe, entra em fallback
-  if (yearIndex === -1) {
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
-      img.alt = `Clara ${year} (não disponível)`;
-      img.style.opacity = 1;
-      configurarSwipesClaraFallback(img);
-    }, 400);
-    return;
-  }
-  
-  // Ano existe - comportamento normal
-  currentYearIndex = yearIndex;
-  
-  img.style.opacity = 0;
-  setTimeout(() => {
-    img.src = photos[year];
-    img.alt = `Oktoberfest ${year}`;
-    
-    const exibirToastClara = () => { img.style.opacity = 1; };
-    img.onload = exibirToastClara;
-    if (img.complete && img.naturalWidth > 0) exibirToastClara();
-    
-    img.onerror = () => {
-      console.warn(`Imagem de ${year} não encontrada — substituindo por vilagermanica.jpg`);
-      img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
-      img.style.opacity = 1;
-    };
-  }, 400);
+stopVideo();
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+const img = getElementSafe("photo");
+if (!img) return;
+adicionarSwipes();
+const yearIndex = allYears.indexOf(year.toString());
+if (yearIndex !== -1) {
+currentYearIndex = yearIndex;
+}
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = photos[year];
+img.alt = `Oktoberfest ${year}`;
+const exibirToastClara = () => { img.style.opacity = 1; };
+img.onload = exibirToastClara;
+if (img.complete && img.naturalWidth > 0) exibirToastClara();
+img.onerror = () => {
+console.warn(`Imagem de ${year} não encontrada — substituindo por vilagermanica.jpg`);
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
+img.style.opacity = 1;
+};
+}, 400);
 }
 
 function nextYear() {
@@ -574,96 +555,6 @@ currentYearIndex--;
 currentYearIndex = allYears.length - 1;
 }
 navigateToYear(parseInt(allYears[currentYearIndex]));
-}
-
-// ======== ALTERAÇÃO 1: FUNÇÃO DE FALLBACK CLARA COM SWIPE CORRETO ========
-function configurarSwipesClaraFallback(img) {
-  removerSwipes();
-  const fadeDuration = 500;
-  let isClaraSwiping = false;
-  let currentIndex = -1;  // -1 indica modo fallback
-
-  function carregarClaraPorIndice(idx) {
-    if (isClaraSwiping) return;
-    if (idx < 0 || idx >= allYears.length) return;
-
-    isClaraSwiping = true;
-    const ano = allYears[idx];
-
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.onerror = () => {
-        img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
-        img.alt = `Clara ${ano} (fallback)`;
-        img.style.opacity = 1;
-      };
-      img.onload = () => { img.style.opacity = 1; };
-      img.src = photos[ano];
-      img.alt = `Clara ${ano}`;
-      
-      currentIndex = idx;
-      setTimeout(() => { isClaraSwiping = false; }, fadeDuration);
-    }, fadeDuration);
-  }
-
-  function proximaClara() {
-    if (allYears.length === 0) return;
-    if (currentIndex === -1) {
-      currentIndex = 0;  // Fallback → primeira foto real
-    } else {
-      currentIndex = (currentIndex + 1) % allYears.length;
-    }
-    carregarClaraPorIndice(currentIndex);
-  }
-
-  function anteriorClara() {
-    if (allYears.length === 0) return;
-    if (currentIndex === -1) {
-      currentIndex = allYears.length - 1;  // Fallback → última foto real
-    } else {
-      currentIndex = (currentIndex - 1 + allYears.length) % allYears.length;
-    }
-    carregarClaraPorIndice(currentIndex);
-  }
-
-  let startX = 0;
-  const touchStart = (e) => { startX = e.changedTouches[0].screenX; };
-  const touchEnd = (e) => {
-    if (isClaraSwiping) return;
-    const delta = e.changedTouches[0].screenX - startX;
-    if (Math.abs(delta) < 50) return;
-    if (delta > 0) proximaClara();
-    else anteriorClara();
-  };
-
-  let isDragging = false;
-  let dragStartX = 0;
-  const mouseDown = (e) => {
-    e.preventDefault();
-    isDragging = true;
-    dragStartX = e.screenX;
-  };
-  const mouseUp = (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    if (isClaraSwiping) return;
-    const delta = e.screenX - dragStartX;
-    if (Math.abs(delta) < 50) return;
-    if (delta > 0) proximaClara();
-    else anteriorClara();
-  };
-
-  img.removeEventListener("touchstart", touchStart);
-  img.removeEventListener("touchend", touchEnd);
-  img.removeEventListener("mousedown", mouseDown);
-  img.removeEventListener("mouseup", mouseUp);
-  img.removeEventListener("mouseleave", mouseUp);
-
-  img.addEventListener("touchstart", touchStart, { passive: true });
-  img.addEventListener("touchend", touchEnd, { passive: true });
-  img.addEventListener("mousedown", mouseDown, false);
-  img.addEventListener("mouseup", mouseUp, false);
-  img.addEventListener("mouseleave", mouseUp, false);
 }
 
 // ======== FOTOS KAKA (Cláudia & Augusto) - VERSÃO RÁPIDA COM MANIFESTO ========
@@ -809,102 +700,100 @@ function mostrarFoto2007() {
   }
 }
 
-// ======== ALTERAÇÃO 2: SORTEIO MODIFICADO COM FALLBACK ========
+// ======== SORTEIO ========
 function startDraw() {
-  stopVideo();
-  if (loopFoto2007) {
-    clearTimeout(loopFoto2007);
-    loopFoto2007 = null;
-  }
-  
-  const yearInput = document.getElementById("yearInput");
-  const year = parseInt(yearInput.value);
-  const img = limparListenersEClone();
-  const button = getElementSafe("drawButton");
-  
-  if (!img || !button) return;
-  
-  // VALIDAÇÃO: ano inválido ou fora do range
-  if (isNaN(year) || year < startYear || !allYears.includes(year.toString())) {
-    // FALLBACK IMEDIATO - sem tentar carregar imagem inexistente
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
-      img.alt = `Clara ${year} (não disponível)`;
-      img.style.opacity = 1;
-      button.disabled = false;
-      
-      // Configura swipe para navegar pelos anos VÁLIDOS
-      configurarSwipesClaraFallback(img);
-      
-      if (!toastClaraExibido && allYears.length > 1) {
-        toastClaraExibido = true;
-        showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
-      }
-    }, 200);
-    
-    yearInput.value = "";
-    return;
-  }
-  
-  // ANO VÁLIDO - comportamento normal do sorteio
-  adicionarSwipes();
-  if (isDrawing) return;
-  
-  clearInterval(interval);
-  isDrawing = true;
-  button.disabled = true;
-  
-  const yearsArray = allYears;
-  let iterations = 0;
-  const maxIterations = 15;
-  let currentSpeed = 100;
-  
-  interval = setInterval(() => {
-    const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.src = photos[randomYear];
-      img.alt = `Oktoberfest ${randomYear}`;
-      img.style.opacity = 1;
-    }, 100);
-    
-    iterations++;
-    currentSpeed = Math.min(100 + (iterations * 25), 500);
-    
-    if (iterations >= maxIterations) {
-      clearInterval(interval);
-      setTimeout(() => {
-        img.style.opacity = 0;
-        setTimeout(() => {
-          img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
-          img.alt = `Oktoberfest ${year} - Sorteado!`;
-          img.onerror = () => {
-            console.warn(`Foto Clara ${year} não encontrada`);
-            img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
-            img.alt = `Oktoberfest ${year} - Upload pendente`;
-          };
-          img.style.opacity = 1;
-          button.disabled = false;
-          isDrawing = false;
-          yearInput.value = "";
-          startFireworks();
-          
-          const yearIndex = yearsArray.indexOf(year.toString());
-          if (yearIndex !== -1) {
-            currentYearIndex = yearIndex;
-          }
-          
-          adicionarSwipes();
-          
-          if (!toastClaraExibido && allYears.length > 1) {
-            toastClaraExibido = true;
-            showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
-          }
-        }, 200);
-      }, 200);
-    }
-  }, currentSpeed);
+stopVideo();
+if (loopFoto2007) {
+clearTimeout(loopFoto2007);
+loopFoto2007 = null;
+}
+adicionarSwipes();
+if (isDrawing) return;
+const yearInput = document.getElementById("yearInput");
+const year = parseInt(yearInput.value);
+const img = limparListenersEClone();
+const button = getElementSafe("drawButton");
+if (!img || !button) return;
+if (isNaN(year) || year < startYear) {
+showModal("oktoberfest");
+yearInput.value = "";
+return;
+}
+clearInterval(interval);
+isDrawing = true;
+button.disabled = true;
+const yearsArray = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
+let iterations = 0;
+const maxIterations = 15;
+let currentSpeed = 100;
+interval = setInterval(() => {
+const randomYear = yearsArray[Math.floor(Math.random() * yearsArray.length)];
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = photos[randomYear];
+img.alt = `Oktoberfest ${randomYear}`;
+img.style.opacity = 1;
+}, 100);
+iterations++;
+currentSpeed = Math.min(100 + (iterations * 25), 500);
+if (iterations >= maxIterations) {
+clearInterval(interval);
+setTimeout(() => {
+img.style.opacity = 0;
+setTimeout(() => {
+img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
+img.alt = `Oktoberfest ${year} - Sorteado!`;
+img.onerror = () => {
+console.warn(`Foto Clara ${year} não encontrada`);
+img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
+img.alt = `Oktoberfest ${year} - Upload pendente`;
+};
+img.style.opacity = 1;
+button.disabled = false;
+isDrawing = false;
+document.getElementById("yearInput").value = "";
+startFireworks();
+const yearIndex = yearsArray.indexOf(year.toString());
+if (yearIndex !== -1) {
+currentYearIndex = yearIndex;
+}
+adicionarSwipes();
+if (!toastClaraExibido) {
+toastClaraExibido = true;
+showToast('👈 Arraste para navegar entre as fotos 👉', 2500);
+}
+}, 200);
+}, 200);
+}
+}, currentSpeed);
+}
+
+// ======== MODAL ========
+function showModal(context = "oktoberfest") {
+const modal = getElementSafe("alertModal");
+if (!modal) return;
+const modalYearSpan = document.getElementById("modalYear");
+if (modalYearSpan) modalYearSpan.textContent = currentYear;
+const firstLine = modal.querySelector(".modal-content div:first-child");
+const secondLine = modal.querySelector(".modal-content div:nth-child(2)");
+if (firstLine && secondLine) {
+if (context === "cartaz") {
+firstLine.innerText = "Cartazes da Oktoberfest entre";
+secondLine.innerHTML = `<strong>1984 e ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
+} else if (context === "oktoberfest") {
+firstLine.innerText = "Clara foi à Oktoberfest entre";
+secondLine.innerHTML = `<strong>2017 e ${currentYear} <span style="font-size: 20px;">🥨</span></strong>`;
+}
+}
+modal.style.display = "flex";
+setTimeout(() => modal.classList.add("show"), 10);
+}
+
+function closeModal() {
+const modal = getElementSafe("alertModal");
+if (!modal) return;
+modal.classList.remove("show");
+setTimeout(() => (modal.style.display = "none"), 300);
 }
 
 // ======== FUNÇÕES CARTAZES (CORRIGIDAS) ========
@@ -1122,15 +1011,15 @@ function startFireworks() {
     }
 
     // 8 explosões a cada 250ms = 2 segundos exatos
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {  // ← MUDOU DE 12 PARA 8
         setTimeout(() => {
             createFirework(random(w * 0.2, w * 0.8), random(h * 0.2, h * 0.6));
             if (i === 0) animateFireworks();
-        }, i * 250);
+        }, i * 250);  // ← MANTEVE 250ms
     }
 }
 
-// ======== ALTERAÇÃO 3: RESET ========
+// ======== RESET ========
 function resetApp() {
 console.log('[APP] Resetando com fogos...');
 stopVideo();
@@ -1319,7 +1208,7 @@ async function initializeApp() {
   setupCanvasAndFireworks();
   setupLazyLoading();
   
-  await loadManifests();
+  await loadManifests();  // ← Carrega tudo rapidamente
   await setupMusic();
   
   console.log('✅ Aplicação inicializada com sucesso!');
