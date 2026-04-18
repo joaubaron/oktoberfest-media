@@ -540,7 +540,10 @@ img.style.opacity = 1;
 }
 
 function nextYear() {
-if (currentYearIndex < allYears.length - 1) {
+// Verifica se está em fallback (índice inválido)
+if (currentYearIndex === -1 || currentYearIndex >= allYears.length) {
+currentYearIndex = 0;  // Vai para o PRIMEIRO ano válido
+} else if (currentYearIndex < allYears.length - 1) {
 currentYearIndex++;
 } else {
 currentYearIndex = 0;
@@ -549,7 +552,10 @@ navigateToYear(parseInt(allYears[currentYearIndex]));
 }
 
 function prevYear() {
-if (currentYearIndex > 0) {
+// Verifica se está em fallback (índice inválido)
+if (currentYearIndex === -1 || currentYearIndex >= allYears.length) {
+currentYearIndex = allYears.length - 1;  // Vai para o último ano válido
+} else if (currentYearIndex > 0) {
 currentYearIndex--;
 } else {
 currentYearIndex = allYears.length - 1;
