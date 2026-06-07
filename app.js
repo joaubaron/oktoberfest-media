@@ -540,19 +540,23 @@ img.style.opacity = 1;
 }
 
 function nextYear() {
-if (currentYearIndex < allYears.length - 1) {
-currentYearIndex++;
+if (currentYearIndex === -1) {
+  currentYearIndex = 0;              // Fallback → primeiro válido (direita)
+} else if (currentYearIndex < allYears.length - 1) {
+  currentYearIndex++;
 } else {
-currentYearIndex = 0;
+  currentYearIndex = 0;
 }
 navigateToYear(parseInt(allYears[currentYearIndex]));
 }
 
 function prevYear() {
-if (currentYearIndex > 0) {
-currentYearIndex--;
+if (currentYearIndex === -1) {
+  currentYearIndex = allYears.length - 1;  // Fallback → último válido (esquerda) — igual ao cartaz
+} else if (currentYearIndex > 0) {
+  currentYearIndex--;
 } else {
-currentYearIndex = allYears.length - 1;
+  currentYearIndex = allYears.length - 1;
 }
 navigateToYear(parseInt(allYears[currentYearIndex]));
 }
@@ -722,7 +726,10 @@ return;
 clearInterval(interval);
 isDrawing = true;
 button.disabled = true;
-const yearsArray = Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
+// Usa allYears (anos verificados) para não piscar fotos inexistentes no sorteio
+const yearsArray = allYears.length > 0
+  ? allYears
+  : Object.keys(photos).sort((a, b) => parseInt(a) - parseInt(b));
 let iterations = 0;
 const maxIterations = 15;
 let currentSpeed = 100;
@@ -741,22 +748,26 @@ clearInterval(interval);
 setTimeout(() => {
 img.style.opacity = 0;
 setTimeout(() => {
+// Define índice ANTES de carregar a imagem final
+const yearIndex = allYears.indexOf(year.toString());
+if (yearIndex !== -1) {
+  currentYearIndex = yearIndex;       // Ano existe → posição correta
+} else {
+  currentYearIndex = -1;              // Ano não existe → estado de fallback (como cartazes)
+}
 img.src = `${GITHUB_BASE}/fotos/oktoberfest${year}.jpg`;
 img.alt = `Oktoberfest ${year} - Sorteado!`;
 img.onerror = () => {
 console.warn(`Foto Clara ${year} não encontrada`);
 img.src = `${GITHUB_BASE}/imagens/vilagermanica.jpg`;
 img.alt = `Oktoberfest ${year} - Upload pendente`;
+// currentYearIndex já está -1 (fallback), swipe irá pra última válida
 };
 img.style.opacity = 1;
 button.disabled = false;
 isDrawing = false;
 document.getElementById("yearInput").value = "";
 startFireworks();
-const yearIndex = yearsArray.indexOf(year.toString());
-if (yearIndex !== -1) {
-currentYearIndex = yearIndex;
-}
 adicionarSwipes();
 if (!toastClaraExibido) {
 toastClaraExibido = true;
