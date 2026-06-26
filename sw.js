@@ -1,4 +1,4 @@
-const CACHE_VERSION = '07.06.2026-2024';
+const CACHE_VERSION = '26.06.2026-0926';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
