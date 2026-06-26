@@ -1,5 +1,4 @@
-// ✅ VERSÃO ATUALIZADA AUTOMATICAMENTE PELO GITHUB ACTIONS
-const CACHE_VERSION = '07.06.2026-2024';
+const CACHE_VERSION = '26.06.2026-0926';
 const CACHE_NAME = `oktoberfest-blumenau-${CACHE_VERSION}`;
 
 // ✅ BASE DO GITHUB
@@ -7,8 +6,7 @@ const GITHUB_BASE = 'https://joaubaron.github.io/oktoberfest-media';
 
 // ✅ Lista de assets essenciais
 let essentialAssets = [
-  './',
-  './index.html', 
+  './manifest.json',
   './app.js',
   './titulo.png',
   './azulbavaro.webp',
@@ -36,8 +34,14 @@ self.addEventListener('install', (event) => {
   console.log('[SW] Instalando e pré-cacheando assets fixos...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(essentialAssets))
-      .then(() => console.log('[SW] Pré-cache concluído.'))
+      .then(async (cache) => {
+        await cache.addAll(essentialAssets);
+        // Cache bust no index.html para garantir versão nova do CDN
+        const resp = await fetch(`./index.html?v=${CACHE_VERSION}`, { cache: 'no-store' });
+        await cache.put('./index.html', resp);
+        await cache.put('./', resp.clone());
+        console.log('[SW] Pré-cache concluído.');
+      })
       .catch((error) => console.error('[SW] Pré-cache falhou:', error))
       .finally(() => self.skipWaiting())
   );
