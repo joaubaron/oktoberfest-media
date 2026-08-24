@@ -1,3 +1,5 @@
+https://joaubaron.github.io/oktoberfest-media/
+
 # 🍻 Prosit - Oktoberfest Blumenau PWA
 
 ## 🇧🇷 Português
